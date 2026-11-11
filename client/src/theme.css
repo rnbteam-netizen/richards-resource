@@ -1,0 +1,280 @@
+@import "tailwindcss";
+@import "tailwindcss-safe-area";
+
+@theme {
+  --text-xs: 12px;
+  --text-xs--line-height: 16px;
+  --text-sm: 14px;
+  --text-sm--line-height: 20px;
+  --text-base: 16px;
+  --text-base--line-height: 24px;
+  --text-lg: 18px;
+  --text-lg--line-height: 28px;
+  --text-xl: 20px;
+  --text-xl--line-height: 28px;
+  --text-2xl: 24px;
+  --text-2xl--line-height: 32px;
+  --text-3xl: 30px;
+  --text-3xl--line-height: 38px;
+  --text-4xl: 36px;
+  --text-4xl--line-height: 42px;
+  --font-sans: "Nunito", "Quicksand", "Trebuchet MS", "Segoe UI", Verdana, Geneva, Tahoma, ui-rounded, system-ui, sans-serif;
+  --font-display: "Quicksand", "Nunito", "Trebuchet MS", "Segoe UI", Verdana, Geneva, Tahoma, ui-rounded, system-ui, sans-serif;
+}
+
+:root {
+  color-scheme: light dark;
+  /* Sunrise & spring palette — warm dawn light, blossom, fresh green */
+  --bg: #fdf4e3;
+  --surface: #fffdf7;
+  --surface-warm: #fff8ec;
+  --text: #2e2117;
+  --dim: #6f5a44;
+  --border: #ead3ac;
+  --accent: #b23a0c;
+  --accent-soft: #fdeeda;
+  --sky: #7fb2c9;
+  --sky-deep: #2f6f8f;
+  --bloom: #c2437b;
+  --bloom-soft: #fbe3ee;
+  --leaf: #3e7d3a;
+  --leaf-soft: #e3efd9;
+  --sun: #f6a609;
+  --amber: #a86a12;
+  --amber-soft: #f8ecd2;
+  --crisis: #b03427;
+  --crisis-soft: #f9e3de;
+  --radius: 18px;
+  --space-surface: var(--surface);
+  --space-surface-alt: var(--surface);
+  --space-muted: var(--dim);
+  --space-border: var(--border);
+  --space-accent: var(--accent);
+  /* Felt / paper grain — tiny inline SVG fractal noise, no external asset.
+     Kept very low-contrast so text stays crisp. */
+  --felt-noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+  --felt-shadow: inset 0 1px 0 rgba(255,255,255,0.75), inset 0 -1px 0 rgba(120,72,28,0.08), 0 10px 24px rgba(122,74,28,0.10), 0 2px 6px rgba(122,74,28,0.08);
+  --felt-shadow-sm: inset 0 1px 0 rgba(255,255,255,0.65), inset 0 -1px 0 rgba(120,72,28,0.07), 0 6px 14px rgba(122,74,28,0.09), 0 1px 3px rgba(122,74,28,0.07);
+  --btn-shadow: inset 0 2px 0 rgba(255,255,255,0.35), inset 0 -3px 0 rgba(60,30,10,0.18), 0 8px 18px rgba(122,74,28,0.18), 0 2px 5px rgba(122,74,28,0.14);
+  --btn-shadow-pressed: inset 0 3px 8px rgba(60,30,10,0.22), inset 0 -1px 0 rgba(255,255,255,0.25), 0 2px 6px rgba(122,74,28,0.12);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Pre-dawn: deep warm night with the first light on the horizon */
+    --bg: #191310;
+    --surface: #261d16;
+    --surface-warm: #2b2018;
+    --text: #f8eee0;
+    --dim: #c6ab90;
+    --border: #4a3826;
+    --accent: #f08a4b;
+    --accent-soft: #3d2417;
+    --sky: #5d87a0;
+    --sky-deep: #9cc4da;
+    --bloom: #e58bb4;
+    --bloom-soft: #3d2230;
+    --leaf: #8fc47e;
+    --leaf-soft: #24331d;
+    --sun: #ffb63e;
+    --amber: #e5ad55;
+    --amber-soft: #382a10;
+    --crisis: #e88a76;
+    --crisis-soft: #3d1f19;
+    --felt-shadow: inset 0 1px 0 rgba(255,235,200,0.10), inset 0 -1px 0 rgba(0,0,0,0.35), 0 12px 26px rgba(0,0,0,0.38), 0 2px 6px rgba(0,0,0,0.30);
+    --felt-shadow-sm: inset 0 1px 0 rgba(255,235,200,0.08), inset 0 -1px 0 rgba(0,0,0,0.30), 0 6px 14px rgba(0,0,0,0.32), 0 1px 3px rgba(0,0,0,0.26);
+    --btn-shadow: inset 0 2px 0 rgba(255,235,200,0.16), inset 0 -3px 0 rgba(0,0,0,0.35), 0 8px 18px rgba(0,0,0,0.38), 0 2px 5px rgba(0,0,0,0.30);
+    --btn-shadow-pressed: inset 0 3px 8px rgba(0,0,0,0.45), inset 0 -1px 0 rgba(255,235,200,0.10), 0 2px 6px rgba(0,0,0,0.30);
+  }
+}
+
+/* Rounded, humanist type — warm and friendly, highly legible.
+   System stack only: no webfont download, works offline, respects the
+   reader's device. Display headings use the same family, heavier. */
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: 0.01em;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+  }
+  body {
+    font-family: var(--font-sans);
+    letter-spacing: 0.008em;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  button, [role="button"], select, summary, input:not([type="checkbox"], [type="radio"]) {
+    min-height: 2.25rem;
+  }
+  button, input, textarea, select {
+    font-family: inherit;
+  }
+  input:not([type="checkbox"], [type="radio"], [type="range"]), textarea, select {
+    box-shadow: inset 0 2px 5px rgba(122,74,28,0.08), inset 0 -1px 0 rgba(255,255,255,0.55);
+  }
+  :focus-visible {
+    outline: 3px solid var(--sky-deep);
+    outline-offset: 2px;
+  }
+}
+
+/* ---- Warm tactile surfaces ---- */
+
+/* Page background: warm wash + barely-there felt grain */
+.felt-page {
+  background-color: var(--bg);
+  background-image: var(--felt-noise),
+    radial-gradient(1200px 500px at 50% -80px, rgba(246,166,9,0.10), rgba(246,166,9,0) 60%),
+    linear-gradient(180deg, rgba(255,255,255,0.35), rgba(255,255,255,0) 220px);
+  background-size: 160px 160px, auto, auto;
+  background-blend-mode: soft-light, normal, normal;
+}
+@media (prefers-color-scheme: dark) {
+  .felt-page {
+    background-image: var(--felt-noise),
+      radial-gradient(1200px 500px at 50% -80px, rgba(255,182,62,0.07), rgba(255,182,62,0) 60%),
+      linear-gradient(180deg, rgba(255,235,200,0.04), rgba(255,235,200,0) 220px);
+  }
+}
+
+/* Card with felt grain and soft layered depth */
+.felt-card {
+  background-image: var(--felt-noise);
+  background-size: 160px 160px;
+  background-blend-mode: soft-light;
+  box-shadow: var(--felt-shadow);
+}
+.felt-soft {
+  background-image: var(--felt-noise);
+  background-size: 160px 160px;
+  background-blend-mode: soft-light;
+  box-shadow: var(--felt-shadow-sm);
+}
+
+/* Raised, tactile button */
+.felt-btn {
+  background-image: var(--felt-noise);
+  background-size: 160px 160px;
+  background-blend-mode: soft-light;
+  box-shadow: var(--btn-shadow);
+  transition: transform 140ms ease, box-shadow 140ms ease, filter 140ms ease;
+}
+.felt-btn:hover {
+  filter: brightness(1.03);
+}
+.felt-btn:active {
+  transform: translateY(1px);
+  box-shadow: var(--btn-shadow-pressed);
+}
+
+/* 3D felt tabs: raised when idle, pressed-in when active */
+.felt-tab {
+  background-image: var(--felt-noise);
+  background-size: 140px 140px;
+  background-blend-mode: soft-light;
+  box-shadow: inset 0 2px 0 rgba(255,255,255,0.70), inset 0 -3px 0 rgba(90,50,20,0.14), inset 1px 0 0 rgba(255,255,255,0.35), 0 7px 14px rgba(122,74,28,0.16), 0 2px 4px rgba(122,74,28,0.12);
+  transform: translateY(-1px);
+  transition: transform 140ms ease, box-shadow 140ms ease, filter 140ms ease;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.45);
+}
+.felt-tab:hover {
+  filter: brightness(1.04) saturate(1.03);
+}
+.felt-tab:active {
+  transform: translateY(1px);
+}
+.felt-tab-active {
+  box-shadow: inset 0 3px 9px rgba(90,50,20,0.26), inset 0 -1px 0 rgba(255,255,255,0.45), inset 0 1px 0 rgba(90,50,20,0.10), 0 2px 6px rgba(122,74,28,0.14) !important;
+  transform: translateY(1px);
+}
+@media (prefers-color-scheme: dark) {
+  .felt-tab {
+    box-shadow: inset 0 2px 0 rgba(255,255,255,0.22), inset 0 -3px 0 rgba(0,0,0,0.35), 0 7px 14px rgba(0,0,0,0.35), 0 2px 4px rgba(0,0,0,0.28);
+    text-shadow: 0 1px 0 rgba(0,0,0,0.25);
+  }
+  .felt-tab-active {
+    box-shadow: inset 0 3px 9px rgba(0,0,0,0.50), inset 0 -1px 0 rgba(255,255,255,0.14), 0 2px 6px rgba(0,0,0,0.30) !important;
+  }
+}
+.felt-tab:focus-visible, .felt-btn:focus-visible, button:focus-visible, a:focus-visible {
+  outline: 3px solid var(--sky-deep);
+  outline-offset: 2px;
+}
+
+/* Pressable pastel cards (Home tab cards etc.) */
+.felt-pressable {
+  transition: transform 140ms ease, box-shadow 140ms ease, filter 140ms ease;
+}
+.felt-pressable:hover {
+  filter: brightness(1.03);
+  transform: translateY(-1px);
+}
+.felt-pressable:active {
+  transform: translateY(1px);
+  box-shadow: var(--btn-shadow-pressed);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .felt-btn, .felt-tab, .felt-pressable {
+    transition: none;
+  }
+  .felt-btn:active, .felt-tab:active, .felt-pressable:active, .felt-tab {
+    transform: none;
+  }
+  .felt-tab-active {
+    transform: none;
+  }
+}
+
+/* Dawn sky band — used for the hero, the top strip, and the footer meadow.
+   Light mode: pale gold rising through peach and rose into morning blue.
+   The dark-mode override keeps the same horizon, dimmed to first light. */
+.sunrise-band {
+  background: linear-gradient(180deg, #a8cfe0 0%, #f3d9a4 42%, #f7b267 72%, #ee8f6b 100%);
+}
+@media (prefers-color-scheme: dark) {
+  .sunrise-band {
+    background: linear-gradient(180deg, #22384a 0%, #5c4038 45%, #8a4b2c 74%, #b85c30 100%);
+  }
+}
+
+/* Soft halo behind the rising sun in the hero artwork */
+.sun-glow {
+  background: radial-gradient(circle, rgba(255, 205, 92, 0.85) 0%, rgba(255, 178, 84, 0.35) 45%, rgba(255, 178, 84, 0) 72%);
+}
+
+/* Slow breathing for relaxation (Richard, 2026-11-10): breathe in for
+   ~4 seconds, hold ~1 second, breathe out for ~6 seconds — an 11-second
+   cycle. The keyframes encode that shape: the circle grows over the
+   first 4s (36%), stays full through the 1s hold (to 45%), then shrinks
+   slowly over the last 6s. The phase words in App.tsx run on the same
+   4 / 1 / 6 timing so words and circle stay together. */
+@keyframes breathe {
+  0% { transform: scale(0.72); }
+  36% { transform: scale(1); }
+  45% { transform: scale(1); }
+  100% { transform: scale(0.72); }
+}
+.breathe-circle {
+  animation: breathe 11s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .breathe-circle { animation: none; transform: scale(0.86); }
+}
+
+@keyframes rise {
+  from { transform: translateY(10px); opacity: 0.35; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.sunrise-rise {
+  animation: rise 1.6s ease-out both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sunrise-rise { animation: none; }
+}
+
+/* Public build: replace the Hatch SafeAreaTopScrim — plain CSS safe-area. */
+.app-root { padding-top: env(safe-area-inset-top, 0px); }

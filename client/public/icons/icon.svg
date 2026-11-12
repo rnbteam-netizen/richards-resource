@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Richard's Resource — sunrise over green hills">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#a8cfe0"/>
+      <stop offset="0.38" stop-color="#f3d9a4"/>
+      <stop offset="0.62" stop-color="#f7b267"/>
+      <stop offset="0.85" stop-color="#ee8f6b"/>
+      <stop offset="1" stop-color="#e8785a"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.42" r="0.42">
+      <stop offset="0" stop-color="#ffcd5c" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#ffcd5c" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#sky)"/>
+  <rect width="512" height="512" fill="url(#glow)"/>
+  <g stroke="#ffdf8a" stroke-width="10" stroke-linecap="round" opacity="0.85">
+    <line x1="256" y1="52" x2="256" y2="88"/>
+    <line x1="256" y1="316" x2="256" y2="352"/>
+    <line x1="92" y1="215" x2="128" y2="215"/>
+    <line x1="384" y1="215" x2="420" y2="215"/>
+    <line x1="140" y1="99" x2="166" y2="125"/>
+    <line x1="346" y1="305" x2="372" y2="331"/>
+    <line x1="372" y1="99" x2="346" y2="125"/>
+    <line x1="166" y1="305" x2="140" y2="331"/>
+  </g>
+  <circle cx="256" cy="215" r="113" fill="#ffd65c" stroke="#e8763a" stroke-width="5"/>
+  <path d="M0 348 Q 128 300 256 348 T 512 348 V 512 H 0 Z" fill="#3e7d3a"/>
+  <path d="M0 380 Q 160 330 320 380 T 512 372 V 512 H 0 Z" fill="#4a8f42"/>
+  <circle cx="82" cy="420" r="6" fill="#e5639e"/>
+  <circle cx="154" cy="450" r="6" fill="#ffffff"/>
+  <circle cx="348" cy="430" r="6" fill="#f2c41c"/>
+  <circle cx="430" cy="460" r="6" fill="#ffffff"/>
+  <circle cx="266" cy="472" r="6" fill="#e5639e"/>
+</svg>

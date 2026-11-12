@@ -2,9 +2,9 @@ import { bigserial, boolean, doublePrecision, index, integer, pgTable, primaryKe
 
 export const categories = ["alcohol", "smoking", "gambling", "drugs", "codependency"] as const;
 
-export const pointTabs = ["home", "alcohol", "smoking", "gambling", "drugs", "codependency", "food", "screens", "wellbeing"] as const;
+export const pointTabs = ["home", "alcohol", "smoking", "gambling", "drugs", "codependency", "food", "screens", "wellbeing", "longevity", "peace"] as const;
 
-export const pointActions = ["welcome", "touch", "field", "quitDate", "daySuccess", "relapse", "pause", "plan", "log", "screening", "slotLesson", "phoneFree", "checkin", "screenOff"] as const;
+export const pointActions = ["welcome", "touch", "field", "quitDate", "daySuccess", "relapse", "pause", "plan", "log", "screening", "slotLesson", "phoneFree", "checkin", "screenOff", "dailyCheckin", "quietMoment"] as const;
 
 // deviceId: an anonymous UUID generated in the visitor's own browser on
 // first visit and stored in that browser's localStorage only. It is NOT
@@ -40,7 +40,10 @@ export const logs = pgTable("logs", {
 // running total across every tab. +10 welcome, +1 per finger touch,
 // +5 per data field, +50 for picking a quit date, +100 for each
 // successful day after it, −100 for a relapse, +10 screenOff (Screens
-// tab, self-reported "I turned my screen off"). Older action names
+// tab, self-reported "I turned my screen off"), +100 dailyCheckin
+// (Home "Today I..." check-in, once per day, 2026-11-11), +10 quietMoment
+// (Peace of Mind "I took a quiet moment", self-claimed, once per day,
+// 2026-11-12). Older action names
 // stay in the enum so historical events keep rendering. `day` carries
 // the client's local calendar day (YYYY-MM-DD) for quit-date and daily
 // marks so a quit date or a day can only be awarded once — per device.

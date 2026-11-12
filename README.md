@@ -1,9 +1,9 @@
 # Richard's Resource — public build
 
-**The best FREE self-help app ever created!** A free app to help people
+**The best FREE self-help app EVER!** A free app to help people
 stop drinking, smoking, gambling, or using drugs — plus codependency,
-food, screens, and feeling unwell. No account, no judgement, no name or
-email needed. *"We don't share your data. This is your personal journey."*
+food, screens, feeling unwell, longevity (healthy living), and peace of mind (meditation, prayer, gratitude, mindfulness — generic, for any faith or none). No account,
+no judgement, no name or email needed. *"We don't share your data. This is your personal journey."*
 
 This is the standalone, portable codebase for publishing the app at
 **RichardsResource.com**. It was re-platformed from the Muse-hosted
@@ -14,14 +14,23 @@ app that Render can host for free.
 
 - `client/` — React 19 + Vite + Tailwind v4 app (the same tabs, hooks,
   breathing, points, and Honest Slot Machine as the Muse version).
-  Client-only tabs are untouched: Food (SCOFF), Screens, and Feeling
-  Unwell (PHQ-9 / GAD-7) never save or send check-in answers — only a
-  completion count can earn points.
+  Client-only tabs are untouched: Food (SCOFF), Screens, Feeling Unwell
+  (PHQ-9 / GAD-7), and Longevity never save or send check-in answers.
+  Food, Screens, and Feeling Unwell earn +5 per answered question;
+  Longevity earns no points for its check-in ticks, by Richard's rule.
+  Peace of Mind saves nothing at all: its only award is +10, self-claimed
+  on your own word for "I took a quiet moment" (meditation / prayer),
+  once per visit in the app and once a day on the server. Longevity
+  keeps to the free basics only — no published studies, by Richard's
+  rule (2026-11-12): this is the starter app.
 - `server/` — Express server. Serves the built client, `GET /health`,
   and `POST /actions` (the 7 actions: `getState`, `awardPoints`,
   `awardTouches`, `awardFields`, `saveProfile`, `addLog`, `deleteLog`).
   Point values live on the server: welcome 10, touch 1, field 5,
-  quitDate 50, daySuccess 100, relapse −100, screenOff 10.
+  quitDate 50, daySuccess 100, relapse −100, screenOff 10,
+  dailyCheckin 100 (Home "Today I..." check-in, once per day, 2026-11-11),
+  quietMoment 10 (Peace of Mind "I took a quiet moment", self-claimed,
+  once per day, 2026-11-12).
 - `drizzle/0001_public.sql` — Postgres schema (Neon). Idempotent;
   run on every deploy.
 - `DATA-PLAN.md` — the data/privacy plan carried over from the
@@ -39,7 +48,7 @@ visitor's plans, logs, or points. There is no account, no login, no
 name, no email. Data is tied to that browser/device — a new phone, a
 cleared browser, or a different browser starts fresh, exactly as the
 app already tells users. Check-in answers (PHQ-9 / GAD-7 / SCOFF /
-Screens) are never saved or sent anywhere.
+Screens / Longevity) are never saved or sent anywhere.
 
 Existing Muse-hosted data does **not** migrate: it was 0 profiles,
 0 logs, and ~158 unscoped point rows (Richard's own testing). The
@@ -123,9 +132,21 @@ app says so, and the button says "Donations coming soon" — there is
 step, after the LLC is restored. Do not add card fields or payment
 links here.
 
+## Add to Home Screen (RR)
+
+The app is a website, not an app-store app. `client/public/manifest.webmanifest`
+(name "Richard's Resource", short_name **"RR"** — Richard chose RR, not "Me")
+plus the sunrise icons in `client/public/icons/` (192 / 512 PNG, maskable,
+180 Apple touch icon, SVG favicon) let the browser offer "Add to Home Screen".
+Home shows a short hint ("Add RR to your home screen — tap your browser menu,
+then Add to Home Screen. RR opens full-screen, like an app, and updates
+automatically."). No install-prompt JavaScript, no push, no tracking.
+
 ## Tests
 
 ```bash
 npm test   # slot math (expected return ≈ 83.8%) + per-user isolation
+           # + daily check-in (100 once/day) + Longevity tab source checks
+           # + Peace of Mind tab checks and quietMoment (10 once/day),
            # over HTTP against a locally started server (in-memory DB)
 ```

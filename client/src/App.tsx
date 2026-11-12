@@ -1,12 +1,13 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { useIsMutating, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, type ApiResponse } from "./api";
+import { sounds, type CalmToneKind } from "./sound";
 
 type Category = "alcohol" | "smoking" | "gambling" | "drugs" | "codependency";
 type Profile = ApiResponse<typeof api, "getState">["profiles"][number];
 type LogEntry = ApiResponse<typeof api, "getState">["logs"][number];
 
-type TabId = Category | "home" | "resources" | "wellbeing" | "food" | "screens";
+type TabId = Category | "home" | "resources" | "wellbeing" | "food" | "screens" | "longevity" | "peace";
 
 const TABS: { id: TabId; label: string }[] = [
   { id: "home", label: "Home" },
@@ -18,6 +19,8 @@ const TABS: { id: TabId; label: string }[] = [
   { id: "food", label: "Food" },
   { id: "screens", label: "Screens" },
   { id: "wellbeing", label: "Feeling Unwell?" },
+  { id: "longevity", label: "Longevity" },
+  { id: "peace", label: "Peace of Mind" },
   { id: "resources", label: "Help & Resources" },
 ];
 
@@ -34,6 +37,8 @@ const TAB_PASTELS: Record<TabId, { activeBg: string; inactiveBg: string; border:
   food:         { activeBg: "#d7e589", inactiveBg: "#eef4cf", border: "#c3d470", activeBorder: "#7d9426" },
   screens:      { activeBg: "#b9cbdd", inactiveBg: "#e4ecf3", border: "#a5bcd2", activeBorder: "#6486a5" },
   wellbeing:    { activeBg: "#9fe0cb", inactiveBg: "#d3f2e6", border: "#86d3b8", activeBorder: "#3d9a78" },
+  longevity:    { activeBg: "#8fd6cf", inactiveBg: "#dcf1ee", border: "#7cc4bd", activeBorder: "#2f8a80" },
+  peace:        { activeBg: "#d8b4d4", inactiveBg: "#f3e2f0", border: "#c49cc0", activeBorder: "#9a5a90" },
   resources:    { activeBg: "#b3c8ee", inactiveBg: "#dde7f7", border: "#9db6e2", activeBorder: "#5f83c4" },
 };
 
@@ -53,13 +58,20 @@ const CAT_LABEL: Record<Category, string> = {
 // app, +5 for filling in each data field, +50 for picking a quit date,
 // +100 for every day after it that you stay on track — and −100 for a
 // relapse, because a slip is part of recovery, not the end of it. The
+// daily check-in on Home adds one more: +100 total, once per day, for
+// completing "Today I... Exercised, Ate Well, Slept Well, Feel Better"
+// (Richard, 2026-11-11) — not 100 per item. The
 // Screens tab adds one more: +10 when you tap "I turned my screen off"
 // — self-assessment on your own word, because an honest self-report is
-// better than nothing. Values
+// better than nothing. Peace of Mind adds the same idea: +10 when you tap
+// "I took a quiet moment" — meditation or prayer, on your own word, once
+// per visit in the app and once a day on the server, so a new day can
+// count again. The app can't check whether you meditated or prayed, and
+// it doesn't try. Values
 // live on the server; the client only reports what happened. The older
 // action names remain in the label map so past events still read well.
-type PointTab = "home" | "alcohol" | "smoking" | "gambling" | "drugs" | "codependency" | "food" | "screens" | "wellbeing";
-type PointAction = "welcome" | "touch" | "field" | "quitDate" | "daySuccess" | "relapse" | "pause" | "plan" | "log" | "screening" | "slotLesson" | "phoneFree" | "checkin" | "screenOff";
+type PointTab = "home" | "alcohol" | "smoking" | "gambling" | "drugs" | "codependency" | "food" | "screens" | "wellbeing" | "longevity" | "peace";
+type PointAction = "welcome" | "touch" | "field" | "quitDate" | "daySuccess" | "relapse" | "pause" | "plan" | "log" | "screening" | "slotLesson" | "phoneFree" | "checkin" | "screenOff" | "dailyCheckin" | "quietMoment";
 type PointEvent = ApiResponse<typeof api, "getState">["pointEvents"][number];
 type DayMark = ApiResponse<typeof api, "getState">["dayMarks"][number];
 
@@ -73,6 +85,8 @@ const POINT_TAB_LABEL: Record<PointTab, string> = {
   food: "Food",
   screens: "Screens",
   wellbeing: "Feeling Unwell?",
+  longevity: "Longevity",
+  peace: "Peace of Mind",
 };
 
 const POINT_ACTION_LABEL: Record<PointAction, string> = {
@@ -90,6 +104,8 @@ const POINT_ACTION_LABEL: Record<PointAction, string> = {
   phoneFree: "Picked a phone-free change",
   checkin: "Completed the check-in",
   screenOff: "Turned my screen off",
+  dailyCheckin: "Completed today's check-in",
+  quietMoment: "Took a quiet moment — meditation / prayer",
 };
 
 type PointsApi = {
@@ -123,7 +139,7 @@ function localDay(d: Date = new Date()): string {
 // logs, quit dates and points are saved through the app's server actions
 // (getState / saveProfile / addLog / award*) — there is no account, no
 // login, and no other reader of those rows in the app. Check-in ANSWERS
-// (PHQ-9 / GAD-7 / SCOFF / Screens) are never saved or sent anywhere —
+// (PHQ-9 / GAD-7 / SCOFF / Screens / Longevity) are never saved or sent anywhere —
 // only a count of answered questions can earn points. So the privacy
 // wording below names exactly that, and is honest about the one limit:
 // the saved copy is tied to this app on this phone / browser, so a new
@@ -162,6 +178,58 @@ function safeLocalRemove(key: string): void {
   try { window.localStorage.removeItem(key); } catch { /* nothing to do */ }
 }
 
+/* ---------- what's new: a banner on Home, once per version ---------- */
+
+// What's new (Richard, 2026-11-12): a short banner on Home listing
+// what changed in this version — Longevity, Peace of Mind, icons,
+// sounds, and the banner itself. It is shown once per version and
+// then dismissed, and that is all it is: NO push notifications, NO
+// email, NO phone calls, NO tracking. The only thing stored is one
+// local version flag in the visitor's own browser localStorage
+// ("seen version 1.1.0") — never sent to the server, never tied to
+// identity, and the privacy line is unchanged. Bump
+// WHATS_NEW_VERSION when a version ships something worth announcing;
+// everyone sees the banner once for the new version, and never again
+// until the next one. Dismissing it hides it and records the flag.
+const WHATS_NEW_VERSION = "1.1.0";
+const WHATS_NEW_KEY = "richards-resource:whats-new-seen";
+const WHATS_NEW_ITEMS = [
+  "New Longevity tab — healthy living, the free basics: sleep, walking, real food, friends, and purpose.",
+  "New Peace of Mind tab — a quiet corner for meditation, prayer, gratitude, and mindfulness, for any faith or none.",
+  "Icons on every tab button, so each tab is easier to spot.",
+  "Optional sounds — slot machine sounds on the Gambling tab, and a calm tone for breathing — both off unless you turn them on.",
+  "This What's new banner — it shows once per version, and never sends anything anywhere.",
+];
+
+function WhatsNewBanner() {
+  // Shown only if this browser hasn't seen this version yet. The
+  // initial state reads localStorage once; dismissing writes the flag.
+  const [visible, setVisible] = useState(() => safeLocalGet(WHATS_NEW_KEY) !== WHATS_NEW_VERSION);
+  if (!visible) return null;
+  const dismiss = () => {
+    safeLocalSet(WHATS_NEW_KEY, WHATS_NEW_VERSION);
+    setVisible(false);
+  };
+  return (
+    <div className="felt-card mb-5 rounded-[var(--radius)] border-2 border-[var(--sun)] bg-[var(--amber-soft)] p-5" role="region" aria-label="What's new in this version">
+      <p className="font-display text-lg font-bold text-[var(--text)]">✨ What's new</p>
+      <ul className="mt-2 space-y-1.5">
+        {WHATS_NEW_ITEMS.map((item) => (
+          <li key={item} className="flex gap-2 text-sm leading-relaxed text-[var(--text)]">
+            <span aria-hidden className="mt-0.5 text-[var(--accent)]">•</span><span>{item}</span>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-3 text-sm text-[var(--dim)]">
+        No notifications, no emails — this banner is the only announcement, and it shows once per version.
+      </p>
+      <button type="button" onClick={dismiss} aria-label="Dismiss what's new" className="felt-btn mt-3 min-h-11 rounded-[var(--radius)] bg-[var(--accent)] px-4 text-sm font-semibold text-white">
+        Got it — hide this
+      </button>
+    </div>
+  );
+}
+
 function timeLabel(ts: number): string {
   return new Date(ts).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
 }
@@ -175,6 +243,50 @@ function PrivacyStrip() {
       <p className="mt-0.5 text-sm leading-relaxed text-[var(--text)]">
         Your plans, logs and points are saved in this app only for you. No account,
         no name or email needed — and your check-in answers are never saved at all.
+      </p>
+    </div>
+  );
+}
+
+// A short one-line version, at the top of the most relevant tabs
+// (Longevity, Feeling Unwell, Food, Peace of Mind).
+function DisclaimerShort() {
+  return (
+    <p className="felt-soft mt-4 rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 py-2.5 text-sm leading-relaxed text-[var(--text)]">
+      This app is support, not medical advice — talk to your own doctor about exercise, diet, medicines, or mental health.
+    </p>
+  );
+}
+
+// Full version, in the footer on every tab and on Help & Resources —
+// plain, kind language, not heavy legalese. Richard's rule, 2026-11-12:
+// this is not medical advice, and professional help comes first.
+function MedicalDisclaimer() {
+  return (
+    <div className="felt-soft rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] p-4">
+      <p className="font-semibold text-[var(--text)]">Please read — this is not medical advice</p>
+      <p className="mt-1 text-sm leading-relaxed text-[var(--text)]">
+        Richard&apos;s Resource is general information and support only. It is not medical advice, not a diagnosis,
+        and not a treatment — and it is not a substitute for your own doctor, a counselor, or an addiction
+        professional. What helps one person may not be right for another, so please use your own judgement, and
+        get professional advice when you are unsure.
+      </p>
+      <p className="mt-2 text-sm leading-relaxed text-[var(--text)]">
+        Before you start an exercise programme, change what you eat, or stop or change a medicine, talk to your
+        own doctor first — especially if you have a health condition, such as a heart condition or diabetes, or
+        you take regular medicines. The same goes for mental health: if you are struggling, please seek counseling
+        or talk to your doctor. Reaching out is a strong step, not a weakness.
+      </p>
+      <p className="mt-2 text-sm leading-relaxed text-[var(--text)]">
+        If you feel unsafe, or you have thoughts of harming yourself, please get help right away — call or text{" "}
+        <a className="font-semibold underline" href="tel:988">988</a> (the Suicide &amp; Crisis Lifeline, US, free,
+        24/7) or call <a className="font-semibold underline" href="tel:911">911</a>, or your local emergency
+        number, right now.
+      </p>
+      <p className="mt-2 text-sm leading-relaxed text-[var(--text)]">
+        For addiction, please seek professional help. Stopping alcohol suddenly can be dangerous, and alcohol
+        withdrawal needs medical supervision — do not stop drinking heavily without a doctor&apos;s help. The same
+        care applies to other drugs and medicines: a doctor or an addiction professional can help you stop safely.
       </p>
     </div>
   );
@@ -218,7 +330,7 @@ function buildBackup(data: BackupData) {
     backupVersion: 1,
     exportedAt: new Date().toISOString(),
     exportedDay: localDay(),
-    note: "This file is your own copy of what you saved in Richard's Resource. We don't share your data. This is your personal journey. It contains only what the app saves: your quit plans, your logs, and your points. Your check-in answers (Feeling Unwell, Food, Screens) are NOT in here, because the app never saves or sends them.",
+    note: "This file is your own copy of what you saved in Richard's Resource. We don't share your data. This is your personal journey. It contains only what the app saves: your quit plans, your logs, and your points. Your check-in answers (Feeling Unwell, Food, Screens, Longevity) are NOT in here, because the app never saves or sends them.",
     profiles: data.profiles,
     logs: data.logs,
     points: {
@@ -343,9 +455,10 @@ function YourDataSection({ profiles, logs, pointEvents, dayMarks }: {
         and your points are saved in this app so they're here when you come back on this phone and this browser.
         There's no account and no sign-up — we never even ask your name or email.
       </p>
+      <p className="mt-1 leading-relaxed text-[var(--text)]">Your data is encrypted in transit.</p>
       <p className="mt-2 leading-relaxed text-[var(--text)]">
         Your check-in answers are private by design: the answers you give on Feeling Unwell (the PHQ-9 and GAD-7),
-        Food (the SCOFF questions) and Screens are <strong>never saved and never sent</strong> — they are worked out
+        Food (the SCOFF questions), Screens, and Longevity are <strong>never saved and never sent</strong> — they are worked out
         on your phone, in the moment, and they're not in the saved copy below either.
       </p>
       <div className="felt-soft mt-3 rounded-[var(--radius)] bg-[var(--surface-warm)] px-4 py-3">
@@ -493,6 +606,142 @@ function FlowerIcon({ color, size = 22 }: { color: string; size?: number }) {
   );
 }
 
+
+// Small, clear icons for every tab button and Home tab card — simple
+// inline SVG in the app's existing style, no new dependencies, no
+// emoji. One icon per tab, same size and stroke throughout, so the
+// buttons stay tidy on a phone. Colours come from the button itself
+// (currentColor), so the icon works in light and dark mode.
+function TabIcon({ id, size = 20 }: { id: TabId; size?: number }) {
+  const common = {
+    width: size,
+    height: size,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.8,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    "aria-hidden": true,
+    className: "shrink-0",
+  };
+  switch (id) {
+    case "home":
+      // Sunrise over a house: a roof, walls, and the morning sun.
+      return (
+        <svg {...common}>
+          <path d="M3 11.5 12 4l9 7.5" />
+          <path d="M5.5 10.5V20h13v-9.5" />
+          <circle cx="17.5" cy="6.5" r="1.6" />
+          <path d="M17.5 3.5v1M20 6.5h-1M15 6.5h1" />
+        </svg>
+      );
+    case "alcohol":
+      // A glass, crossed out — the drink, refused.
+      return (
+        <svg {...common}>
+          <path d="M7 3h10l-1.2 6a4.5 4.5 0 0 1-7.6 0L7 3z" />
+          <path d="M12 13.5V21M8.5 21h7" />
+          <path d="M4.5 4.5l15 15" />
+        </svg>
+      );
+    case "smoking":
+      // A cigarette, crossed out — smoke included, then refused.
+      return (
+        <svg {...common}>
+          <rect x="3" y="10" width="13" height="4.5" rx="1" />
+          <path d="M16 10h5M3 10v4.5" />
+          <path d="M7 6.5c0-1.2 1-1.2 1-2.4M11 6.5c0-1.2 1-1.2 1-2.4" />
+          <path d="M4.5 4.5l15 15" />
+        </svg>
+      );
+    case "gambling":
+      // A die — chance, in your hand, not the machine's.
+      return (
+        <svg {...common}>
+          <rect x="3.5" y="3.5" width="17" height="17" rx="4" />
+          <circle cx="8.5" cy="8.5" r="1.3" fill="currentColor" stroke="none" />
+          <circle cx="15.5" cy="15.5" r="1.3" fill="currentColor" stroke="none" />
+          <circle cx="15.5" cy="8.5" r="1.3" fill="currentColor" stroke="none" />
+          <circle cx="8.5" cy="15.5" r="1.3" fill="currentColor" stroke="none" />
+          <circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none" />
+        </svg>
+      );
+    case "drugs":
+      // A capsule, tilted — medicine, not a promise.
+      return (
+        <svg {...common}>
+          <rect x="4.5" y="8.5" width="15" height="7" rx="3.5" transform="rotate(-45 12 12)" />
+          <path d="M9.5 9.5l5 5" />
+        </svg>
+      );
+    case "codependency":
+      // Two hearts, overlapping — love, with a boundary between them.
+      return (
+        <svg {...common}>
+          <path d="M8.5 20S3 15.5 3 10.8C3 8 5 6 7.4 6c1 0 1.9.5 2.6 1.3" />
+          <path d="M15.5 20s5.5-4.5 5.5-9.2C21 8 19 6 16.6 6c-1 0-1.9.5-2.6 1.3" />
+          <path d="M10 7.3C10.7 6.5 11.6 6 12.5 6c.9 0 1.8.5 2.5 1.3" />
+        </svg>
+      );
+    case "food":
+      // An apple with a leaf — real food, nothing counted.
+      return (
+        <svg {...common}>
+          <path d="M12 8.5c-4.5-2-8.5.5-8.5 5 0 4 3 8.5 6 8.5 1.2 0 1.8-.6 2.5-.6s1.3.6 2.5.6c3 0 6-4.5 6-8.5 0-4.5-4-7-8.5-5z" />
+          <path d="M12 8.5c0-2.5 1-4 3-4.8" />
+          <path d="M12 7.5c.5-1.8 2-2.8 3.8-2.8-.3 1.7-1.6 2.7-3.8 2.8z" fill="currentColor" stroke="none" />
+        </svg>
+      );
+    case "screens":
+      // A phone, upright — the thing this tab helps you put down.
+      return (
+        <svg {...common}>
+          <rect x="7" y="2.5" width="10" height="19" rx="2.5" />
+          <path d="M10.5 5h3" />
+          <path d="M11 18.5h2" />
+        </svg>
+      );
+    case "wellbeing":
+      // A heart with a pulse — how you feel, measured honestly.
+      return (
+        <svg {...common}>
+          <path d="M12 20.5S3.5 15.5 3.5 9.8C3.5 6.6 6 4.5 8.6 4.5c1.4 0 2.6.7 3.4 1.8.8-1.1 2-1.8 3.4-1.8 2.6 0 5.1 2.1 5.1 5.3 0 5.7-8.5 10.7-8.5 10.7z" />
+          <path d="M6.5 12h3l1.2-2.5 1.8 5 1.2-2.5h3.8" />
+        </svg>
+      );
+    case "longevity":
+      // A sprout under the sun — small, growing, alive. Hope, not hype.
+      return (
+        <svg {...common}>
+          <path d="M12 21v-8" />
+          <path d="M12 13c-4.5.3-7-1.8-7-5.5 3.5 0 6 1.5 7 5.5z" />
+          <path d="M12 12c.8-3.5 3-5 6.5-5-.3 3.5-2.5 5-6.5 5z" />
+          <circle cx="12" cy="4.5" r="1.4" fill="currentColor" stroke="none" />
+        </svg>
+      );
+    case "peace":
+      // A lotus — quiet, open, still. No one faith, no one way to be quiet.
+      return (
+        <svg {...common}>
+          <path d="M12 4c2 2.5 2 5.5 0 8-2-2.5-2-5.5 0-8z" />
+          <path d="M5.5 7.5c2.5.5 4.5 2 5.5 4.5-2.5-.5-4.5-2-5.5-4.5z" />
+          <path d="M18.5 7.5c-2.5.5-4.5 2-5.5 4.5 2.5-.5 4.5-2 5.5-4.5z" />
+          <path d="M4 16.5c2.5 2 5 3 8 3s5.5-1 8-3" />
+        </svg>
+      );
+    case "resources":
+      // A lifebuoy — help, thrown to you, free.
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="12" r="8.5" />
+          <circle cx="12" cy="12" r="3.5" />
+          <path d="M6 6l3.5 3.5M18 6l-3.5 3.5M6 18l3.5-3.5M18 18l-3.5-3.5" />
+        </svg>
+      );
+  }
+}
+
 const FLOWER_COLORS = ["#e5639e", "#f2a541", "#c2437b", "#7fb2c9", "#e8763a", "#8a63c9"];
 
 // The Home hero scene: a sunrise over spring hills, with the sun just
@@ -587,7 +836,10 @@ function MeadowFooter() {
         <p className="text-center text-sm leading-relaxed text-[var(--dim)]">
           Every morning is a new beginning. One day, one urge, one honest moment at a time — brighter days grow from small starts.
         </p>
+        <p className="mt-1 text-center font-display text-base font-bold text-[var(--accent)]">Making the world 🌎 a happier place ❤️</p>
         <p className="mt-1 text-center text-sm font-semibold text-[var(--dim)]">We don't share your data. This is your personal journey.</p>
+        <p className="mt-1 text-center text-xs text-[var(--dim)]">© 2026 Richard's Resource. All rights reserved.</p>
+        <div className="mt-4 text-left"><MedicalDisclaimer /></div>
       </div>
     </footer>
   );
@@ -944,6 +1196,20 @@ function CalmingBreathing() {
   const [phase, setPhase] = useState<BreathPhase>("breathe in");
   const [breaths, setBreaths] = useState(0);
   const [finished, setFinished] = useState(false);
+  // Calm tone (Richard, 2026-11-12): optional, OFF by default. "calm"
+  // is two soft tones ~10 Hz apart, "sleepy" ~6 Hz apart, one per ear.
+  // No medical claims — it doesn't change brainwaves or promise calm
+  // or sleep; it's just a soft sound to breathe along with. It starts
+  // only when the breathing starts (after a tap, never on load) and
+  // stops the moment the breathing stops or you leave the tab.
+  const [tone, setTone] = useState<CalmToneKind | "off">("off");
+
+  useEffect(() => {
+    if (!running || tone === "off") return;
+    sounds.startCalmTone(tone);
+    return () => sounds.stopCalmTone();
+  }, [running, tone]);
+  useEffect(() => () => sounds.stopCalmTone(), []);
 
   useEffect(() => {
     if (!running) return;
@@ -976,6 +1242,38 @@ function CalmingBreathing() {
         </div>
       </div>
       <p className="mb-4 mt-1 text-sm text-[var(--dim)]">Slow and easy: in… 2, 3, 4 — hold — out… 2, 3, 4, 5, 6.</p>
+      <div className="mx-auto mb-4 max-w-md rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface-warm)] px-3 py-3 text-left">
+        <p className="text-sm font-semibold text-[var(--text)]">Calm tone — optional, off unless you choose it</p>
+        <p className="mt-1 text-sm leading-relaxed text-[var(--dim)]">
+          A soft tone in your ears while you breathe — two gentle notes, one per ear. It doesn&apos;t change your
+          brainwaves and promises nothing medical; it&apos;s just a calm sound. It plays only while the breathing
+          runs, and stops when it stops. It follows your phone&apos;s volume and silent switch.
+        </p>
+        <div className="mt-2 flex flex-wrap gap-2" role="group" aria-label="Calm tone for breathing">
+          {([
+            ["off", "Tone off"],
+            ["calm", "Calm tone"],
+            ["sleepy", "Sleepy tone"],
+          ] as [CalmToneKind | "off", string][]).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              aria-pressed={tone === value}
+              aria-label={`${label} — ${value === "off" ? "no sound" : "soft tone while breathing"}`}
+              onClick={() => setTone(value)}
+              className={`min-h-11 rounded-[var(--radius)] px-3 text-sm font-semibold ${tone === value ? "felt-btn bg-[var(--accent)] text-white" : "border-2 border-[var(--border)] bg-[var(--surface)] text-[var(--text)]"}`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        {tone !== "off" && !running && (
+          <p className="mt-2 text-sm text-[var(--dim)]">Tone chosen — it will play when you begin breathing, and stop when you stop.</p>
+        )}
+        {tone !== "off" && running && (
+          <p className="mt-2 text-sm font-medium text-[var(--text)]" aria-live="polite">Playing the {tone === "calm" ? "calm" : "sleepy"} tone — it stops when the breathing stops.</p>
+        )}
+      </div>
       {breaths > 0 && (
         <p className="mb-3 text-sm font-medium text-[var(--text)]" aria-live="polite">
           {breaths} slow {breaths === 1 ? "breath" : "breaths"} so far{finished ? " — nicely done." : "."}
@@ -1770,6 +2068,11 @@ function spinResult(): { reels: string[]; payout: number } {
 
 function SlotSimulator() {
   const [bankroll, setBankroll] = useState(START_BANKROLL);
+  // Slot sounds (Richard, 2026-11-12): optional, OFF by default. Small
+  // tones made in the browser — a click on a spin, a chime on a win, a
+  // low tone when the money runs out. No audio files, nothing plays on
+  // load, and sound follows the phone's volume and silent switch.
+  const [soundOn, setSoundOn] = useState(false);
   const [reels, setReels] = useState<string[]>(["🍒", "🍋", "🔔"]);
   const [spins, setSpins] = useState(0);
   const [totalBet, setTotalBet] = useState(0);
@@ -1804,22 +2107,33 @@ function SlotSimulator() {
   };
 
   const spinOnce = () => {
-    if (bankRef.current < BET) { setLastMsg("That's the end of the money. In a real casino, this is where the ATM, the credit card, and the regret come in."); return; }
+    if (bankRef.current < BET) {
+      if (soundOn) sounds.playSlotSound("low");
+      setLastMsg("That's the end of the money. In a real casino, this is where the ATM, the credit card, and the regret come in."); return;
+    }
+    if (soundOn) sounds.playSlotSound("click");
     const { reels: r, payout } = spinResult();
     applyResult(r, payout, true);
+    const nextBank = bankRef.current;
+    if (soundOn) {
+      if (payout > BET) sounds.playSlotSound("chime");
+      else if (nextBank < BET) sounds.playSlotSound("low");
+    }
   };
   const spinFast = (n: number) => {
     stopAuto();
+    if (soundOn) sounds.playSlotSound("click");
     for (let i = 0; i < n && bankRef.current >= BET; i++) {
       const { reels: r, payout } = spinResult();
       applyResult(r, payout, false);
     }
+    if (soundOn && bankRef.current < BET) sounds.playSlotSound("low");
     setLastMsg(bankRef.current < BET ? "Broke. It always ends here — the only question is how long it takes and how much went in." : "That's 25 spins in a blink — about how fast real money goes too. Check the totals.");
   };
   const autoPlay = () => {
     stopAuto();
     timerRef.current = setInterval(() => {
-      if (bankRef.current < BET) { stopAuto(); setLastMsg("Broke. It always ends here — the only question is how long it takes and how much went in."); return; }
+      if (bankRef.current < BET) { stopAuto(); if (soundOn) sounds.playSlotSound("low"); setLastMsg("Broke. It always ends here — the only question is how long it takes and how much went in."); return; }
       spinOnce();
     }, 350);
   };
@@ -1844,6 +2158,22 @@ function SlotSimulator() {
         No real money. This machine pays back about 84¢ for every $1 played — that's a real slot machine's math, not a rigged
         demo. It will let you win. Watch what winning does to the total.
       </p>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          aria-pressed={soundOn}
+          aria-label={soundOn ? "Slot sounds on — tap to turn sound off" : "Slot sounds off — tap to turn sound on"}
+          onClick={() => setSoundOn((on) => !on)}
+          className={`min-h-11 rounded-[var(--radius)] px-3 text-sm font-semibold ${soundOn ? "felt-btn bg-[var(--amber)] text-white" : "border-2 border-[var(--border)] bg-[var(--surface)] text-[var(--text)]"}`}
+        >
+          {soundOn ? "🔊 Slot sounds: on" : "🔇 Slot sounds: off"}
+        </button>
+        <p className="text-sm text-[var(--dim)]">
+          {soundOn
+            ? "Sound on — a click on each spin, a chime on a win, a low tone when the money runs out. It follows your phone's volume and silent switch."
+            : "Sound is off. Turn it on if you like — it only plays after you tap spin, never on its own."}
+        </p>
+      </div>
       <div className="mt-4 flex items-center justify-center gap-3" aria-label={`Reels showing ${reels.join(", ")}`}>
         {reels.map((s, i) => (
           <div key={i} className="felt-soft flex h-20 w-20 items-center justify-center rounded-2xl bg-[var(--amber-soft)] text-4xl">{s}</div>
@@ -2241,6 +2571,7 @@ function WellbeingPage() {
     <div>
       <TabPointsChip tab="wellbeing" />
       <WellbeingHook />
+      <DisclaimerShort />
       <div className="mt-5"><CrisisStrip /></div>
 
       <Section title="Calming breathing — right here, up top">
@@ -2485,6 +2816,7 @@ function FoodPage() {
         moment, and people who understand.
       </p>
 
+      <DisclaimerShort />
       <div className="mt-5"><CrisisStrip /></div>
 
       <div className="felt-soft mt-5 rounded-[var(--radius)] bg-[var(--crisis-soft)] p-4">
@@ -3009,14 +3341,591 @@ function ScreensPage() {
   );
 }
 
+/* ---------- longevity: healthy living, hope and purpose ---------- */
+
+// Longevity is not a quit tab and not a treatment. It is the other
+// side of quitting: the small, free, everyday things that actually
+// help people live longer and better — sleep, walking, real food,
+// not smoking, drinking less, friends, and purpose. No miracle
+// claims, no expensive tests or products, nothing for sale, and no
+// diagnosis. The basics only — no published studies here, by
+// Richard's rule (2026-11-12): this is the starter app, and not
+// everyone is a science nerd.
+const LONGEVITY_CHECKIN: { question: string; options: string[] }[] = [
+  {
+    question: "Over the past week, how has your sleep been?",
+    options: ["Mostly 7–8 hours, and I wake up rested", "Often short or broken", "Rarely enough — I am often tired"],
+  },
+  {
+    question: "How much do you move on most days?",
+    options: ["I walk or move most days", "Some movement, most days", "Very little movement"],
+  },
+  {
+    question: "How often do you eat real, home-cooked food?",
+    options: ["Most meals", "About half my meals", "Rarely — mostly quick or packaged food"],
+  },
+  {
+    question: "Do you have something that gives your days purpose?",
+    options: ["Yes, most days", "Sometimes", "Hard to say right now"],
+  },
+];
+
+// The hook: pick one small thing for today — not a life overhaul,
+// one thing. No points ride on it; the point is the doing.
+function LongevityHook() {
+  const options = [
+    { id: "walk", label: "A walk today", result: "Good choice — walking is the closest thing to a free longevity drug that exists, and it costs nothing. Ten minutes counts. Around the block is a walk." },
+    { id: "sleep", label: "An earlier night tonight", result: "Sleep is when the body does its repair work. An earlier night, a dark room, and the phone charging somewhere else is a real longevity plan — and it is free." },
+    { id: "friend", label: "Call or see a friend", result: "Loneliness shortens lives; connection lengthens them. One real conversation today is not small talk — it is one of the strongest healthy-living tools there is." },
+    { id: "food", label: "One real meal today", result: "Not a diet, not a number — one real meal, cooked simply, eaten sitting down. Your body knows what to do with real food." },
+  ] as const;
+  const [picked, setPicked] = useState<string | null>(null);
+  const result = options.find((o) => o.id === picked)?.result;
+  return (
+    <HookShell pastelBg="#dcf1ee" pastelBorder="#2f8a80" title="One small thing today, for the years ahead" intro="Longevity is not a pill or a purchase. It is small things, repeated, over years. Pick one for today — just one — and let the years take care of themselves.">
+      <div className="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Pick one small thing for today">
+        {options.map((o) => (
+          <button key={o.id} type="button" role="radio" aria-checked={picked === o.id} onClick={() => setPicked(o.id)}
+            className={`min-h-12 rounded-xl px-3 font-semibold ${picked === o.id ? "felt-btn bg-[#2f8a80] text-white" : "felt-soft border-2 border-[#2f8a80] bg-white/70 text-[#2e2117]"}`}>
+            {o.label}
+          </button>
+        ))}
+      </div>
+      {result && <p className="mt-3 leading-relaxed text-[#2e2117]" aria-live="polite">{result}</p>}
+    </HookShell>
+  );
+}
+
+function LongevityPage() {
+  // Deliberately NO awardFields here. The check-in below is a gentle
+  // reflection for you alone — Richard's rule for this tab is no
+  // points for the ticks. Taps anywhere in the app still earn their
+  // usual +1, like everywhere else. The answers are never saved or
+  // sent anywhere; they are reflected on this screen only, and this
+  // is screening, not a diagnosis.
+  const [answers, setAnswers] = useState<(number | null)[]>(() => LONGEVITY_CHECKIN.map(() => null));
+  const done = answers.every((a) => a != null);
+
+  const reflection: string[] = [];
+  if (done) {
+    const [sleepA, moveA, foodA, purposeA] = answers;
+    if (sleepA === 2) reflection.push("Sleep is the one to start with. Short, broken sleep makes everything else harder — mood, appetite, willpower, even the urge to move. An earlier night and a phone that charges outside the bedroom are the cheapest fix there is.");
+    else if (sleepA === 1) reflection.push("Your sleep is often short or broken. That is common, and it is worth protecting: a regular bedtime, daylight in the morning, and no scrolling in bed are small changes with a large payoff.");
+    else reflection.push("Good sleep is already working for you — protect it. It is the foundation the rest of this tab builds on.");
+    if (moveA === 2) reflection.push("Very little movement is the easiest place to gain ground. You do not need a gym or a programme — a ten-minute walk, most days, is a real start, and it counts from the first one.");
+    else if (moveA === 1) reflection.push("You already move some, most days. A little more, a little more often — one longer walk, or a walk after a meal — is enough. Small beats heroic, every time.");
+    else reflection.push("Moving most days is already a longevity habit. Keep it, and let it be the anchor for the rest.");
+    if (foodA === 2) reflection.push("Real food is mostly a matter of access and time, not willpower. One home-cooked meal a day — simple, sitting down — is a fine place to start; the rest can follow.");
+    else if (foodA === 1) reflection.push("About half your meals are real food. That is a solid middle — one more real meal a day, when you can, is progress without a diet or a number in sight.");
+    else reflection.push("Mostly real, home-cooked food is already doing a lot of quiet work for you. No counting, no dieting — just keep it.");
+    if (purposeA === 2) reflection.push("Purpose is hard to name right now — and that is honest, not a failure. This app itself was built on one person's purpose: helping one person. Yours can be small too — a person, a place, a project, a morning walk with a reason. If low mood is part of it, the “Feeling Unwell?” tab has the check-ins doctors use.");
+    else if (purposeA === 1) reflection.push("Purpose comes and goes — that is normal. Notice what gives the good days their shape, and do a little more of that. Purpose is often found in the doing, not the thinking.");
+    else reflection.push("Having something that gives your days purpose, most days, is one of the strongest predictors of a long, good life. Hold onto it — and share it, if you can. Purpose shared is purpose doubled.");
+    reflection.push("You do not have to fix all of this. Pick the smallest change above — the one that feels almost too easy — and start there tonight. That is how years are built: one small, easy thing, repeated.");
+  }
+
+  return (
+    <div>
+      <TabPointsChip tab="longevity" />
+      <LongevityHook />
+      <div className="sunrise-band mb-5 flex items-center gap-3 rounded-[var(--radius)] px-4 py-3" aria-hidden="true">
+        <svg width="40" height="28" viewBox="0 0 30 22" className="shrink-0">
+          <path d="M3 19a12 12 0 0 1 24 0Z" fill="#ffd35c" stroke="#e8763a" strokeWidth="1.6" />
+          <g stroke="#e8763a" strokeWidth="1.8" strokeLinecap="round">
+            <path d="M15 1.5v3" /><path d="M6.5 4.5l2 2.4" /><path d="M23.5 4.5l-2 2.4" />
+          </g>
+          <path d="M0 19.5h30" stroke="#5d8f4e" strokeWidth="2.4" strokeLinecap="round" />
+        </svg>
+        <span className="flex gap-1">
+          {FLOWER_COLORS.slice(0, 5).map((c) => (
+            <FlowerIcon key={c} color={c} size={24} />
+          ))}
+        </span>
+      </div>
+
+      <p className="font-display text-2xl font-semibold leading-snug text-[var(--text)]">
+        Longevity — live longer, live better, start today
+      </p>
+      <p className="mt-2 leading-relaxed text-[var(--text)]">
+        This tab is not about stopping something. It is about building something: a longer, healthier life, one
+        ordinary day at a time. The honest news is that the things that help most are also the most ordinary —
+        and the most free. Sleep, walking, real food, not smoking, drinking less, friends, and a reason to get
+        up in the morning. No pill, no test, no programme for sale can replace them, and nobody here will try
+        to sell you one.
+      </p>
+      <p className="mt-2 leading-relaxed text-[var(--text)]">
+        If you came here from a quit tab, you are already doing longevity work: every day without a drink, a
+        cigarette, or a bet is a day your body gets to repair itself. This tab is the other half of that —
+        what to build, now that you have room.
+      </p>
+
+      <DisclaimerShort />
+      <div className="mt-5"><CrisisStrip /></div>
+
+      <div className="felt-soft mt-5 rounded-[var(--radius)] bg-[var(--crisis-soft)] p-4">
+        <p className="font-semibold text-[var(--text)]">When it's medical — get help today</p>
+        <p className="mt-1 leading-relaxed text-[var(--text)]">
+          Chest pain or pressure, breathlessness, fainting or feeling faint, a heart that races, pounds, or
+          skips, sudden weakness, or feeling very weak or confused are reasons to seek urgent care or call{" "}
+          <a className="font-semibold underline" href="tel:911">911</a> today — not someday. And if you ever
+          feel you might hurt yourself, call or text <a className="font-semibold underline" href="tel:988">988</a>{" "}
+          right away. Starting to exercise, changing what you eat, or stopping a medicine is also worth a word
+          with your own doctor first — especially if you have a heart condition, diabetes, or take regular
+          medicines. A doctor is a real first step, not a last resort.
+        </p>
+      </div>
+
+      <Section title="Calming breathing">
+        <CalmingBreathing />
+      </Section>
+
+      <Section title="A gentle check-in — sleep, movement, food, purpose">
+        <p className="leading-relaxed text-[var(--text)]">
+          Four honest questions about the past week. Nobody sees the answers but you; they are reflected right
+          here on this screen and never saved or sent anywhere — and there are <strong>no points for these
+          ticks</strong>. They are just for you, to see where you stand and where one small change might help
+          most.
+        </p>
+        <p className="mt-2 leading-relaxed text-[var(--text)]">
+          This is <strong>screening, not a diagnosis</strong> — and it is not a validated test, just a gentle
+          reflection. Only a clinician who knows you can say what is going on with your health. What this can
+          do is help you pick one small step, and give you something concrete to bring to a conversation with
+          your doctor.
+        </p>
+        <ol className="mt-4 space-y-3">
+          {LONGEVITY_CHECKIN.map((q, qi) => (
+            <li key={q.question} className="felt-card rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-4">
+              <p className="leading-relaxed text-[var(--text)]">
+                <span className="font-semibold">{qi + 1}. </span>{q.question}
+              </p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label={`Question ${qi + 1}: ${q.question}`}>
+                {q.options.map((opt, oi) => {
+                  const selected = answers[qi] === oi;
+                  return (
+                    <button
+                      key={opt}
+                      type="button"
+                      role="radio"
+                      aria-checked={selected}
+                      onClick={() => setAnswers((prev) => prev.map((a, i) => (i === qi ? oi : a)))}
+                      className={`min-h-11 rounded-xl px-3 text-left text-sm font-medium ${selected ? "felt-btn bg-[#2f8a80] text-white" : "felt-soft border border-[var(--border)] bg-[var(--surface)] text-[var(--text)]"}`}
+                    >
+                      {opt}
+                    </button>
+                  );
+                })}
+              </div>
+            </li>
+          ))}
+        </ol>
+
+        {done && (
+          <div className="felt-soft mt-4 rounded-[var(--radius)] bg-[var(--accent-soft)] p-5" aria-live="polite">
+            <p className="text-sm font-medium text-[var(--dim)]">Your gentle check-in — for your eyes only</p>
+            <div className="mt-2 space-y-2">
+              {reflection.map((r) => (
+                <p key={r} className="leading-relaxed text-[var(--text)]">{r}</p>
+              ))}
+            </div>
+            <button type="button" onClick={() => setAnswers(LONGEVITY_CHECKIN.map(() => null))} className="mt-3 min-h-11 w-full rounded-[var(--radius)] border-2 border-[var(--accent)] px-4 font-semibold text-[var(--accent)]">
+              Start over
+            </button>
+          </div>
+        )}
+      </Section>
+
+      <Section title="The basics that actually help">
+        <p className="leading-relaxed text-[var(--text)]">
+          None of these is new, and none of them is for sale. That is the point: the strongest evidence in
+          healthy living is for ordinary, free things, done most days, for years.
+        </p>
+        <div className="mt-4 space-y-3">
+          <div className="felt-card rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-4">
+            <p className="font-display text-lg font-semibold text-[var(--text)]">Sleep — the repair shift</p>
+            <p className="mt-1 leading-relaxed text-[var(--text)]">Most adults need around 7–8 hours. Sleep is when the body repairs tissue, consolidates memory, and clears the day's wear. A regular bedtime, daylight in the morning, a cool dark room, and a phone that charges outside the bedroom do more than any supplement.</p>
+          </div>
+          <div className="felt-card rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-4">
+            <p className="font-display text-lg font-semibold text-[var(--text)]">Movement — walking is enough to start</p>
+            <p className="mt-1 leading-relaxed text-[var(--text)]">You do not need a gym, a programme, or special clothes. Walking most days — ten minutes to start, longer when you can — helps the heart, the mood, the sleep, and the waistline, all at once. If you can, walk with someone: movement and friendship in the same half hour.</p>
+          </div>
+          <div className="felt-card rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-4">
+            <p className="font-display text-lg font-semibold text-[var(--text)]">Real food — no numbers, no diet</p>
+            <p className="mt-1 leading-relaxed text-[var(--text)]">Food cooked simply, eaten sitting down, mostly plants, with enough protein to keep you strong. This tab has no weight numbers, no calorie counting, and no diet tips — on purpose, like the Food tab. If eating is a struggle, the Food tab and its helplines are the right place, not a diet.</p>
+          </div>
+          <div className="felt-card rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-4">
+            <p className="font-display text-lg font-semibold text-[var(--text)]">Not smoking, drinking less</p>
+            <p className="mt-1 leading-relaxed text-[var(--text)]">Stopping smoking is the single biggest longevity step most people can take, at any age — the body starts repairing within days. Drinking less helps sleep, mood, blood pressure, and the liver. Both have their own tabs in this app, with real help, free.</p>
+          </div>
+          <div className="felt-card rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-4">
+            <p className="font-display text-lg font-semibold text-[var(--text)]">Friends — connection is medicine</p>
+            <p className="mt-1 leading-relaxed text-[var(--text)]">Loneliness is hard on the body, and on the mood. One real conversation, one shared meal, one walk with a friend — these are not extras. They are part of the plan.</p>
+          </div>
+          <div className="felt-card rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-4">
+            <p className="font-display text-lg font-semibold text-[var(--text)]">Purpose — a reason to get up</p>
+            <p className="mt-1 leading-relaxed text-[var(--text)]">A sense of purpose gives your days a shape — and purpose does not have to be grand. A person to care for, a garden, a project, a morning walk with a reason, helping one person: if it gives your day a shape, it counts. This app was built on exactly that kind of purpose.</p>
+          </div>
+        </div>
+      </Section>
+
+      <Section title="Real help — free and confidential">
+        <div className="space-y-3">
+          <ResourceLink
+            name="Your own doctor"
+            detail="A regular doctor is a real first step, not a last resort. They can check blood pressure, blood sugar, cholesterol, and the physical side of sleep, mood, and movement — and help you start exercising or changing what you eat safely, especially if you have a heart condition, diabetes, or take regular medicines. Bring your check-in answers above: “my sleep has been short most nights” is a complete way to start the conversation."
+          />
+          <ResourceLink
+            name="SAMHSA National Helpline — 1-800-662-HELP (4357)"
+            detail="Free, confidential, 24/7 — for alcohol, drugs, gambling, and mental health, for you or your family. If drinking, smoking, or low mood is standing between you and healthy living, this is the door."
+            phone="18006624357"
+            phoneLabel="1-800-662-4357"
+            href="https://www.samhsa.gov/find-help/helplines/national-helpline"
+          />
+          <ResourceLink
+            name="Smoking — National Quitline"
+            detail="1-800-QUIT-NOW connects you to your state's quitline for free coaching. Stopping smoking is the single biggest longevity step most people can take, at any age."
+            phone="18007848669"
+            phoneLabel="1-800-QUIT-NOW"
+            href="https://smokefree.gov/tips"
+          />
+          <ResourceLink
+            name="988 Suicide & Crisis Lifeline"
+            detail="Call or text 988 any time, for any emotional distress — you don't have to be in crisis to call. Chat at 988lifeline.org."
+            phone="988"
+            phoneLabel="988"
+          />
+        </div>
+      </Section>
+
+      <p className="mt-8 text-sm leading-relaxed text-[var(--dim)]">
+        About this check-in: it is a gentle reflection the app put together from the basics above — sleep,
+        movement, food, and purpose. It is not a validated screener, not a medical test, and not a diagnosis.
+        Screening is a first step — it is not a diagnosis, and feeling fine on this check-in does not rule
+        out something worth talking to a doctor about. This app sells nothing.
+      </p>
+    </div>
+  );
+}
+
+/* ---------- peace of mind: spirituality, generic and optional ---------- */
+
+// Peace of Mind is a quiet corner, not a doctrine. A lot of people use
+// spirituality for wellbeing — meditation, prayer, gratitude, quiet
+// time — and it is a touchy subject, so this tab names no one religion
+// as the way, preaches nothing, and is always optional. Mindfulness is
+// central: a short, plain-language moment — notice your breath, notice
+// your body, notice one sound, no judgement. Nothing here is saved or
+// sent. The one point award is self-claimed, on your own word, like the
+// Screens tab's screen-off award: +10 for "I took a quiet moment",
+// once per visit in the app (the button goes away after you tap it)
+// and once a day on the server, so a new day can count again. The app
+// can't check whether you meditated or prayed, and it doesn't try.
+function PeaceHook() {
+  const options = [
+    { id: "quiet", label: "A minute of quiet", result: "One minute is enough. Sit down, put the phone aside, and let the minute be quiet. You don't have to feel calm for it to count — you just have to stop for a minute." },
+    { id: "prayer", label: "A prayer, in my own words", result: "No set words needed. Say what you need to say, in your own words, to whoever you pray to — out loud, in your head, or written down. Your words are enough." },
+    { id: "grateful", label: "One thing I'm grateful for", result: "One thing, big or small — a person, a meal, a morning, a roof. Name it, and let yourself feel it for a moment. Gratitude is a quiet kind of strength." },
+    { id: "walk", label: "A slow walk outside", result: "Slow is the point. Notice the sky, the trees, the air on your face. A walk can be a prayer, a meditation, or just a walk — all three count." },
+  ] as const;
+  const [picked, setPicked] = useState<string | null>(null);
+  const result = options.find((o) => o.id === picked)?.result;
+  return (
+    <HookShell pastelBg="#f3e2f0" pastelBorder="#9a5a90" title="A quiet moment, your way" intro="This is a quiet corner — meditation, prayer, gratitude, or just sitting still. There is no one right way to be quiet, and no one faith named here as the way. Pick one for today, or skip this tab entirely. It is always your choice.">
+      <div className="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Pick one quiet thing for today">
+        {options.map((o) => (
+          <button key={o.id} type="button" role="radio" aria-checked={picked === o.id} onClick={() => setPicked(o.id)}
+            className={`min-h-12 rounded-xl px-3 font-semibold ${picked === o.id ? "felt-btn bg-[#9a5a90] text-white" : "felt-soft border-2 border-[#9a5a90] bg-white/70 text-[#2e2117]"}`}>
+            {o.label}
+          </button>
+        ))}
+      </div>
+      {result && <p className="mt-3 leading-relaxed text-[#2e2117]" aria-live="polite">{result}</p>}
+    </HookShell>
+  );
+}
+
+function PeacePage() {
+  const { award } = usePoints();
+  // "I took a quiet moment" — +10, on your own word. The app can't
+  // check whether you meditated or prayed, and it doesn't pretend to:
+  // this is self-assessment, and an honest self-report is better than
+  // nothing. Once per visit to this tab (the tab remounts each time
+  // it's opened), and the server counts it once a day.
+  const [quietClaimed, setQuietClaimed] = useState(false);
+  const claimQuiet = () => {
+    if (quietClaimed) return;
+    setQuietClaimed(true);
+    award("peace", "quietMoment", localDay());
+  };
+
+  return (
+    <div>
+      <TabPointsChip tab="peace" />
+      <PeaceHook />
+      <div className="sunrise-band mb-5 flex items-center gap-3 rounded-[var(--radius)] px-4 py-3" aria-hidden="true">
+        <svg width="40" height="28" viewBox="0 0 30 22" className="shrink-0">
+          <path d="M3 19a12 12 0 0 1 24 0Z" fill="#ffd35c" stroke="#e8763a" strokeWidth="1.6" />
+          <g stroke="#e8763a" strokeWidth="1.8" strokeLinecap="round">
+            <path d="M15 1.5v3" /><path d="M6.5 4.5l2 2.4" /><path d="M23.5 4.5l-2 2.4" />
+          </g>
+          <path d="M0 19.5h30" stroke="#5d8f4e" strokeWidth="2.4" strokeLinecap="round" />
+        </svg>
+        <span className="flex gap-1">
+          {FLOWER_COLORS.slice(0, 5).map((c) => (
+            <FlowerIcon key={c} color={c} size={24} />
+          ))}
+        </span>
+      </div>
+
+      <p className="font-display text-2xl font-semibold leading-snug text-[var(--text)]">
+        Peace of Mind — a quiet corner, for any faith or none
+      </p>
+      <p className="mt-2 leading-relaxed text-[var(--text)]">
+        A lot of people lean on spirituality to get through hard times — meditation, prayer, gratitude, quiet
+        time, a walk outside, a hand held. This tab is for that, and it is deliberately generic: no doctrine,
+        no preaching, no one religion named as the way. If you pray, pray in your own words. If you meditate,
+        meditate your way. If you believe in nothing in particular, the quiet still works. And if none of this
+        is your thing, skip the tab — it will still be here, and nothing here is required.
+      </p>
+      <p className="mt-2 leading-relaxed text-[var(--text)]">
+        Nothing on this tab is saved or sent anywhere. There is no check-in, no score, and no one watching.
+        The only thing the app keeps is the one point award below, and only if you tap it, on your own word.
+      </p>
+
+      <DisclaimerShort />
+      <div className="mt-5"><CrisisStrip /></div>
+
+      <Section title="Calming breathing">
+        <CalmingBreathing />
+      </Section>
+
+      <Section title="A mindfulness moment — notice, don't judge">
+        <p className="leading-relaxed text-[var(--text)]">
+          Mindfulness is just paying attention, on purpose, without judging what you find. A minute is enough.
+          Try it now, or come back to it later — there is no right way to do it, and no way to fail it.
+        </p>
+        <ol className="mt-4 space-y-3">
+          <li className="felt-card rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-4">
+            <p className="leading-relaxed text-[var(--text)]"><span className="font-semibold">1. Notice your breath. </span> Breathe in, breathe out — just as you are, no need to change it. Feel the air come in and go out. That is all.</p>
+          </li>
+          <li className="felt-card rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-4">
+            <p className="leading-relaxed text-[var(--text)]"><span className="font-semibold">2. Notice your body. </span> Where are you tense? Where are you comfortable? Your shoulders, your hands, your jaw. Just notice — don't fix anything.</p>
+          </li>
+          <li className="felt-card rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-4">
+            <p className="leading-relaxed text-[var(--text)]"><span className="font-semibold">3. Notice one sound. </span> Near or far — a clock, a bird, traffic, your own breathing. Just listen to it for a few seconds.</p>
+          </li>
+          <li className="felt-card rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-4">
+            <p className="leading-relaxed text-[var(--text)]"><span className="font-semibold">4. Stop and look around. </span> Look around your environment, wherever you are — outdoors in a forest, or sitting in a chair in your home. Just look, and notice what is there.</p>
+          </li>
+          <li className="felt-card rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-4">
+            <p className="leading-relaxed text-[var(--text)]"><span className="font-semibold">5. When your mind wanders, that's normal. </span> It will wander — to the shopping, to the worry, to the phone. Notice it wandering, without judging yourself for it, and gently come back to your breath. That coming back <em>is</em> the practice.</p>
+          </li>
+        </ol>
+        <p className="mt-3 leading-relaxed text-[var(--text)]">
+          No judgement — not of your thoughts, not of yourself, not of how quiet you managed to be. A wandering
+          mind is a normal mind. A minute of noticing is a real quiet moment.
+        </p>
+      </Section>
+
+      <Section title="Ways to be quiet — pick what fits you">
+        <p className="leading-relaxed text-[var(--text)]">
+          These are offered as choices, not instructions. Take the one that fits you, leave the rest.
+        </p>
+        <div className="mt-4 space-y-3">
+          <div className="felt-card rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-4">
+            <p className="font-display text-lg font-semibold text-[var(--text)]">Meditation — sit quietly, follow your breath</p>
+            <p className="mt-1 leading-relaxed text-[var(--text)]">Sit comfortably, feet on the floor, and follow your breath in and out. A minute counts. Five minutes counts more. There is no empty mind to achieve — just noticing, and coming back.</p>
+          </div>
+          <div className="felt-card rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-4">
+            <p className="font-display text-lg font-semibold text-[var(--text)]">Prayer — in your own words</p>
+            <p className="mt-1 leading-relaxed text-[var(--text)]">Say what you need to say, in your own words, to whoever you pray to — out loud, in your head, or written down. Ask for help, say thank you, or just sit in the quiet. Your words are enough, and no one here will tell you what they should be.</p>
+          </div>
+          <div className="felt-card rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-4">
+            <p className="font-display text-lg font-semibold text-[var(--text)]">Gratitude — one thing, named</p>
+            <p className="mt-1 leading-relaxed text-[var(--text)]">One thing, big or small — a person, a meal, a morning, a roof, a phone call. Name it, and let yourself feel it for a moment. Gratitude is a quiet kind of strength, and it costs nothing.</p>
+          </div>
+          <div className="felt-card rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-4">
+            <p className="font-display text-lg font-semibold text-[var(--text)]">Quiet time — a few minutes with nothing on</p>
+            <p className="mt-1 leading-relaxed text-[var(--text)]">No phone, no television, no music, no noise — just a few minutes of quiet, with a cup of something warm if you like. Quiet is not empty time. It is where a lot of people hear themselves think.</p>
+          </div>
+          <div className="felt-card rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-4">
+            <p className="font-display text-lg font-semibold text-[var(--text)]">A walk in nature — slow, and noticing</p>
+            <p className="mt-1 leading-relaxed text-[var(--text)]">Slow is the point. Notice the sky, the trees, the air on your face, the ground under your feet. A walk can be a prayer, a meditation, or just a walk — all three count.</p>
+          </div>
+          <div className="felt-card rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-4">
+            <p className="font-display text-lg font-semibold text-[var(--text)]">Reaching out to someone — quiet can be shared</p>
+            <p className="mt-1 leading-relaxed text-[var(--text)]">A kind word, a phone call, a visit, a shared meal. Quiet does not have to mean alone. Sometimes the most peaceful thing you can do is be with someone, without needing to fix anything.</p>
+          </div>
+        </div>
+      </Section>
+
+      <Section title="One prayer many people know — an example, only">
+        <p className="leading-relaxed text-[var(--text)]">
+          Richard keeps this prayer on his wall, and a lot of people in recovery know it by heart. It is here
+          as an example only — use it if it helps, skip it if it doesn't. It is not a requirement, and it is
+          not the app telling you what to believe.
+        </p>
+        <div className="felt-card mt-3 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-5 text-center">
+          <p className="font-display text-lg italic leading-relaxed text-[var(--text)]">
+            “God, grant me the serenity to accept the things I cannot change, courage to change the things I
+            can, and wisdom to know the difference.”
+          </p>
+          <p className="mt-2 text-sm text-[var(--dim)]">— the Serenity Prayer</p>
+        </div>
+        <p className="mt-3 leading-relaxed text-[var(--text)]">
+          Accept what you cannot change, find the courage to change what you can, and the wisdom to know the
+          difference — that is the whole prayer, and it is a good way to live whether you pray it or not.
+        </p>
+      </Section>
+
+      <Section title="A quiet moment, on your word">
+        <div className="felt-card rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] p-5 text-center">
+          <p className="leading-relaxed text-[var(--text)]">
+            If you took a quiet moment — meditation, prayer, gratitude, a mindful minute, a slow walk — say so,
+            and take <strong>+10 points</strong>. We can't check, and we won't try. It's self-assessment: your
+            word, your points. And self-assessment is better than nothing — the person you're reporting to
+            is you.
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-[var(--dim)]">
+            Tap it once per visit to this tab. The app counts it once a day, so a new day is a new quiet moment.
+          </p>
+          {!quietClaimed ? (
+            <button type="button" onClick={claimQuiet} aria-label="I took a quiet moment — claim 10 points" className="felt-btn mt-4 min-h-12 w-full rounded-[var(--radius)] bg-[var(--accent)] px-4 text-base font-semibold text-white">
+              I took a quiet moment — meditation / prayer · +10 points
+            </button>
+          ) : (
+            <div aria-live="polite">
+              <p className="mt-4 font-display text-lg font-bold text-[var(--text)]">+10 points — a quiet moment, on your word. ✓</p>
+              <p className="mx-auto mt-1 max-w-md text-sm leading-relaxed text-[var(--dim)]">
+                That's the win this tab is for. Carry the quiet with you — we'll be here when you need us again.
+              </p>
+            </div>
+          )}
+        </div>
+      </Section>
+
+      <Section title="Real help — free and confidential">
+        <div className="space-y-3">
+          <ResourceLink
+            name="988 Suicide & Crisis Lifeline"
+            detail="Call or text 988 any time, for any emotional distress — you don't have to be in crisis to call. Chat at 988lifeline.org."
+            phone="988"
+            phoneLabel="988"
+          />
+          <ResourceLink
+            name="SAMHSA National Helpline — 1-800-662-HELP (4357)"
+            detail="Free, confidential, 24/7 — for alcohol, drugs, gambling, and mental health, for you or your family."
+            phone="18006624357"
+            phoneLabel="1-800-662-4357"
+            href="https://www.samhsa.gov/find-help/helplines/national-helpline"
+          />
+          <ResourceLink
+            name="Feeling low or worried?"
+            detail="If low mood or worry is the main thing, the “Feeling Unwell?” tab has the same depression and anxiety check-ins doctors use (PHQ-9 and GAD-7) — and a real conversation beats any quiet moment alone."
+          />
+        </div>
+      </Section>
+
+      <p className="mt-8 text-sm leading-relaxed text-[var(--dim)]">
+        About this tab: it is a quiet corner, not a treatment, not a diagnosis, and not a doctrine. Nothing
+        here is saved or sent — no answers, no scores, no record of what you prayed, meditated on, or felt.
+        The only thing kept is the point award, and only if you tap it, on your own word.
+      </p>
+    </div>
+  );
+}
+
 /* ---------- home & resources ---------- */
+
+// Daily check-in (Richard's "extra credit", 2026-11-11): "Today I...
+// Exercised, Ate Well, Slept Well, Feel Better" — +100 points total,
+// once per day, for completing it. Not 100 per item, and a successful
+// quit day is also +100, so it stays fair. The ticks are never saved
+// or sent anywhere — only the one award event (Home, today) is stored,
+// so the server can enforce once-a-day. Done is read from the saved
+// point events, so it stays done after a reload, on this device.
+const DAILY_CHECKIN_ITEMS = [
+  { id: "exercised", label: "Exercised" },
+  { id: "ateWell", label: "Ate Well" },
+  { id: "sleptWell", label: "Slept Well" },
+  { id: "feelBetter", label: "Feel Better" },
+] as const;
+
+function DailyCheckin({ pointEvents }: { pointEvents: PointEvent[] }) {
+  const queryClient = useQueryClient();
+  const [selected, setSelected] = useState<string[]>([]);
+  const [justDone, setJustDone] = useState(false);
+  const today = localDay();
+  const doneToday = justDone || pointEvents.some((e) => e.action === "dailyCheckin" && e.day === today);
+  const claim = useMutation({
+    mutationFn: async () => await api.awardPoints({ tab: "home", action: "dailyCheckin", day: today }),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ["state"] });
+      if (!res.already) setJustDone(true);
+      else setJustDone(true);
+    },
+  });
+  const toggle = (id: string) => setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+  return (
+    <div className="felt-soft rounded-[var(--radius)] bg-[var(--amber-soft)] p-5">
+      <p className="font-display text-lg font-semibold text-[var(--text)]">Today I…</p>
+      {doneToday ? (
+        <p className="mt-2 leading-relaxed text-[var(--text)]" aria-live="polite">
+          ✓ <strong>Checked in for today — +100 points.</strong> Come back tomorrow and do it again.
+        </p>
+      ) : (
+        <>
+          <p className="mt-1 text-sm leading-relaxed text-[var(--dim)]">
+            Tick what is true today, then tap Done for <strong>+100 points, once a day</strong>. Your ticks are not
+            saved or sent — only that you checked in today, for your points.
+          </p>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            {DAILY_CHECKIN_ITEMS.map((item) => {
+              const on = selected.includes(item.id);
+              return (
+                <button key={item.id} type="button" aria-pressed={on} onClick={() => toggle(item.id)} className={`felt-btn min-h-12 rounded-[var(--radius)] px-4 font-semibold ${on ? "bg-[var(--leaf)] text-white" : "border-2 border-[var(--border)] bg-[var(--surface)] text-[var(--text)]"}`}>
+                  {on ? "✓ " : ""}{item.label}
+                </button>
+              );
+            })}
+          </div>
+          <button type="button" disabled={selected.length === 0 || claim.isPending} onClick={() => claim.mutate()} className="felt-btn mt-3 min-h-12 w-full rounded-[var(--radius)] bg-[var(--accent)] px-4 font-semibold text-white disabled:opacity-60">
+            Done — claim my 100 points
+          </button>
+          {selected.length === 0 && <p className="mt-2 text-sm text-[var(--dim)]">Tick at least one to claim today&apos;s 100 points.</p>}
+          {claim.isError && <p className="mt-2 text-sm text-[var(--crisis)]">Couldn't save that — please try again.</p>}
+        </>
+      )}
+    </div>
+  );
+}
+
+// Add to Home Screen (Richard, 2026-11-12): a short hint on Home so
+// people can put RR on their phone like an app. The manifest
+// (client/public/manifest.webmanifest, short_name "RR", sunrise icon)
+// makes the browser offer "Add to Home Screen" / "Install"; this hint
+// just tells them where to find it. No app store, no download, no
+// tracking — RR opens full-screen from the home screen and updates
+// automatically, like the site itself.
+function AddToHomeScreenHint() {
+  return (
+    <div className="felt-soft mb-5 flex gap-3 rounded-[var(--radius)] border-2 border-[var(--sun)] bg-[var(--surface)] p-4" role="region" aria-label="Add RR to your home screen">
+      <img src="/icons/icon-192.png" alt="" aria-hidden="true" className="h-12 w-12 shrink-0 rounded-xl" />
+      <div>
+        <p className="font-display text-base font-bold text-[var(--text)]">Add RR to your home screen</p>
+        <p className="mt-0.5 text-sm leading-relaxed text-[var(--text)]">
+          Tap your browser menu, then <strong>Add to Home Screen</strong>. RR opens full-screen, like an app, and updates automatically.
+        </p>
+      </div>
+    </div>
+  );
+}
 
 function HomePage({ profiles, logs, pointEvents, dayMarks, onGo, onSurf }: {
   profiles: Profile[];
   logs: LogEntry[];
   pointEvents: PointEvent[];
   dayMarks: DayMark[];
-  onGo: (t: Category | "resources" | "wellbeing" | "food" | "screens") => void;
+  onGo: (t: Category | "resources" | "wellbeing" | "food" | "screens" | "longevity" | "peace") => void;
   onSurf: () => void;
 }) {
   const { byTab, total } = usePoints();
@@ -3028,9 +3937,14 @@ function HomePage({ profiles, logs, pointEvents, dayMarks, onGo, onSurf }: {
   });
   return (
     <div>
+      <WhatsNewBanner />
+      <AddToHomeScreenHint />
+      {/* Tagline (Richard, 2026-11-12): "Making the world 🌎 a happier
+          place" — right above the banner on Home, and in the footer. */}
+      <p className="mb-4 text-center font-display text-lg font-bold text-[var(--accent)]">Making the world 🌎 a happier place ❤️</p>
       <div className="felt-card rounded-[var(--radius)] border-4 border-[var(--sun)] bg-[var(--amber-soft)] px-5 py-6 text-center">
         <h1 className="font-display text-[28px] font-black leading-[1.15] tracking-tight text-[var(--text)] sm:text-4xl sm:leading-[1.15]">
-          <span className="block text-[var(--accent)]">The best FREE self-help app ever created!</span>
+          <span className="block text-[var(--accent)]">The best FREE self-help app EVER!</span>
           <span className="mt-3 block">YOU CAN DO IT!</span>
           <span className="mt-3 block">A BRIGHTER FUTURE IS WITHIN YOUR GRASP.</span>
           <span className="mt-3 block text-[var(--accent)]">GET STARTED TODAY — download the app for free.</span>
@@ -3048,6 +3962,25 @@ function HomePage({ profiles, logs, pointEvents, dayMarks, onGo, onSurf }: {
         <CalmingBreathing />
       </Section>
 
+      <Section title="Check in for today — extra credit">
+        <DailyCheckin pointEvents={pointEvents} />
+      </Section>
+
+      {/* Longevity, bigger — Richard, 2026-11-12: a bigger button so a
+          first-time visitor sees healthy living first, with hope and
+          purpose. Noticeably larger than the tab cards below. */}
+      <div className="mt-8">
+        <button type="button" onClick={() => onGo("longevity")} style={{ backgroundColor: TAB_PASTELS.longevity.inactiveBg, borderColor: TAB_PASTELS.longevity.activeBorder }} className="felt-card felt-pressable w-full rounded-[var(--radius)] border-4 p-6 text-left">
+          <p className="flex items-center gap-3 font-display text-2xl font-black text-[#2e2117] sm:text-3xl">
+            <TabIcon id="longevity" size={40} />
+            Longevity
+          </p>
+          <p className="mt-2 text-lg font-bold leading-snug text-[#2e2117]">Live longer, live better — start today.</p>
+          <p className="mt-1 leading-relaxed text-[#6f5a44]">Healthy living, the free basics: sleep, walking, real food, friends, and purpose. Hope, not hype — no miracle claims, nothing for sale.</p>
+          <p className="mt-3 text-sm font-bold uppercase tracking-widest text-[#2f8a80]">Tap to open the Longevity tab →</p>
+        </button>
+      </div>
+
       <Section title="The tabs">
         <div className="space-y-3">
           {([
@@ -3059,7 +3992,7 @@ function HomePage({ profiles, logs, pointEvents, dayMarks, onGo, onSurf }: {
           ] as [Category, string, string][]).map(([c, name, desc], idx) => (
             <button key={c} type="button" onClick={() => onGo(c)} style={{ backgroundColor: TAB_PASTELS[c].inactiveBg, borderColor: TAB_PASTELS[c].border }} className="felt-card felt-pressable w-full rounded-[var(--radius)] border-2 p-4 text-left">
               <p className="flex items-center gap-2 font-semibold text-[#2e2117]">
-                <FlowerIcon color={FLOWER_COLORS[idx % FLOWER_COLORS.length] ?? "#e5639e"} size={24} />
+                <TabIcon id={c} size={24} />
                 {name}
               </p>
               <p className="mt-1 text-sm leading-relaxed text-[#6f5a44]">{desc}</p>
@@ -3067,24 +4000,38 @@ function HomePage({ profiles, logs, pointEvents, dayMarks, onGo, onSurf }: {
           ))}
           <button type="button" onClick={() => onGo("food")} style={{ backgroundColor: TAB_PASTELS.food.inactiveBg, borderColor: TAB_PASTELS.food.border }} className="felt-card felt-pressable w-full rounded-[var(--radius)] border-2 p-4 text-left">
             <p className="flex items-center gap-2 font-semibold text-[#2e2117]">
-              <FlowerIcon color="var(--leaf)" size={24} />
+              <TabIcon id="food" size={24} />
               Food
             </p>
             <p className="mt-1 text-sm leading-relaxed text-[#6f5a44]">When eating, restricting, bingeing, purging, or body worries take over. A gentle SCOFF check-in, help for the hard moment, and people who understand — no weight numbers, no calorie counting, no diet tips.</p>
           </button>
           <button type="button" onClick={() => onGo("screens")} style={{ backgroundColor: TAB_PASTELS.screens.inactiveBg, borderColor: TAB_PASTELS.screens.border }} className="felt-card felt-pressable w-full rounded-[var(--radius)] border-2 p-4 text-left">
             <p className="flex items-center gap-2 font-semibold text-[#2e2117]">
-              <FlowerIcon color="var(--sky-deep)" size={24} />
+              <TabIcon id="screens" size={24} />
               Screens
             </p>
             <p className="mt-1 text-sm leading-relaxed text-[#6f5a44]">For the scroll that won't end. A quick check-in on time, sleep, and mood, a pause that starts at just 30 seconds for the doomscroll urge, and a phone-free plan for bedtime, meals, and the first hour of the day. Its job is to send you back to real life.</p>
           </button>
           <button type="button" onClick={() => onGo("wellbeing")} style={{ backgroundColor: TAB_PASTELS.wellbeing.inactiveBg, borderColor: TAB_PASTELS.wellbeing.border }} className="felt-card felt-pressable w-full rounded-[var(--radius)] border-2 p-4 text-left">
             <p className="flex items-center gap-2 font-semibold text-[#2e2117]">
-              <FlowerIcon color="var(--bloom)" size={24} />
+              <TabIcon id="wellbeing" size={24} />
               Feeling Unwell? Sad? Anxious?
             </p>
             <p className="mt-1 text-sm leading-relaxed text-[#6f5a44]">Not an urge — just low, heavy, or worried. Take the same 2-week depression and anxiety check-ins doctors use (PHQ-9 and GAD-7) and get a score to bring to a real conversation.</p>
+          </button>
+          <button type="button" onClick={() => onGo("longevity")} style={{ backgroundColor: TAB_PASTELS.longevity.inactiveBg, borderColor: TAB_PASTELS.longevity.border }} className="felt-card felt-pressable w-full rounded-[var(--radius)] border-2 p-4 text-left">
+            <p className="flex items-center gap-2 font-semibold text-[#2e2117]">
+              <TabIcon id="longevity" size={24} />
+              Longevity
+            </p>
+            <p className="mt-1 text-sm leading-relaxed text-[#6f5a44]">Live longer, live better — start today. Sleep, walking, real food, friends, and purpose, with a gentle check-in — no miracle claims, nothing for sale.</p>
+          </button>
+          <button type="button" onClick={() => onGo("peace")} style={{ backgroundColor: TAB_PASTELS.peace.inactiveBg, borderColor: TAB_PASTELS.peace.border }} className="felt-card felt-pressable w-full rounded-[var(--radius)] border-2 p-4 text-left">
+            <p className="flex items-center gap-2 font-semibold text-[#2e2117]">
+              <TabIcon id="peace" size={24} />
+              Peace of Mind
+            </p>
+            <p className="mt-1 text-sm leading-relaxed text-[#6f5a44]">A quiet corner: meditation, prayer, gratitude, and a mindfulness moment — generic, for any faith or none, always optional. Nothing saved, nothing required.</p>
           </button>
         </div>
       </Section>
@@ -3102,7 +4049,9 @@ function HomePage({ profiles, logs, pointEvents, dayMarks, onGo, onSurf }: {
             but need different tools. When food itself is the struggle, there's a gentle tab for that too. And when
             the screen itself is the thing you can't put down, there's a tab for that as well — one that happily
             puts itself out of a job. And if it's not an urge at all, just feeling low or anxious, there's a tab for
-            that too, with the check-ins doctors use. Pick your tab above. Everything here is free, and your plans
+            that too, with the check-ins doctors use. And the Longevity tab is for what comes next: healthy living,
+            hope, and purpose. And the Peace of Mind tab is a quiet corner — meditation, prayer, gratitude,
+            and mindfulness, for any faith or none. Pick your tab above. Everything here is free, and your plans
             and logs save only in this app.
           </p>
         </div>
@@ -3115,7 +4064,7 @@ function HomePage({ profiles, logs, pointEvents, dayMarks, onGo, onSurf }: {
               const mark = dayMarks.find((m) => m.tab === s.c && m.day === today);
               return (
                 <button key={s.c} type="button" onClick={() => onGo(s.c)} style={{ backgroundColor: TAB_PASTELS[s.c].inactiveBg, borderColor: TAB_PASTELS[s.c].border }} className="felt-card felt-pressable rounded-[var(--radius)] border-2 p-4 text-left">
-                  <p className="font-semibold text-[#2e2117]">{CAT_LABEL[s.c]}</p>
+                  <p className="flex items-center gap-2 font-semibold text-[#2e2117]"><TabIcon id={s.c} size={20} />{CAT_LABEL[s.c]}</p>
                   <p className="mt-1 text-sm text-[#6f5a44]">{s.days} {s.days === 1 ? "day" : "days"}{s.saved != null ? ` · ${money(s.saved)} kept` : ""}</p>
                   {mark?.action === "daySuccess" && <p className="mt-1 text-sm font-semibold text-[var(--leaf)]">✓ Today counted — +100</p>}
                   {mark?.action === "relapse" && <p className="mt-1 text-sm font-semibold text-[var(--crisis)]">A slip today — tomorrow is a new chance</p>}
@@ -3151,7 +4100,9 @@ function HomePage({ profiles, logs, pointEvents, dayMarks, onGo, onSurf }: {
               <li><strong>+5</strong> — for filling in each data field: your plan, your logs, the check-in questions.</li>
               <li><strong>+50</strong> — for picking a quit date. That's a real decision, and it's worth real points.</li>
               <li><strong>+100</strong> — for every day after your quit date that you stay on track. Mark it on your tab each day.</li>
+              <li><strong>+100</strong> — once a day, for completing the “Today I…” check-in above. Tick what is true, tap Done — 100 total, not 100 per item.</li>
               <li><strong>+10</strong> — on the Screens tab, for tapping “I turned my screen off.” It's on your word — self-assessment, and self-assessment is better than nothing.</li>
+              <li><strong>+10</strong> — on the Peace of Mind tab, for tapping “I took a quiet moment.” Meditation or prayer, on your word — once per visit, counted once a day. The app can't check, and it won't try.</li>
               <li><strong>−100</strong> — if you slip. A relapse is sadly a part of recovery for many people; log it honestly, hear us when we say <em>try again</em>, and notice — with all the points above, you're hopefully not starting at zero. Neither is your progress.</li>
             </ul>
           </div>
@@ -3229,10 +4180,8 @@ function ResourcesPage({ profiles, logs, pointEvents, dayMarks }: {
           "Never Use Alone, 1-877-696-1996 — a person stays on the line while someone uses alone, and calls for help if they stop responding.",
         ]} />
       </Section>
-      <p className="mt-8 text-sm leading-relaxed text-[var(--dim)]">
-        This app is a first prototype and a companion, not a treatment program or medical advice. For alcohol and
-        benzodiazepine dependence especially, talk to a doctor before stopping suddenly — withdrawal can be dangerous.
-      </p>
+      <div className="mt-8"><MedicalDisclaimer /></div>
+      <p className="mt-4 text-center text-xs text-[var(--dim)]">© 2026 Richard's Resource. All rights reserved.</p>
     </div>
   );
 }
@@ -3250,6 +4199,8 @@ const TAB_TO_POINT_TAB: Record<TabId, PointTab> = {
   food: "food",
   screens: "screens",
   wellbeing: "wellbeing",
+  longevity: "longevity",
+  peace: "peace",
 };
 
 export function App() {
@@ -3386,7 +4337,7 @@ export function App() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["state"] }),
   });
 
-  const activeSurf: Category | null = surfCategory ?? (tab !== "home" && tab !== "resources" && tab !== "wellbeing" && tab !== "food" && tab !== "screens" ? tab : null);
+  const activeSurf: Category | null = surfCategory ?? (tab !== "home" && tab !== "resources" && tab !== "wellbeing" && tab !== "food" && tab !== "screens" && tab !== "longevity" && tab !== "peace" ? tab : null);
 
   return (
     <PointsContext.Provider value={pointsApi}>
@@ -3407,8 +4358,9 @@ export function App() {
                   backgroundColor: isActive ? pastel.activeBg : pastel.inactiveBg,
                   borderColor: isActive ? pastel.activeBorder : pastel.border,
                 }}
-                className={`felt-tab ${isActive ? "felt-tab-active" : ""} min-h-11 rounded-full border-2 px-4 text-sm font-bold text-[#2e2117]`}
+                className={`felt-tab ${isActive ? "felt-tab-active" : ""} inline-flex min-h-11 items-center gap-1.5 rounded-full border-2 px-3 text-sm font-bold text-[#2e2117]`}
               >
+                <TabIcon id={t.id} size={16} />
                 {t.label}
               </button>
             );
@@ -3464,7 +4416,9 @@ export function App() {
             {tab === "wellbeing" && <WellbeingPage />}
             {tab === "food" && <FoodPage />}
             {tab === "screens" && <ScreensPage />}
-            {state.isSuccess && tab !== "home" && tab !== "resources" && tab !== "wellbeing" && tab !== "food" && tab !== "screens" && (
+            {tab === "longevity" && <LongevityPage />}
+            {tab === "peace" && <PeacePage />}
+            {state.isSuccess && tab !== "home" && tab !== "resources" && tab !== "wellbeing" && tab !== "food" && tab !== "screens" && tab !== "longevity" && tab !== "peace" && (
               <CategoryPage category={tab} profile={profileFor(tab)} logs={logs} dayMarks={dayMarks} onSurf={(c) => setSurfCategory(c)} />
             )}
           </div>

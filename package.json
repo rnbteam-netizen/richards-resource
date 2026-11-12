@@ -34,9 +34,9 @@
     "build:server": "tsc -p server/tsconfig.json",
     "dev": "node dist-server/server.js",
     "start": "node dist-server/server.js",
-    "test": "node --test tests/slot-math.test.mjs tests/isolation.test.mjs",
+    "test": "node --test tests/slot-math.test.mjs tests/isolation.test.mjs tests/daily-checkin.test.mjs tests/longevity.test.mjs tests/peace.test.mjs tests/sound-whatsnew.test.mjs tests/disclaimer.test.mjs tests/add-to-home-screen.test.mjs tests/tagline.test.mjs tests/copyright.test.mjs",
     "typecheck": "tsc --noEmit -p client/tsconfig.json && tsc --noEmit -p server/tsconfig.json"
   },
   "type": "module",
-  "version": "1.0.0"
+  "version": "1.1.0"
 }

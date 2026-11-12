@@ -23,8 +23,8 @@ export type PoolLike = {
 export type Db = PoolLike;
 
 export const categoryEnum = z.enum(["alcohol", "smoking", "gambling", "drugs", "codependency"]);
-export const pointTabEnum = z.enum(["home", "alcohol", "smoking", "gambling", "drugs", "codependency", "food", "screens", "wellbeing"]);
-export const pointActionEnum = z.enum(["welcome", "touch", "field", "quitDate", "daySuccess", "relapse", "pause", "plan", "log", "screening", "slotLesson", "phoneFree", "checkin", "screenOff"]);
+export const pointTabEnum = z.enum(["home", "alcohol", "smoking", "gambling", "drugs", "codependency", "food", "screens", "wellbeing", "longevity", "peace"]);
+export const pointActionEnum = z.enum(["welcome", "touch", "field", "quitDate", "daySuccess", "relapse", "pause", "plan", "log", "screening", "slotLesson", "phoneFree", "checkin", "screenOff", "dailyCheckin", "quietMoment"]);
 export const dayString = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 export const deviceIdSchema = z.string().uuid();
 
@@ -37,6 +37,16 @@ export const deviceIdSchema = z.string().uuid();
 // +10 on the Screens tab when the user says, on their own word,
 // "I turned my screen off" — self-assessment, better than nothing;
 // the server can't and doesn't try to verify a screen turning off.
+// Daily check-in (Richard, 2026-11-11): +100 total, once per day,
+// for completing "Today I... Exercised, Ate Well, Slept Well, Feel
+// Better" on Home — not 100 per item. The ticks themselves are never
+// saved or sent; only this one award event (tab home, today's day)
+// is stored, so the server can enforce once-a-day.
+// Peace of Mind (Richard, 2026-11-12): +10 for "I took a quiet moment"
+// — meditation or prayer, self-claimed on the visitor's own word, like
+// screenOff. The client guards once per visit (the button goes away
+// after one tap); the server enforces once per local day per device,
+// so a second claim the same day pays 0 and a new day can count again.
 // The older action values stay only so historical rows keep their meaning.
 export const POINT_VALUES: Record<z.infer<typeof pointActionEnum>, number> = {
   welcome: 10,
@@ -53,6 +63,8 @@ export const POINT_VALUES: Record<z.infer<typeof pointActionEnum>, number> = {
   phoneFree: 5,
   checkin: 15,
   screenOff: 10,
+  dailyCheckin: 100,
+  quietMoment: 10,
 };
 
 const profileShape = z.object({
@@ -219,6 +231,18 @@ export async function awardPoints(
   if (args.action === "quitDate") {
     if (!day) throw new Error("awardPoints: quitDate requires the quit date as `day`");
     if (await exists(db, `SELECT 1 FROM points WHERE device_id = $1 AND tab = $2 AND action = 'quitDate' AND day = $3 LIMIT 1`, [deviceId, args.tab, day])) {
+      return { ok: true as const, points: 0, already: true };
+    }
+  }
+  if (args.action === "dailyCheckin") {
+    if (!day) throw new Error("awardPoints: dailyCheckin requires the local day as `day`");
+    if (await exists(db, `SELECT 1 FROM points WHERE device_id = $1 AND tab = $2 AND action = 'dailyCheckin' AND day = $3 LIMIT 1`, [deviceId, args.tab, day])) {
+      return { ok: true as const, points: 0, already: true };
+    }
+  }
+  if (args.action === "quietMoment") {
+    if (!day) throw new Error("awardPoints: quietMoment requires the local day as `day`");
+    if (await exists(db, `SELECT 1 FROM points WHERE device_id = $1 AND tab = $2 AND action = 'quietMoment' AND day = $3 LIMIT 1`, [deviceId, args.tab, day])) {
       return { ok: true as const, points: 0, already: true };
     }
   }

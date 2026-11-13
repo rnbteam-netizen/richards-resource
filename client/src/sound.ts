@@ -32,6 +32,16 @@
 export type CalmToneKind = "calm" | "sleepy";
 export type SlotSoundKind = "click" | "chime" | "low";
 
+// The calm tone, 2026-11-13: Richard could only hear it with the
+// phone volume at max and the phone against his ear — the old gain
+// of 0.05 was a whisper. The tone now plays at 0.22, about four
+// times louder, still soft, and the breathing exercise has its own
+// volume slider (0 to 0.4) for the tone, off by default, so the
+// visitor sets it. Sound still follows the phone's volume and silent
+// switch — this is the tone's own volume, inside the app.
+export const CALM_TONE_GAIN = 0.22;
+export const CALM_TONE_GAIN_MAX = 0.4;
+
 // Binaural-style tones: one gentle sine tone per ear. The base is a
 // low, soft 200 Hz; the "beat" is just the difference between the two
 // ears — 10 Hz for the calm tone, 6 Hz for the sleepy tone. Those
@@ -76,6 +86,19 @@ function getAudioContext(): AudioContext | null {
 class AppSounds {
   private ctx: AudioContext | null = null;
   private calmTone: ToneNodes | null = null;
+  private calmVolume: number = CALM_TONE_GAIN;
+
+  // The breathing exercise's own volume slider calls this. Clamped
+  // to 0–0.4, so the tone can never get harsh. If a tone is playing,
+  // its gain moves with the slider right away.
+  setCalmToneVolume(volume: number): void {
+    const v = Math.max(0, Math.min(CALM_TONE_GAIN_MAX, volume));
+    this.calmVolume = v;
+    const tone = this.calmTone;
+    if (tone && this.ctx) {
+      tone.gain.gain.setTargetAtTime(v, this.ctx.currentTime, 0.1);
+    }
+  }
 
   private ensureContext(): AudioContext | null {
     if (!this.ctx) this.ctx = getAudioContext();
@@ -140,7 +163,7 @@ class AppSounds {
     const { leftHz, rightHz } = binauralFrequencies(kind);
     const gain = ctx.createGain();
     gain.gain.setValueAtTime(0, ctx.currentTime);
-    gain.gain.linearRampToValueAtTime(0.05, ctx.currentTime + 1.5);
+    gain.gain.linearRampToValueAtTime(this.calmVolume, ctx.currentTime + 1.5);
     gain.connect(ctx.destination);
     const makeEar = (frequencyHz: number, pan: number): OscillatorNode => {
       const osc = ctx.createOscillator();

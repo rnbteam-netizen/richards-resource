@@ -44,11 +44,11 @@ test("disclaimer components exist, in plain kind language", () => {
 
 test("full disclaimer in the footer on every tab and on Help & Resources", () => {
   // The footer is rendered once, at the bottom of the app, for every tab.
-  const footer = src.slice(src.indexOf("function MeadowFooter()"), src.indexOf("/* ---------- the pause"));
+  const footer = src.slice(src.indexOf("function MeadowFooter("), src.indexOf("/* ---------- the pause"));
   assert.ok(footer.includes("<MedicalDisclaimer />"),
     "MeadowFooter must include the full MedicalDisclaimer");
-  assert.ok(src.includes("function MeadowFooter()"), "MeadowFooter must exist");
-  assert.ok(src.includes("<MeadowFooter />"), "the app must render MeadowFooter");
+  assert.ok(src.includes("function MeadowFooter("), "MeadowFooter must exist");
+  assert.ok(src.includes("<MeadowFooter onTerms="), "the app must render MeadowFooter");
   // Help & Resources carries the full version as its own closing section too.
   const resources = src.slice(src.indexOf("function ResourcesPage("), src.indexOf("export function App()"));
   assert.ok(resources.includes("<MedicalDisclaimer />"),

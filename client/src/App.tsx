@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode 
 import { useIsMutating, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, type ApiResponse } from "./api";
 import { sounds, type CalmToneKind } from "./sound";
+import { speakText, speakNumber, stopSpeaking } from "./speech";
 
 type Category = "alcohol" | "smoking" | "gambling" | "drugs" | "codependency";
 type Profile = ApiResponse<typeof api, "getState">["profiles"][number];
@@ -212,7 +213,12 @@ function WhatsNewBanner() {
   };
   return (
     <div className="felt-card mb-5 rounded-[var(--radius)] border-2 border-[var(--sun)] bg-[var(--amber-soft)] p-5" role="region" aria-label="What's new in this version">
-      <p className="font-display text-lg font-bold text-[var(--text)]">✨ What's new</p>
+      <div className="flex items-start justify-between gap-3">
+        <p className="font-display text-lg font-bold text-[var(--text)]">✨ What's new</p>
+        <button type="button" onClick={dismiss} aria-label="Close what's new" className="min-h-11 min-w-11 shrink-0 rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-3 text-lg font-bold text-[var(--text)]">
+          ✕
+        </button>
+      </div>
       <ul className="mt-2 space-y-1.5">
         {WHATS_NEW_ITEMS.map((item) => (
           <li key={item} className="flex gap-2 text-sm leading-relaxed text-[var(--text)]">
@@ -223,9 +229,10 @@ function WhatsNewBanner() {
       <p className="mt-3 text-sm text-[var(--dim)]">
         No notifications, no emails — this banner is the only announcement, and it shows once per version.
       </p>
-      <button type="button" onClick={dismiss} aria-label="Dismiss what's new" className="felt-btn mt-3 min-h-11 rounded-[var(--radius)] bg-[var(--accent)] px-4 text-sm font-semibold text-white">
+      <button type="button" onClick={dismiss} aria-label="Dismiss what's new" className="felt-btn mt-3 min-h-14 w-full rounded-[var(--radius)] bg-[var(--accent)] px-4 text-base font-bold text-white">
         Got it — hide this
       </button>
+      <p className="mt-2 text-center text-sm text-[var(--dim)]">Tap “Got it” or ✕ above to hide this — it will not come back for this version.</p>
     </div>
   );
 }
@@ -288,6 +295,157 @@ function MedicalDisclaimer() {
         withdrawal needs medical supervision — do not stop drinking heavily without a doctor&apos;s help. The same
         care applies to other drugs and medicines: a doctor or an addiction professional can help you stop safely.
       </p>
+    </div>
+  );
+}
+
+/* ---------- terms of use: one page, plain language, never a locked gate ---------- */
+
+// Terms (Richard, 2026-11-13): a one-page Terms of Use for liability,
+// in minimal lawyerese, from his draft of 2026-11-13. It is linked
+// from the footer on every tab and on Help & Resources, and a short
+// first-visit notice (TermsNotice, below) points to it with a "Got
+// it" button. It is NEVER a locked gate: the notice sits above the
+// tabs and can be dismissed, and the crisis box, the breathing, and
+// every tab are always open, whether or not the visitor has read it.
+// By using the app you agree to the Terms — that is the browsewrap
+// trade-off Richard accepted, because blocking help would be worse.
+const TERMS_KEY = "richards-resource:terms-seen";
+
+function TermsPage({ onBack }: { onBack: () => void }) {
+  return (
+    <div>
+      <button type="button" onClick={onBack} className="min-h-11 rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 font-semibold text-[var(--text)]">
+        ← Back to the app
+      </button>
+      <h1 className="font-display mt-5 text-2xl font-bold leading-snug text-[var(--text)]">Terms of Use — Richard&apos;s Resource</h1>
+      <p className="mt-3 text-lg font-bold leading-relaxed text-[var(--text)]">We are here to help.</p>
+      <p className="mt-1 text-lg font-bold leading-relaxed text-[var(--text)]">This is your personal journey... BUT YOU ARE NOT ALONE. Help is at your fingertips.</p>
+      <p className="mt-3 leading-relaxed text-[var(--text)]">
+        Richard&apos;s Resource is a free self-help app. We built it to help people who want to stop drinking, smoking,
+        gambling, or using drugs, and for codependency, food, screens, and feeling unwell, and for healthy living and
+        peace of mind. It is free, with no account, no name or email needed, and no judgement.
+      </p>
+      <p className="mt-3 leading-relaxed text-[var(--text)]">
+        By using this app, you agree to these Terms. If you do not agree, please do not use the app.
+      </p>
+      <div className="mt-5 space-y-4">
+        <section>
+          <p className="font-semibold text-[var(--text)]">1. This is support, not medical advice.</p>
+          <p className="mt-1 text-sm leading-relaxed text-[var(--text)]">
+            This app is general information and support only. It is not medical advice, diagnosis, or treatment, and it is
+            not a substitute for your own doctor, counsellor, or addiction professional. Talk to your own doctor before
+            starting an exercise programme, changing your diet, or stopping or changing any medicine, especially if you
+            have a health condition or take medicines. For mental health, please seek counselling and talk to your doctor
+            — reaching out is a strong step, not a weakness.
+          </p>
+        </section>
+        <section>
+          <p className="font-semibold text-[var(--text)]">2. In a crisis, get help now.</p>
+          <p className="mt-1 text-sm leading-relaxed text-[var(--text)]">
+            If you feel unsafe, or have thoughts of harming yourself, call or text <a className="font-semibold underline" href="tel:988">988</a> in
+            the United States, or call <a className="font-semibold underline" href="tel:911">911</a> or your local emergency number right away.
+            Do not wait for this app. Stopping drinking heavily all at once can be dangerous — alcohol withdrawal needs
+            medical supervision, so do not stop without a doctor&apos;s help.
+          </p>
+        </section>
+        <section>
+          <p className="font-semibold text-[var(--text)]">3. No guarantees.</p>
+          <p className="mt-1 text-sm leading-relaxed text-[var(--text)]">
+            We do not promise that this app will help you stop, or that it will work for you. Everyone is different.
+            What helps one person may not help another. Use the tools here as support, alongside real help from people
+            you trust and professionals who know you.
+          </p>
+        </section>
+        <section>
+          <p className="font-semibold text-[var(--text)]">4. Your data.</p>
+          <p className="mt-1 text-sm leading-relaxed text-[var(--text)]">
+            We don&apos;t share your data. This is your personal journey. Your plans, logs, and points are saved in this app
+            only for you, under an anonymous device ID in your own browser. No account, no name, no email. Your check-in
+            answers are never saved or sent. Your data is encrypted in transit. If you clear your browser, lose your phone,
+            or someone else uses your phone, they may see what is on it, or it may be gone — please download a backup if
+            that matters to you.
+          </p>
+        </section>
+        <section>
+          <p className="font-semibold text-[var(--text)]">5. Your responsibility.</p>
+          <p className="mt-1 text-sm leading-relaxed text-[var(--text)]">
+            You are responsible for your own choices and for getting the medical help you need. Do not use this app as a
+            reason to delay seeing a doctor, counsellor, or addiction professional. If a tool here does not feel right
+            for you, stop using it.
+          </p>
+        </section>
+        <section>
+          <p className="font-semibold text-[var(--text)]">6. Donations.</p>
+          <p className="mt-1 text-sm leading-relaxed text-[var(--text)]">
+            Donations, when available, are optional personal gifts to support Richard&apos;s Resource. They are NOT tax
+            deductible — Richard&apos;s Resource is not a charity or a tax-exempt organisation.
+          </p>
+        </section>
+        <section>
+          <p className="font-semibold text-[var(--text)]">7. The app as it is — errors and omissions.</p>
+          <p className="mt-1 text-sm leading-relaxed text-[var(--text)]">
+            This app is provided “as it is”, without warranties of any kind. The information in it may contain errors or
+            omissions, and it may be out of date. We do not promise that it is complete, accurate, or up to date, and we
+            are not liable for any errors or omissions in it, or for any loss, harm, or damage that comes from using it,
+            or from relying on it instead of professional help, to the fullest extent allowed by law. If you find an error,
+            please tell us, and we will try to fix it.
+          </p>
+        </section>
+        <section>
+          <p className="font-semibold text-[var(--text)]">8. Arbitration in Grays Harbor County, Washington.</p>
+          <p className="mt-1 text-sm leading-relaxed text-[var(--text)]">
+            If you have a dispute about this app, you agree to resolve it by binding arbitration in Grays Harbor County,
+            Washington, under Washington law, instead of in court. You agree not to bring a class action. This clause is
+            part of these Terms, and by using the app you agree to it.
+          </p>
+        </section>
+        <section>
+          <p className="font-semibold text-[var(--text)]">9. Changes.</p>
+          <p className="mt-1 text-sm leading-relaxed text-[var(--text)]">
+            We may update these Terms and the app from time to time. The current version is the one on this page. Using
+            the app after a change means you agree to the updated Terms.
+          </p>
+        </section>
+        <section>
+          <p className="font-semibold text-[var(--text)]">10. Contact.</p>
+          <p className="mt-1 text-sm leading-relaxed text-[var(--text)]">Richard&apos;s Resource, LLC — RichardsResource.com</p>
+        </section>
+      </div>
+      <p className="mt-5 text-sm leading-relaxed text-[var(--dim)]">
+        This is plain language, not legal advice. A lawyer should review it before it is relied on for liability.
+      </p>
+      <button type="button" onClick={onBack} className="felt-btn mt-4 min-h-12 w-full rounded-[var(--radius)] bg-[var(--accent)] px-4 font-semibold text-white">
+        Back to the app
+      </button>
+    </div>
+  );
+}
+
+// First-visit notice: a short strip, above the tabs, with a link to
+// the full Terms and a "Got it" button. It shows once, until dismissed,
+// and it never blocks anything — the tabs, the crisis box, and the
+// breathing are all open underneath it, whether or not it is dismissed.
+function TermsNotice({ onReadTerms }: { onReadTerms: () => void }) {
+  const [visible, setVisible] = useState(() => safeLocalGet(TERMS_KEY) !== "seen");
+  if (!visible) return null;
+  const dismiss = () => {
+    safeLocalSet(TERMS_KEY, "seen");
+    setVisible(false);
+  };
+  const readTerms = () => {
+    dismiss();
+    onReadTerms();
+  };
+  return (
+    <div className="felt-soft mt-3 rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 py-3" role="region" aria-label="Terms of use notice">
+      <p className="text-sm leading-relaxed text-[var(--text)]">
+        This is support, not medical advice — please read the <button type="button" onClick={readTerms} className="font-semibold text-[var(--accent)] underline">Terms of Use</button>.
+        Help is never locked behind it: the tabs, the breathing, and the crisis numbers below are open right now.
+      </p>
+      <button type="button" onClick={dismiss} aria-label="Dismiss terms notice" className="felt-btn mt-2 min-h-11 rounded-[var(--radius)] bg-[var(--accent)] px-4 text-sm font-semibold text-white">
+        Got it
+      </button>
     </div>
   );
 }
@@ -824,7 +982,7 @@ function SunriseHero() {
 }
 
 // A row of spring flowers along the bottom of the page.
-function MeadowFooter() {
+function MeadowFooter({ onTerms }: { onTerms: () => void }) {
   return (
     <footer className="mt-12">
       <div className="flex items-end justify-between gap-1 px-1" aria-hidden="true">
@@ -839,6 +997,9 @@ function MeadowFooter() {
         <p className="mt-1 text-center font-display text-base font-bold text-[var(--accent)]">Making the world 🌎 a happier place ❤️</p>
         <p className="mt-1 text-center text-sm font-semibold text-[var(--dim)]">We don't share your data. This is your personal journey.</p>
         <p className="mt-1 text-center text-xs text-[var(--dim)]">© 2026 Richard's Resource. All rights reserved.</p>
+        <p className="mt-2 text-center">
+          <button type="button" onClick={onTerms} className="text-sm font-semibold text-[var(--accent)] underline">Terms of Use</button>
+        </p>
         <div className="mt-4 text-left"><MedicalDisclaimer /></div>
       </div>
     </footer>
@@ -1203,6 +1364,15 @@ function CalmingBreathing() {
   // only when the breathing starts (after a tap, never on load) and
   // stops the moment the breathing stops or you leave the tab.
   const [tone, setTone] = useState<CalmToneKind | "off">("off");
+  // Calm-tone volume (Richard, 2026-11-13): the tone was a whisper at
+  // gain 0.05 — it now plays at 0.22 by default, and this slider lets
+  // the visitor set it from silent (0) to 0.4, in the app. The tone
+  // is still off unless a tone is chosen, and sound still follows
+  // the phone's volume and silent switch.
+  const [toneVolume, setToneVolume] = useState(55);
+  useEffect(() => {
+    sounds.setCalmToneVolume((toneVolume / 100) * 0.4);
+  }, [toneVolume]);
 
   useEffect(() => {
     if (!running || tone === "off") return;
@@ -1273,6 +1443,20 @@ function CalmingBreathing() {
         {tone !== "off" && running && (
           <p className="mt-2 text-sm font-medium text-[var(--text)]" aria-live="polite">Playing the {tone === "calm" ? "calm" : "sleepy"} tone — it stops when the breathing stops.</p>
         )}
+        <div className="mt-3">
+          <label htmlFor="calm-tone-volume" className="text-sm font-semibold text-[var(--text)]">Calm tone volume</label>
+          <input
+            id="calm-tone-volume"
+            type="range"
+            min={0}
+            max={100}
+            value={toneVolume}
+            onChange={(e) => setToneVolume(Number(e.target.value))}
+            aria-label="Calm tone volume"
+            className="mt-1 w-full"
+          />
+          <p className="mt-1 text-sm text-[var(--dim)]">This is the tone&apos;s own volume, inside the app — sound still follows your phone&apos;s volume and silent switch.</p>
+        </div>
       </div>
       {breaths > 0 && (
         <p className="mb-3 text-sm font-medium text-[var(--text)]" aria-live="polite">
@@ -1518,6 +1702,7 @@ const BOUNDARY_EXAMPLES = [
 function CodependencyHook() {
   const [idx, setIdx] = useState(0);
   const [seen, setSeen] = useState(false);
+  useEffect(() => () => stopSpeaking(), []);
   return (
     <HookShell pastelBg="#fbe3ee" pastelBorder="#c95a8a" title="Hear what a loving boundary actually sounds like" intro="Boundaries aren't walls or threats. They're one honest sentence about what you will do. Tap through a few — notice how each one loves the person and still lets go of the rescue.">
       {!seen ? (
@@ -1527,7 +1712,14 @@ function CodependencyHook() {
       ) : (
         <div aria-live="polite">
           <p className="rounded-xl bg-white/70 p-4 font-display text-lg font-semibold leading-relaxed text-[#2e2117]">{BOUNDARY_EXAMPLES[idx]}</p>
-          <button type="button" onClick={() => setIdx((i) => (i + 1) % BOUNDARY_EXAMPLES.length)} className="felt-btn mt-3 min-h-11 w-full rounded-[var(--radius)] border-2 border-[#c95a8a] bg-white/60 px-4 font-semibold text-[#2e2117]">
+          <button type="button" onClick={() => { const phrase = BOUNDARY_EXAMPLES[idx]; if (phrase) speakText(phrase); }} aria-label="Hear this boundary read aloud" className="felt-btn mt-3 min-h-11 w-full rounded-[var(--radius)] bg-[#c95a8a] px-4 font-semibold text-white">
+            🔊 Hear it read aloud
+          </button>
+          <p className="mt-2 text-sm leading-relaxed text-[#2e2117]">
+            Read aloud by your phone&apos;s own voice — tap to hear, nothing is recorded or sent. We ask for a soft
+            female voice where your phone has one; if it doesn&apos;t, your phone uses its best voice instead.
+          </p>
+          <button type="button" onClick={() => { stopSpeaking(); setIdx((i) => (i + 1) % BOUNDARY_EXAMPLES.length); }} className="felt-btn mt-3 min-h-11 w-full rounded-[var(--radius)] border-2 border-[#c95a8a] bg-white/60 px-4 font-semibold text-[#2e2117]">
             Hear another ({idx + 1} of {BOUNDARY_EXAMPLES.length})
           </button>
           <p className="mt-3 leading-relaxed text-[#2e2117]">When one of these sounds like your situation, the boundary log below is where you practice your own version — in your words, one moment at a time.</p>
@@ -1564,19 +1756,47 @@ function FoodHook() {
 
 // Screens: the welcome is looking up. Ten seconds of the real world,
 // counted here, so the tab proves its point before it teaches anything.
+// Then 30 seconds, the next rung (Richard, 2026-11-13): "You did 10,
+// try 30" — progress you can feel, step by step. Spoken counting is
+// sparse on purpose — 1, 2, 3, then the last number (10 or 30) — and
+// off unless the visitor turns it on. No 60-second timer: the 60 was
+// a mix-up with the breathing, and 30 is the rung Richard chose.
 function ScreensHook() {
   const [left, setLeft] = useState<number | null>(null);
   const [doneLooking, setDoneLooking] = useState(false);
+  const [doneDuration, setDoneDuration] = useState<number | null>(null);
+  const [speakOn, setSpeakOn] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  useEffect(() => () => { if (intervalRef.current) clearInterval(intervalRef.current); }, []);
-  const start = () => {
-    setDoneLooking(false);
-    setLeft(10);
+  const speakTimeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const speakOnRef = useRef(speakOn);
+  speakOnRef.current = speakOn;
+  const clearTimers = () => {
     if (intervalRef.current) clearInterval(intervalRef.current);
+    intervalRef.current = null;
+    speakTimeoutsRef.current.forEach(clearTimeout);
+    speakTimeoutsRef.current = [];
+    stopSpeaking();
+  };
+  useEffect(() => () => clearTimers(), []);
+  const start = (seconds: 10 | 30) => {
+    clearTimers();
+    setDoneLooking(false);
+    setDoneDuration(null);
+    setLeft(seconds);
+    // Spoken counting, only if the visitor turned it on: 1, 2, 3,
+    // then the last number when the timer finishes. Nothing speaks
+    // before this tap, and nothing speaks if the toggle is off.
+    if (speakOnRef.current) {
+      speakNumber(1);
+      speakTimeoutsRef.current.push(setTimeout(() => speakNumber(2), 1000));
+      speakTimeoutsRef.current.push(setTimeout(() => speakNumber(3), 2000));
+    }
     intervalRef.current = setInterval(() => {
       setLeft((s) => {
         if (s == null || s <= 1) {
           if (intervalRef.current) clearInterval(intervalRef.current);
+          if (speakOnRef.current) speakNumber(seconds);
+          setDoneDuration(seconds);
           setDoneLooking(true);
           return 0;
         }
@@ -1585,22 +1805,36 @@ function ScreensHook() {
     }, 1000);
   };
   return (
-    <HookShell pastelBg="#e4ecf3" pastelBorder="#6486a5" title="Quick test: can you look up for 10 seconds?" intro="This is the one tab that wants less of your attention. Prove it works: tap the button, look up from the screen at the real room, the real sky — I'll count.">
+    <HookShell pastelBg="#e4ecf3" pastelBorder="#6486a5" title="Quick test: can you look up?" intro="This is the one tab that wants less of your attention. Prove it works: tap the button, look up from the screen at the real room, the real sky — I'll count. Ten seconds first, then 30 when you're ready.">
+      <div className="mb-3 flex items-center gap-2">
+        <input id="screens-speak-count" type="checkbox" checked={speakOn} onChange={(e) => setSpeakOn(e.target.checked)} className="h-5 w-5 accent-[#6486a5]" />
+        <label htmlFor="screens-speak-count" className="text-sm font-semibold text-[#2e2117]">Hear the counting — spoken, off unless you choose it</label>
+      </div>
+      <p className="mb-3 text-sm leading-relaxed text-[#2e2117]">Spoken counting says 1, 2, 3, then the last number — 10 or 30 — and nothing in between.</p>
       {left == null && !doneLooking && (
-        <button type="button" onClick={start} className="felt-btn min-h-12 w-full rounded-[var(--radius)] bg-[#6486a5] px-4 text-base font-semibold text-white">
-          Look up now — I'll count to 10
+        <button type="button" onClick={() => start(10)} className="felt-btn min-h-12 w-full rounded-[var(--radius)] bg-[#6486a5] px-4 text-base font-semibold text-white">
+          Look up now — I&apos;ll count to 10
         </button>
       )}
       {left != null && left > 0 && (
         <p className="text-center" aria-live="polite">
           <span className="font-display text-5xl font-black tabular-nums text-[#2e2117]">{left}</span>
-          <span className="mt-1 block text-sm font-medium text-[#2e2117]">Eyes up — the room, a window, the light. I'm still here.</span>
+          <span className="mt-1 block text-sm font-medium text-[#2e2117]">Eyes up — the room, a window, the light. I&apos;m still here.</span>
         </p>
       )}
       {doneLooking && (
         <div aria-live="polite" className="text-center">
-          <p className="leading-relaxed text-[#2e2117]">That was real life — it was there the whole time, and it didn't ask you to scroll it. Ten seconds back is how the rest comes back too. The short check-in below shows where your screen time is really going.</p>
-          <button type="button" onClick={start} className="mt-3 min-h-11 rounded-[var(--radius)] border-2 border-[#6486a5] px-4 font-semibold text-[#2e2117]">Look up again</button>
+          <p className="leading-relaxed text-[#2e2117]">
+            {doneDuration === 30
+              ? "Thirty seconds back — that was real life, and it was there the whole time. You did 10, then you did 30. That's progress you can feel."
+              : "That was real life — it was there the whole time, and it didn't ask you to scroll it. Ten seconds back is how the rest comes back too. The short check-in below shows where your screen time is really going."}
+          </p>
+          {doneDuration === 10 && (
+            <button type="button" onClick={() => start(30)} className="felt-btn mt-3 min-h-12 w-full rounded-[var(--radius)] bg-[#6486a5] px-4 text-base font-semibold text-white">
+              You did 10, try 30 — I&apos;ll count to 30
+            </button>
+          )}
+          <button type="button" onClick={() => start(10)} className="mt-3 min-h-11 rounded-[var(--radius)] border-2 border-[#6486a5] px-4 font-semibold text-[#2e2117]">Look up again — 10 seconds</button>
         </div>
       )}
     </HookShell>
@@ -1639,12 +1873,12 @@ function WellbeingHook() {
   );
 }
 
-function UrgeSurf({ categoryLabel, onDone }: { categoryLabel: string; onDone: (rodeItOut: boolean) => void }) {
+function UrgeSurf({ onDone }: { onDone: (rodeItOut: boolean) => void }) {
   return (
     <StepPause
       borderClass="border-[var(--accent)]"
       buttonClass="bg-[var(--accent)]"
-      title={`Ride out this urge — ${categoryLabel}`}
+      title="Ride out this urge"
       hook="No clock on you here. This pause runs as long as you need — an urge can't outlast you if you give it room to rise, peak, and fall. Stay as long as it takes; stop whenever you're ready. Nothing here will cut you off mid-thought, right before it clicks."
       earlyMsg="The urge is loudest at the start. You don't have to obey it — just watch it."
       midMsg="You're on the wave now, not under it. Waves always come down."
@@ -3536,7 +3770,7 @@ function LongevityPage() {
 
       <Section title="The basics that actually help">
         <p className="leading-relaxed text-[var(--text)]">
-          None of these is new, and none of them is for sale. That is the point: the strongest evidence in
+          None of these are new, and none of them is for sale. That is the point: the strongest evidence in
           healthy living is for ordinary, free things, done most days, for years.
         </p>
         <div className="mt-4 space-y-3">
@@ -3937,6 +4171,12 @@ function HomePage({ profiles, logs, pointEvents, dayMarks, onGo, onSurf }: {
   });
   return (
     <div>
+      {/* The true message (Richard, 2026-11-13): the first thing a
+          visitor sees when the app opens, with the privacy line —
+          this is your personal journey, and you are not alone. */}
+      <div className="felt-soft mb-5 rounded-[var(--radius)] border-2 border-[var(--leaf)] bg-[var(--leaf-soft)] px-4 py-3 text-center" role="note">
+        <p className="font-bold leading-relaxed text-[var(--text)]">We don&apos;t share your data. This is your personal journey... BUT YOU ARE NOT ALONE. Help is at your fingertips.</p>
+      </div>
       <WhatsNewBanner />
       <AddToHomeScreenHint />
       {/* Tagline (Richard, 2026-11-12): "Making the world 🌎 a happier
@@ -4036,6 +4276,13 @@ function HomePage({ profiles, logs, pointEvents, dayMarks, onGo, onSurf }: {
         </div>
       </Section>
 
+      {/* Crisis box (Richard, 2026-11-12): if someone comes to a
+          self-help app, they are likely already struggling — and no
+          one gets points for killing themselves. The same 988 / 911
+          box as Feeling Unwell, here on Home, after the tabs and
+          before the points box, so help is visible before the score. */}
+      <div className="mt-5"><CrisisStrip /></div>
+
       <Section title="Support this free app">
         <DonationSection />
       </Section>
@@ -4129,11 +4376,12 @@ function HomePage({ profiles, logs, pointEvents, dayMarks, onGo, onSurf }: {
   );
 }
 
-function ResourcesPage({ profiles, logs, pointEvents, dayMarks }: {
+function ResourcesPage({ profiles, logs, pointEvents, dayMarks, onTerms }: {
   profiles: Profile[];
   logs: LogEntry[];
   pointEvents: PointEvent[];
   dayMarks: DayMark[];
+  onTerms: () => void;
 }) {
   return (
     <div>
@@ -4181,6 +4429,9 @@ function ResourcesPage({ profiles, logs, pointEvents, dayMarks }: {
         ]} />
       </Section>
       <div className="mt-8"><MedicalDisclaimer /></div>
+      <p className="mt-4 text-center">
+        <button type="button" onClick={onTerms} className="text-sm font-semibold text-[var(--accent)] underline">Terms of Use</button>
+      </p>
       <p className="mt-4 text-center text-xs text-[var(--dim)]">© 2026 Richard's Resource. All rights reserved.</p>
     </div>
   );
@@ -4205,6 +4456,7 @@ const TAB_TO_POINT_TAB: Record<TabId, PointTab> = {
 
 export function App() {
   const [tab, setTab] = useState<TabId>("home");
+  const [showTerms, setShowTerms] = useState(false);
   const [surfCategory, setSurfCategory] = useState<Category | null>(null);
   const [pendingRide, setPendingRide] = useState<boolean | null>(null);
   const [lastAward, setLastAward] = useState<PointsApi["lastAward"]>(null);
@@ -4353,7 +4605,7 @@ export function App() {
                 key={t.id}
                 type="button"
                 aria-current={isActive ? "page" : undefined}
-                onClick={() => { setTab(t.id); setSurfCategory(null); setPendingRide(null); }}
+                onClick={() => { setTab(t.id); setShowTerms(false); setSurfCategory(null); setPendingRide(null); }}
                 style={{
                   backgroundColor: isActive ? pastel.activeBg : pastel.inactiveBg,
                   borderColor: isActive ? pastel.activeBorder : pastel.border,
@@ -4380,11 +4632,11 @@ export function App() {
 
         <SaveStatusBar isError={state.isError} lastSavedAt={lastSavedAt} pendingCount={pendingTouches} />
         <PrivacyStrip />
+        <TermsNotice onReadTerms={() => setShowTerms(true)} />
 
         {surfCategory && (
           <div className="mt-6">
             <UrgeSurf
-              categoryLabel={CAT_LABEL[surfCategory]}
               onDone={(rode) => setPendingRide(rode)}
             />
             {pendingRide != null && (
@@ -4407,12 +4659,16 @@ export function App() {
 
         {!surfCategory && (
           <div className="mt-6">
+            {showTerms ? (
+              <TermsPage onBack={() => { setShowTerms(false); if (typeof window !== "undefined") window.scrollTo(0, 0); }} />
+            ) : (
+              <>
             {state.isPending && <p className="text-[var(--dim)]">Loading your plans and logs…</p>}
             {state.isError && <p className="text-[var(--crisis)]">Couldn't load your saved data. <button type="button" className="underline" onClick={() => state.refetch()}>Try again</button></p>}
             {state.isSuccess && tab === "home" && (
               <HomePage profiles={profiles} logs={logs} pointEvents={pointEvents} dayMarks={dayMarks} onGo={(t) => setTab(t)} onSurf={() => setSurfCategory(activeSurf ?? "gambling")} />
             )}
-            {state.isSuccess && tab === "resources" && <ResourcesPage profiles={profiles} logs={logs} pointEvents={pointEvents} dayMarks={dayMarks} />}
+            {state.isSuccess && tab === "resources" && <ResourcesPage profiles={profiles} logs={logs} pointEvents={pointEvents} dayMarks={dayMarks} onTerms={() => setShowTerms(true)} />}
             {tab === "wellbeing" && <WellbeingPage />}
             {tab === "food" && <FoodPage />}
             {tab === "screens" && <ScreensPage />}
@@ -4421,10 +4677,12 @@ export function App() {
             {state.isSuccess && tab !== "home" && tab !== "resources" && tab !== "wellbeing" && tab !== "food" && tab !== "screens" && tab !== "longevity" && tab !== "peace" && (
               <CategoryPage category={tab} profile={profileFor(tab)} logs={logs} dayMarks={dayMarks} onSurf={(c) => setSurfCategory(c)} />
             )}
+              </>
+            )}
           </div>
         )}
 
-        <MeadowFooter />
+        <MeadowFooter onTerms={() => setShowTerms(true)} />
       </main>
     </div>
     </PointsContext.Provider>

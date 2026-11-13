@@ -17,7 +17,7 @@ test("copyright appears in the footer and on Help & Resources", () => {
   const hits = src.split(COPYRIGHT).length - 1;
   assert.ok(hits >= 2, `copyright must appear at least twice (footer + Help & Resources), found ${hits}`);
   // In the footer: the line must sit inside MeadowFooter.
-  const footerStart = src.indexOf("function MeadowFooter()");
+  const footerStart = src.indexOf("function MeadowFooter(");
   const footerEnd = src.indexOf("</footer>", footerStart);
   assert.ok(footerStart !== -1 && footerEnd !== -1, "MeadowFooter must exist");
   assert.ok(src.slice(footerStart, footerEnd).includes(COPYRIGHT), "the footer must carry the copyright");

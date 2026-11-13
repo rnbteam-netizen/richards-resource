@@ -22,7 +22,7 @@ test("tagline appears on Home above the banner, and in the footer", () => {
   const banner = src.indexOf(BANNER);
   assert.ok(firstTagline !== -1 && banner !== -1 && firstTagline < banner, "the Home tagline must sit above the banner");
   // In the footer: the tagline must sit inside MeadowFooter.
-  const footerStart = src.indexOf("function MeadowFooter()");
+  const footerStart = src.indexOf("function MeadowFooter(");
   const footerEnd = src.indexOf("}", src.indexOf("</footer>", footerStart));
   assert.ok(footerStart !== -1, "MeadowFooter must exist");
   assert.ok(src.slice(footerStart, footerEnd).includes(TAGLINE), "the footer must carry the tagline");

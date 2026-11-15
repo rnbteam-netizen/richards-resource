@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode 
 import { useIsMutating, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, type ApiResponse } from "./api";
 import { sounds, type CalmToneKind } from "./sound";
-import { speakText, speakNumber, stopSpeaking } from "./speech";
+import { speakText, stopSpeaking } from "./speech";
 
 type Category = "alcohol" | "smoking" | "gambling" | "drugs" | "codependency";
 type Profile = ApiResponse<typeof api, "getState">["profiles"][number];
@@ -247,6 +247,7 @@ function PrivacyStrip() {
   return (
     <div className="felt-soft mt-3 rounded-[var(--radius)] border-2 border-[var(--leaf)] bg-[var(--leaf-soft)] px-4 py-2.5 text-center">
       <p className="font-bold text-[var(--text)]">We don't share your data. This is your personal journey.</p>
+      <p className="mt-0.5 text-sm font-semibold text-[var(--text)]">We can't share your personal information, because we don't ask for it.</p>
       <p className="mt-0.5 text-sm leading-relaxed text-[var(--text)]">
         Your plans, logs and points are saved in this app only for you. No account,
         no name or email needed — and your check-in answers are never saved at all.
@@ -1017,21 +1018,27 @@ function MeadowFooter({ onTerms }: { onTerms: () => void }) {
 const PAUSE_STEPS = [30, 60, 120, 300] as const;
 
 // Slow breathing for relaxation (Richard, 2026-11-10): in ~2–4 seconds,
-// pause ~1 second, out ~3–6 seconds. We use the slow, calming end of
-// those ranges — in 4, hold 1, out 6 — an 11-second cycle, with the long
-// out-breath doing the relaxing. The .breathe-circle animation in
-// theme.css runs the same 4 / 1 / 6 shape so the words and the circle
-// stay together.
-const BREATH_IN_MS = 4000;
+// pause ~1 second, out ~3–6 seconds. Richard, 2026-11-14, after testing
+// the live app ("the breathing is really off"): in 3, pause 1, out 4,
+// pause 1 — a 9-second cycle, replacing the earlier 4 / 1 / 6 shape.
+// The .breathe-circle animation in theme.css runs the same 3 / 1 / 4 / 1
+// shape so the words and the circle stay together.
+const BREATH_IN_MS = 3000;
 const BREATH_HOLD_MS = 1000;
-const BREATH_OUT_MS = 6000;
-const BREATH_CYCLE_MS = BREATH_IN_MS + BREATH_HOLD_MS + BREATH_OUT_MS;
-type BreathPhase = "breathe in" | "hold" | "breathe out";
+const BREATH_OUT_MS = 4000;
+const BREATH_PAUSE_MS = 1000;
+const BREATH_CYCLE_MS = BREATH_IN_MS + BREATH_HOLD_MS + BREATH_OUT_MS + BREATH_PAUSE_MS;
+type BreathPhase = "breathe in" | "pause" | "breathe out" | "rest";
 function nextBreathPhase(p: BreathPhase): BreathPhase {
-  return p === "breathe in" ? "hold" : p === "hold" ? "breathe out" : "breathe in";
+  return p === "breathe in" ? "pause" : p === "pause" ? "breathe out" : p === "breathe out" ? "rest" : "breathe in";
 }
 function breathPhaseMs(p: BreathPhase): number {
-  return p === "breathe in" ? BREATH_IN_MS : p === "hold" ? BREATH_HOLD_MS : BREATH_OUT_MS;
+  return p === "breathe in" ? BREATH_IN_MS : p === "pause" ? BREATH_HOLD_MS : p === "breathe out" ? BREATH_OUT_MS : BREATH_PAUSE_MS;
+}
+// Both pauses read "pause" on screen: the hold after breathing in, and
+// the rest after breathing out.
+function breathPhaseLabel(p: BreathPhase): string {
+  return p === "rest" ? "pause" : p;
 }
 
 function pauseLabel(seconds: number): string {
@@ -1091,8 +1098,8 @@ function StepPause({ borderClass, buttonClass, title, hook, earlyMsg, midMsg, la
     }
   }, [mode, running, secondsLeft, stepSeconds]);
 
-  // Phase words follow the same slow cycle as the circle: in 4s, hold
-  // 1s, out 6s, repeat. A timeout per phase (not a fixed interval) so
+  // Phase words follow the same cycle as the circle: in 3s, pause
+  // 1s, out 4s, pause 1s, repeat. A timeout per phase (not a fixed interval) so
   // each phase gets its own length.
   useEffect(() => {
     if (!running) return;
@@ -1142,10 +1149,10 @@ function StepPause({ borderClass, buttonClass, title, hook, earlyMsg, midMsg, la
       {showHook && <p className="mx-auto mt-3 max-w-md font-medium leading-relaxed text-[var(--text)]">{hook}</p>}
       <div className="mx-auto mt-5 flex h-36 w-36 items-center justify-center">
         <div className={`breathe-circle sun-glow flex h-32 w-32 items-center justify-center rounded-full bg-[#ffd971] ${running ? "" : "[animation-play-state:paused]"}`}>
-          <span className="px-3 text-sm font-semibold text-[#7c2d12]">{running ? phase : "breathe with the circle"}</span>
+          <span className="px-3 text-sm font-semibold text-[#7c2d12]">{running ? breathPhaseLabel(phase) : "breathe with the circle"}</span>
         </div>
       </div>
-      <p className="mb-4 mt-1 text-sm text-[var(--dim)]">Slow and easy: in… 2, 3, 4 — hold — out… 2, 3, 4, 5, 6.</p>
+      <p className="mb-4 mt-1 text-sm text-[var(--dim)]">Slow and easy: in… 2, 3 — pause — out… 2, 3, 4 — pause.</p>
       <p className="text-4xl font-bold tabular-nums text-[var(--text)]" aria-live="polite">
         {mode === "open" ? clockText(elapsed) : clockText(secondsLeft)}
       </p>
@@ -1347,8 +1354,8 @@ function useIdSafe(prefix: string): string {
   return ref.current;
 }
 
-// the tab itself. This is that one shared exercise, on the same slow
-// rhythm as everywhere else in the app: in 4 seconds, hold 1, out 6.
+// the tab itself. This is that one shared exercise, on the same rhythm
+// as everywhere else in the app: in 3 seconds, pause 1, out 4, pause 1.
 // It runs for as many breaths as you want and ends only when you end
 // it; nothing is saved and no points ride on finishing it (your taps
 // still earn their +1 like everywhere in the app).
@@ -1408,10 +1415,10 @@ function CalmingBreathing() {
       </p>
       <div className="mx-auto mt-5 flex h-36 w-36 items-center justify-center">
         <div className={`breathe-circle sun-glow flex h-32 w-32 items-center justify-center rounded-full bg-[#ffd971] ${running ? "" : "[animation-play-state:paused]"}`}>
-          <span className="px-3 text-sm font-semibold text-[#7c2d12]">{running ? phase : "breathe with the circle"}</span>
+          <span className="px-3 text-sm font-semibold text-[#7c2d12]">{running ? breathPhaseLabel(phase) : "breathe with the circle"}</span>
         </div>
       </div>
-      <p className="mb-4 mt-1 text-sm text-[var(--dim)]">Slow and easy: in… 2, 3, 4 — hold — out… 2, 3, 4, 5, 6.</p>
+      <p className="mb-4 mt-1 text-sm text-[var(--dim)]">Slow and easy: in… 2, 3 — pause — out… 2, 3, 4 — pause.</p>
       <div className="mx-auto mb-4 max-w-md rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface-warm)] px-3 py-3 text-left">
         <p className="text-sm font-semibold text-[var(--text)]">Calm tone — optional, off unless you choose it</p>
         <p className="mt-1 text-sm leading-relaxed text-[var(--dim)]">
@@ -1569,24 +1576,25 @@ function SmokingHook() {
     timersRef.current = [];
     setPhase("breathing");
     setBreath("breathe in");
-    // One full slow cycle on the shared rhythm — in 4, hold 1, out 6 —
-    // with the words changing on the same timing as the circle.
-    timersRef.current.push(setTimeout(() => setBreath("hold"), BREATH_IN_MS));
+    // One full slow cycle on the shared rhythm — in 3, pause 1, out 4,
+    // pause 1 — with the words changing on the same timing as the circle.
+    timersRef.current.push(setTimeout(() => setBreath("pause"), BREATH_IN_MS));
     timersRef.current.push(setTimeout(() => setBreath("breathe out"), BREATH_IN_MS + BREATH_HOLD_MS));
+    timersRef.current.push(setTimeout(() => setBreath("rest"), BREATH_IN_MS + BREATH_HOLD_MS + BREATH_OUT_MS));
     timersRef.current.push(setTimeout(() => setPhase("done"), BREATH_CYCLE_MS));
   };
   return (
     <HookShell pastelBg="#dceef7" pastelBorder="#5b9bbf" title="Take the breath the cigarette promises you" intro="Most of what a cigarette sells is this: a pause, and one deep breath. That part was always free. Try it — breathe with the circle, slowly in, a short hold, then a long slow out, once through.">
       <div className="flex flex-col items-center">
         <div className={`breathe-circle sun-glow flex h-28 w-28 items-center justify-center rounded-full bg-[#ffd971] ${phase === "breathing" ? "" : "[animation-play-state:paused]"}`} aria-hidden="true">
-          <span className="px-3 text-center text-sm font-semibold text-[#7c2d12]">{phase === "breathing" ? breath : phase === "done" ? "that's real air" : "one clean breath"}</span>
+          <span className="px-3 text-center text-sm font-semibold text-[#7c2d12]">{phase === "breathing" ? breathPhaseLabel(breath) : phase === "done" ? "that's real air" : "one clean breath"}</span>
         </div>
         {phase === "idle" && (
           <button type="button" onClick={start} className="felt-btn mt-4 min-h-12 w-full rounded-[var(--radius)] bg-[var(--sky-deep)] px-4 text-base font-semibold text-white">
-            Breathe with me — one slow breath, about 11 seconds
+            Breathe with me — one slow breath, about 9 seconds
           </button>
         )}
-        {phase === "breathing" && <p className="mt-4 text-sm font-medium text-[#2e2117]" aria-live="polite">In as it grows… hold… out, slow and long, as it shrinks. Nothing to buy, nothing to light.</p>}
+        {phase === "breathing" && <p className="mt-4 text-sm font-medium text-[#2e2117]" aria-live="polite">In as it grows… pause… out, slow and long, as it shrinks. Nothing to buy, nothing to light.</p>}
         {phase === "done" && (
           <div aria-live="polite" className="mt-4 text-center">
             <p className="leading-relaxed text-[#2e2117]">You just took the part of smoking that actually helps — the pause and the breath — and left the part that harms. Every craving below can be ridden out exactly this way.</p>
@@ -1757,45 +1765,34 @@ function FoodHook() {
 // Screens: the welcome is looking up. Ten seconds of the real world,
 // counted here, so the tab proves its point before it teaches anything.
 // Then 30 seconds, the next rung (Richard, 2026-11-13): "You did 10,
-// try 30" — progress you can feel, step by step. Spoken counting is
-// sparse on purpose — 1, 2, 3, then the last number (10 or 30) — and
-// off unless the visitor turns it on. No 60-second timer: the 60 was
+// try 30" — progress you can feel, step by step. Sound only, Richard
+// 2026-11-14: "Sound only on screen look away please." — no spoken
+// counting (the voice was too variable), just a soft two-note sound
+// when 10 or 30 seconds is up. No 60-second timer: the 60 was
 // a mix-up with the breathing, and 30 is the rung Richard chose.
 function ScreensHook() {
   const [left, setLeft] = useState<number | null>(null);
   const [doneLooking, setDoneLooking] = useState(false);
   const [doneDuration, setDoneDuration] = useState<number | null>(null);
-  const [speakOn, setSpeakOn] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const speakTimeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
-  const speakOnRef = useRef(speakOn);
-  speakOnRef.current = speakOn;
   const clearTimers = () => {
     if (intervalRef.current) clearInterval(intervalRef.current);
     intervalRef.current = null;
-    speakTimeoutsRef.current.forEach(clearTimeout);
-    speakTimeoutsRef.current = [];
-    stopSpeaking();
   };
   useEffect(() => () => clearTimers(), []);
   const start = (seconds: 10 | 30) => {
     clearTimers();
+    // Warm up the audio engine from this tap, so the "time's up"
+    // sound at the end can actually be heard.
+    sounds.prepareAudio();
     setDoneLooking(false);
     setDoneDuration(null);
     setLeft(seconds);
-    // Spoken counting, only if the visitor turned it on: 1, 2, 3,
-    // then the last number when the timer finishes. Nothing speaks
-    // before this tap, and nothing speaks if the toggle is off.
-    if (speakOnRef.current) {
-      speakNumber(1);
-      speakTimeoutsRef.current.push(setTimeout(() => speakNumber(2), 1000));
-      speakTimeoutsRef.current.push(setTimeout(() => speakNumber(3), 2000));
-    }
     intervalRef.current = setInterval(() => {
       setLeft((s) => {
         if (s == null || s <= 1) {
           if (intervalRef.current) clearInterval(intervalRef.current);
-          if (speakOnRef.current) speakNumber(seconds);
+          sounds.playDoneSound();
           setDoneDuration(seconds);
           setDoneLooking(true);
           return 0;
@@ -1805,15 +1802,11 @@ function ScreensHook() {
     }, 1000);
   };
   return (
-    <HookShell pastelBg="#e4ecf3" pastelBorder="#6486a5" title="Quick test: can you look up?" intro="This is the one tab that wants less of your attention. Prove it works: tap the button, look up from the screen at the real room, the real sky — I'll count. Ten seconds first, then 30 when you're ready.">
-      <div className="mb-3 flex items-center gap-2">
-        <input id="screens-speak-count" type="checkbox" checked={speakOn} onChange={(e) => setSpeakOn(e.target.checked)} className="h-5 w-5 accent-[#6486a5]" />
-        <label htmlFor="screens-speak-count" className="text-sm font-semibold text-[#2e2117]">Hear the counting — spoken, off unless you choose it</label>
-      </div>
-      <p className="mb-3 text-sm leading-relaxed text-[#2e2117]">Spoken counting says 1, 2, 3, then the last number — 10 or 30 — and nothing in between.</p>
+    <HookShell pastelBg="#e4ecf3" pastelBorder="#6486a5" title="Quick test: can you look up?" intro="This is the one tab that wants less of your attention. Prove it works: tap the button, look up from the screen at the real room, the real sky. Ten seconds first, then 30 when you're ready.">
+      <p className="mb-3 text-sm leading-relaxed text-[#2e2117]">A soft sound plays when your time is up — no counting out loud, just look up and listen for it.</p>
       {left == null && !doneLooking && (
         <button type="button" onClick={() => start(10)} className="felt-btn min-h-12 w-full rounded-[var(--radius)] bg-[#6486a5] px-4 text-base font-semibold text-white">
-          Look up now — I&apos;ll count to 10
+          Look up now — 10 seconds
         </button>
       )}
       {left != null && left > 0 && (
@@ -1831,7 +1824,7 @@ function ScreensHook() {
           </p>
           {doneDuration === 10 && (
             <button type="button" onClick={() => start(30)} className="felt-btn mt-3 min-h-12 w-full rounded-[var(--radius)] bg-[#6486a5] px-4 text-base font-semibold text-white">
-              You did 10, try 30 — I&apos;ll count to 30
+              You did 10, try 30
             </button>
           )}
           <button type="button" onClick={() => start(10)} className="mt-3 min-h-11 rounded-[var(--radius)] border-2 border-[#6486a5] px-4 font-semibold text-[#2e2117]">Look up again — 10 seconds</button>

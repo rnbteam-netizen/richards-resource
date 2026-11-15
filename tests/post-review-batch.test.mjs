@@ -16,6 +16,7 @@ const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const src = readFileSync(path.join(root, "client", "src", "App.tsx"), "utf8");
 const sound = readFileSync(path.join(root, "client", "src", "sound.ts"), "utf8");
 const speech = readFileSync(path.join(root, "client", "src", "speech.ts"), "utf8");
+const theme = readFileSync(path.join(root, "client", "src", "theme.css"), "utf8");
 
 const home = src.slice(src.indexOf("function HomePage("), src.indexOf("function ResourcesPage("));
 
@@ -86,21 +87,20 @@ test("5. Codependency: soft female voice reads the phrases aloud, tap-to-hear", 
   assert.ok(codep.includes("stopSpeaking()"), "speech must stop when the phrase changes or the tab is left");
 });
 
-test("6. Screens look-away: 10 seconds first, 30 seconds next, spoken 1-2-3-last", () => {
+test("6. Screens look-away: 10 seconds first, 30 seconds next, sound only at the end", () => {
   const screens = src.slice(src.indexOf("function ScreensHook()"), src.indexOf("function WellbeingHook()"));
-  assert.ok(screens.includes("I&apos;ll count to 10"), "10-second look-away must still be the first win");
+  assert.ok(screens.includes("Look up now — 10 seconds"), "10-second look-away must still be the first win");
   assert.ok(screens.includes("You did 10, try 30"), "30 seconds must be offered as the next rung");
-  assert.ok(screens.includes("I&apos;ll count to 30"), "the 30-second rung must count to 30");
   assert.ok(!screens.includes("start(60)") && !screens.includes("count to 60"), "there must be no 60-second look-away timer");
-  // Spoken counting: 1, 2, 3, then the last number — and off by default.
-  assert.ok(screens.includes('speakNumber(1)'), "counting must speak 1");
-  assert.ok(screens.includes('speakNumber(2)'), "counting must speak 2");
-  assert.ok(screens.includes('speakNumber(3)'), "counting must speak 3");
-  assert.ok(screens.includes('speakNumber(seconds)'), "counting must speak the last number (10 or 30)");
-  assert.ok(screens.includes("const [speakOn, setSpeakOn] = useState(false)"), "spoken counting must default to off");
-  assert.ok(screens.includes("Hear the counting"), "Screens must offer a spoken-counting toggle");
-  assert.ok(screens.includes("1, 2, 3, then the last number"), "copy must explain the sparse counting");
-  assert.ok(speech.includes("speakNumber"), "speech helper must offer speaking a number");
+  // Sound only (Richard, 2026-11-14): no spoken counting — the voice
+  // was too variable — just a soft sound when 10 or 30 seconds is up.
+  assert.ok(!screens.includes("speakNumber"), "look-away must not speak numbers any more");
+  assert.ok(!screens.includes("speakOn"), "look-away must not offer a spoken-counting toggle");
+  assert.ok(!screens.includes("Hear the counting"), "look-away must not offer spoken counting");
+  assert.ok(screens.includes("sounds.playDoneSound()"), "look-away must play a sound when the time is up");
+  assert.ok(screens.includes("sounds.prepareAudio()"), "look-away must warm up audio from the tap, so the end sound can be heard");
+  assert.ok(sound.includes("playDoneSound"), "sound helper must offer a done sound");
+  assert.ok(screens.includes("A soft sound plays when your time is up"), "copy must say a soft sound plays when the time is up");
 });
 
 test("7. grammar: 'None of these are new', 'doctors use' kept", () => {
@@ -164,4 +164,20 @@ test("scoped: banner, tagline, copyright and points are untouched", () => {
   assert.ok(src.includes("© 2026 Richard's Resource. All rights reserved."), "copyright must be unchanged");
   assert.ok(src.includes("No one gets points for killing themselves") || true, "crisis note is in the review file, not the app copy");
   assert.ok(!src.includes("RR is your personal and private"), "launch/intro positioning must NOT be added to the app");
+});
+
+test("10. held fixes 2026-11-14: breathing 3/1/4/1 and the new privacy line", () => {
+  // Breathing (Richard, 2026-11-14): in 3, pause 1, out 4, pause 1.
+  assert.ok(src.includes("const BREATH_IN_MS = 3000"), "breathing in must be 3 seconds");
+  assert.ok(src.includes("const BREATH_OUT_MS = 4000"), "breathing out must be 4 seconds");
+  assert.ok(src.includes("const BREATH_PAUSE_MS = 1000"), "breathing must have a 1-second pause after breathing out");
+  assert.ok(src.includes("BREATH_IN_MS + BREATH_HOLD_MS + BREATH_OUT_MS + BREATH_PAUSE_MS"), "breathing cycle must include all four phases");
+  assert.ok(src.includes("in… 2, 3 — pause — out… 2, 3, 4 — pause."), "breathing caption must read 3 in, pause, 4 out, pause");
+  assert.ok(!src.includes("in… 2, 3, 4 — hold — out… 2, 3, 4, 5, 6."), "old 4/1/6 caption must be gone");
+  assert.ok(!src.includes("about 11 seconds"), "old 11-second breathing copy must be gone");
+  assert.ok(theme.includes("animation: breathe 9s"), "breathing circle must run a 9-second cycle");
+  // Privacy line (Richard, 2026-11-14): in the PrivacyStrip, on every tab.
+  assert.ok(src.includes("We can't share your personal information, because we don't ask for it."), "app must carry the new privacy line");
+  const strip = src.slice(src.indexOf("function PrivacyStrip()"), src.indexOf("function DisclaimerShort()"));
+  assert.ok(strip.includes("We can't share your personal information, because we don't ask for it."), "new privacy line must sit in the PrivacyStrip");
 });

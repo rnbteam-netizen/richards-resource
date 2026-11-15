@@ -127,6 +127,23 @@ class AppSounds {
     osc.stop(startAt + durationMs / 1000 + 0.05);
   }
 
+  // Warm up the audio engine from a tap, so a sound played later
+  // (for example, when a timer finishes) can actually be heard.
+  // Creating/resuming the AudioContext here, inside the tap, is what
+  // lets the later sound play — a context created outside a tap may
+  // stay suspended on a phone.
+  prepareAudio(): void {
+    this.ensureContext();
+  }
+
+  // A soft two-note "time's up" sound (Richard, 2026-11-14, Screens
+  // look-away: sound only, no spoken counting). Same gentle notes as
+  // the slot chime, 523 Hz then 784 Hz, quiet, no words.
+  playDoneSound(): void {
+    this.playTone(523, 220, "sine", 0.12);
+    this.playTone(784, 350, "sine", 0.12, 140);
+  }
+
   playSlotSound(kind: SlotSoundKind): void {
     const spec = SLOT_TONE_SPECS[kind];
     if (kind === "chime") {

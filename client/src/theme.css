@@ -246,20 +246,22 @@
   background: radial-gradient(circle, rgba(255, 205, 92, 0.85) 0%, rgba(255, 178, 84, 0.35) 45%, rgba(255, 178, 84, 0) 72%);
 }
 
-/* Slow breathing for relaxation (Richard, 2026-11-10): breathe in for
-   ~4 seconds, hold ~1 second, breathe out for ~6 seconds — an 11-second
-   cycle. The keyframes encode that shape: the circle grows over the
-   first 4s (36%), stays full through the 1s hold (to 45%), then shrinks
-   slowly over the last 6s. The phase words in App.tsx run on the same
-   4 / 1 / 6 timing so words and circle stay together. */
+/* Slow breathing for relaxation (Richard, 2026-11-14): breathe in for
+   3 seconds, pause 1 second, breathe out for 4 seconds, pause 1 second
+   — a 9-second cycle. The keyframes encode that shape: the circle grows
+   over the first 3s (33%), stays full through the 1s pause (to 44%),
+   then shrinks over the 4s out-breath (to 89%), and rests small through
+   the last 1s pause. The phase words in App.tsx run on the same
+   3 / 1 / 4 / 1 timing so words and circle stay together. */
 @keyframes breathe {
   0% { transform: scale(0.72); }
-  36% { transform: scale(1); }
-  45% { transform: scale(1); }
+  33% { transform: scale(1); }
+  44% { transform: scale(1); }
+  89% { transform: scale(0.72); }
   100% { transform: scale(0.72); }
 }
 .breathe-circle {
-  animation: breathe 11s ease-in-out infinite;
+  animation: breathe 9s ease-in-out infinite;
 }
 @media (prefers-reduced-motion: reduce) {
   .breathe-circle { animation: none; transform: scale(0.86); }

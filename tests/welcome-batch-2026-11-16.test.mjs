@@ -77,6 +77,30 @@ test("13/21/22/24. Welcome cottage is a FULL COVER PAGE first, tap the door to e
   assert.ok(!src.includes("please feel free to choose any option, you may use as many as you like"), "the wording must say 'choose', not 'use'");
 });
 
+test("13/21/22/24b. After entry, the cottage stays on Home, just above the choose wording", () => {
+  // WelcomeIntro is what Home renders after the cover is entered.
+  assert.ok(src.includes("function WelcomeIntro()"), "a WelcomeIntro component must exist on Home");
+  const intro = src.slice(src.indexOf("function WelcomeIntro()"), src.indexOf("function HomePage("));
+  // The same cottage image, banner-sized — not the full cover again.
+  assert.ok(intro.includes("src={welcomeCottage}"), "Home must show the cottage image above the choose line");
+  assert.ok(intro.includes("object-cover"), "the Home cottage must be a cropped banner, not the full picture");
+  assert.ok(intro.includes("h-36"), "the Home cottage must be banner-sized (h-36, sm:h-44), not full-screen");
+  assert.ok(!intro.includes("min-h-dvh"), "the Home cottage must not be a full-screen cover");
+  assert.ok(intro.includes("WELCOME"), "the Home cottage alt text must name the WELCOME mat");
+  assert.ok(!intro.includes("Tap the door to come in"), "the Home cottage is not a tap-to-enter button, so it must not say tap the door");
+  // The cottage comes just above the choose wording, verbatim
+  // (the wording itself lives in WELCOME_CHOOSE_TEXT, pinned
+  // verbatim in the cover test above).
+  assert.ok(intro.includes("{WELCOME_CHOOSE_TEXT}"), "the choose wording must follow the cottage");
+  assert.ok(intro.indexOf("src={welcomeCottage}") < intro.indexOf("{WELCOME_CHOOSE_TEXT}"), "the cottage must sit above the choose wording");
+  assert.ok(home.includes("<WelcomeIntro />"), "Home must render WelcomeIntro on every visit");
+  // The cover itself is unchanged: full-screen, first open only.
+  assert.ok(src.includes("function WelcomeCover("), "the full cover page must still exist for first-time visitors");
+  const cover = src.slice(src.indexOf("function WelcomeCover("), src.indexOf("function WelcomeIntro()"));
+  assert.ok(cover.includes("min-h-dvh"), "the cover must still be full-screen");
+  assert.ok(cover.includes("skip the welcome"), "the cover must still carry the skip-the-welcome button");
+});
+
 test("16. Home banner 'The best FREE self-help app EVER!' is about 1/4 its size", () => {
   assert.ok(src.includes("The best FREE self-help app EVER!"), "banner wording must be unchanged");
   assert.ok(!home.includes("text-[28px]"), "the banner must no longer be 28px");

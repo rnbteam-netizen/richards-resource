@@ -4187,9 +4187,11 @@ function FeedbackContact() {
 // the door / sign / image opens the first page and begins the
 // journey. It is NOT a gate in front of help: a small
 // "I need help right now — skip the welcome" button on the cover
-// itself goes straight in. Once you have come in, it does not show
-// again — a localStorage flag, like What's New — and the next screen
-// says, in Richard's words: "please feel free to choose any option,
+// itself goes straight in. Once you have come in, the full cover
+// does not show again — a localStorage flag, like What's New —
+// but a smaller cottage banner stays on Home above the choose line
+// (Richard, 2026-11-16). The next screen says, in Richard's words:
+// "please feel free to choose any option,
 // you may choose as many as you like".
 const WELCOME_KEY = "richards-resource:welcome-seen";
 const WELCOME_CHOOSE_TEXT = "please feel free to choose any option, you may choose as many as you like";
@@ -4211,13 +4213,21 @@ function WelcomeCover({ onEnter }: { onEnter: () => void }) {
   );
 }
 
-// After first entry, Home shows this line instead of the cover,
-// in Richard's words (note 24, 'choose' not 'use'/'select').
+// After first entry, Home shows the cottage again — smaller,
+// banner-sized, just above the choose line, on every Home visit
+// (Richard, 2026-11-16: he was disappointed it was only on the
+// first view). It is the same WELCOME-mat image, not the full cover
+// again, and it is not a button — the cover stays the only tap-to-
+// enter version, for first-time visitors. The choose line follows
+// it, in Richard's words (note 24, 'choose' not 'use'/'select').
 function WelcomeIntro() {
   return (
-    <p className="felt-soft mb-5 rounded-[var(--radius)] border-2 border-[var(--leaf)] bg-[var(--leaf-soft)] px-4 py-3 text-center font-bold leading-relaxed text-[var(--text)]" role="note">
-      {WELCOME_CHOOSE_TEXT}
-    </p>
+    <div className="mb-5">
+      <img src={welcomeCottage} alt="A cottage in a sunrise field with a wooden front door, a welcome mat that says WELCOME, and a stepping-stone pathway." className="block h-36 w-full rounded-[var(--radius)] border-2 border-[var(--sun)] object-cover sm:h-44" />
+      <p className="felt-soft mt-3 rounded-[var(--radius)] border-2 border-[var(--leaf)] bg-[var(--leaf-soft)] px-4 py-3 text-center font-bold leading-relaxed text-[var(--text)]" role="note">
+        {WELCOME_CHOOSE_TEXT}
+      </p>
+    </div>
   );
 }
 

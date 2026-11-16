@@ -1039,7 +1039,11 @@ const PAUSE_STEPS = [30, 60, 120, 300] as const;
 // the live app ("the breathing is really off"): in 3, pause 1, out 4,
 // pause 1 — a 9-second cycle, replacing the earlier 4 / 1 / 6 shape.
 // The .breathe-circle animation in theme.css runs the same 3 / 1 / 4 / 1
-// shape so the words and the circle stay together.
+// shape. Richard, 2026-11-16: the words inside the circle flashed too
+// quickly once it was turned on (the 1s "pause" most of all), so while the
+// breathing runs the circle shows no words at all — just the empty
+// expanding/contracting circle. The caption below the circle still says
+// the rhythm, and the idle words stay when it is not running.
 const BREATH_IN_MS = 3000;
 const BREATH_HOLD_MS = 1000;
 const BREATH_OUT_MS = 4000;
@@ -1051,11 +1055,6 @@ function nextBreathPhase(p: BreathPhase): BreathPhase {
 }
 function breathPhaseMs(p: BreathPhase): number {
   return p === "breathe in" ? BREATH_IN_MS : p === "pause" ? BREATH_HOLD_MS : p === "breathe out" ? BREATH_OUT_MS : BREATH_PAUSE_MS;
-}
-// Both pauses read "pause" on screen: the hold after breathing in, and
-// the rest after breathing out.
-function breathPhaseLabel(p: BreathPhase): string {
-  return p === "rest" ? "pause" : p;
 }
 
 function pauseLabel(seconds: number): string {
@@ -1115,9 +1114,10 @@ function StepPause({ borderClass, buttonClass, title, hook, earlyMsg, midMsg, la
     }
   }, [mode, running, secondsLeft, stepSeconds]);
 
-  // Phase words follow the same cycle as the circle: in 3s, pause
+  // Phase timing follows the same cycle as the circle: in 3s, pause
   // 1s, out 4s, pause 1s, repeat. A timeout per phase (not a fixed interval) so
-  // each phase gets its own length.
+  // each phase gets its own length. The circle itself shows no words while
+  // running (see the note at BREATH_IN_MS) — only the idle words below.
   useEffect(() => {
     if (!running) return;
     const t = setTimeout(() => setPhase((p) => nextBreathPhase(p)), breathPhaseMs(phase));
@@ -1166,7 +1166,7 @@ function StepPause({ borderClass, buttonClass, title, hook, earlyMsg, midMsg, la
       {showHook && <p className="mx-auto mt-3 max-w-md font-medium leading-relaxed text-[var(--text)]">{hook}</p>}
       <div className="mx-auto mt-5 flex h-36 w-36 items-center justify-center">
         <div className={`breathe-circle sun-glow flex h-32 w-32 items-center justify-center rounded-full bg-[#ffd971] ${running ? "" : "[animation-play-state:paused]"}`}>
-          <span className="px-3 text-sm font-semibold text-[#7c2d12]">{running ? breathPhaseLabel(phase) : "breathe with the circle"}</span>
+          <span className="px-3 text-sm font-semibold text-[#7c2d12]">{running ? "" : "breathe with the circle"}</span>
         </div>
       </div>
       <p className="mb-4 mt-1 text-sm text-[var(--dim)]">Slow and easy: in… 2, 3 — pause — out… 2, 3, 4 — pause.</p>
@@ -1432,7 +1432,7 @@ function CalmingBreathing() {
       </p>
       <div className="mx-auto mt-5 flex h-36 w-36 items-center justify-center">
         <div className={`breathe-circle sun-glow flex h-32 w-32 items-center justify-center rounded-full bg-[#ffd971] ${running ? "" : "[animation-play-state:paused]"}`}>
-          <span className="px-3 text-sm font-semibold text-[#7c2d12]">{running ? breathPhaseLabel(phase) : "breathe with the circle"}</span>
+          <span className="px-3 text-sm font-semibold text-[#7c2d12]">{running ? "" : "breathe with the circle"}</span>
         </div>
       </div>
       <p className="mb-4 mt-1 text-sm text-[var(--dim)]">Slow and easy: in… 2, 3 — pause — out… 2, 3, 4 — pause.</p>
@@ -1585,26 +1585,21 @@ function AlcoholHook() {
 // first — one slow breath, on the tab's own breathing circle.
 function SmokingHook() {
   const [phase, setPhase] = useState<"idle" | "breathing" | "done">("idle");
-  const [breath, setBreath] = useState<BreathPhase>("breathe in");
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   useEffect(() => () => { timersRef.current.forEach(clearTimeout); }, []);
   const start = () => {
     timersRef.current.forEach(clearTimeout);
     timersRef.current = [];
     setPhase("breathing");
-    setBreath("breathe in");
     // One full slow cycle on the shared rhythm — in 3, pause 1, out 4,
-    // pause 1 — with the words changing on the same timing as the circle.
-    timersRef.current.push(setTimeout(() => setBreath("pause"), BREATH_IN_MS));
-    timersRef.current.push(setTimeout(() => setBreath("breathe out"), BREATH_IN_MS + BREATH_HOLD_MS));
-    timersRef.current.push(setTimeout(() => setBreath("rest"), BREATH_IN_MS + BREATH_HOLD_MS + BREATH_OUT_MS));
+    // pause 1 — with the circle showing no words while it runs.
     timersRef.current.push(setTimeout(() => setPhase("done"), BREATH_CYCLE_MS));
   };
   return (
     <HookShell pastelBg="#dceef7" pastelBorder="#5b9bbf" title="Take the breath the cigarette promises you" intro="Most of what a cigarette sells is this: a pause, and one deep breath. That part was always free. Try it — breathe with the circle, slowly in, a short hold, then a long slow out, once through.">
       <div className="flex flex-col items-center">
         <div className={`breathe-circle sun-glow flex h-28 w-28 items-center justify-center rounded-full bg-[#ffd971] ${phase === "breathing" ? "" : "[animation-play-state:paused]"}`} aria-hidden="true">
-          <span className="px-3 text-center text-sm font-semibold text-[#7c2d12]">{phase === "breathing" ? breathPhaseLabel(breath) : phase === "done" ? "that's real air" : "one clean breath"}</span>
+          <span className="px-3 text-center text-sm font-semibold text-[#7c2d12]">{phase === "breathing" ? "" : phase === "done" ? "that's real air" : "one clean breath"}</span>
         </div>
         {phase === "idle" && (
           <button type="button" onClick={start} className="felt-btn mt-4 min-h-12 w-full rounded-[var(--radius)] bg-[var(--sky-deep)] px-4 text-base font-semibold text-white">

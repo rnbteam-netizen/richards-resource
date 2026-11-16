@@ -1,6 +1,14 @@
 // Richard's Resource — standalone public server.
 // Serves the built client from client/dist/ and exposes:
 //   GET  /health          -> {"status":"ok"}
+//   GET  /counts          -> {"welcomeDevices":N,"devicesSeen":M}
+//                            Aggregate counts only, for Richard — how
+//                            many distinct anonymous devices claimed the
+//                            +10 welcome points, and how many distinct
+//                            anonymous devices have any points at all.
+//                            No device ids, no rows, no personal data.
+//                            Anyone who guesses the URL sees just those
+//                            two numbers. Not shown in the app UI.
 //   POST /actions         -> {action, deviceId, args} dispatches one of
 //                            the 7 actions in actions.ts, with Zod
 //                            validation. The point values live on the
@@ -22,6 +30,34 @@ const db = createDb();
 
 app.get("/health", (_req: Request, res: Response) => {
   res.json({ status: "ok" });
+});
+
+// Private, anonymous download count (Richard, 2026-11-16): the app is
+// web-only, no app store, no analytics, no accounts — nobody counts
+// downloads for us. The closest honest proxy already in the database:
+// distinct anonymous device_ids that claimed the +10 welcome points
+// (action='welcome', server-enforced once per device in actions.ts).
+// That counts distinct phones/browsers that opened the app, including
+// Richard and testers. Two aggregate numbers only — no device ids, no
+// rows, no personal data of any kind. Placed before the static-client
+// catch-all below, so the SPA fallback does not swallow it.
+app.get("/counts", async (_req: Request, res: Response) => {
+  try {
+    const welcome = await db.query(
+      `SELECT COUNT(DISTINCT device_id) AS n FROM points WHERE action = 'welcome'`,
+    );
+    const seen = await db.query(
+      `SELECT COUNT(DISTINCT device_id) AS n FROM points`,
+    );
+    res.json({
+      welcomeDevices: Number(welcome.rows[0]?.n ?? 0),
+      devicesSeen: Number(seen.rows[0]?.n ?? 0),
+    });
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error("[counts] failed:", err instanceof Error ? err.message : err);
+    res.status(500).json({ error: "Count unavailable" });
+  }
 });
 
 const actionBody = z.object({

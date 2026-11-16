@@ -4178,46 +4178,46 @@ function FeedbackContact() {
   );
 }
 
-// Warm Welcome intro (Richard, 2026-11-15, notes 13, 21, 22, 24):
+// Warm Welcome intro (Richard, 2026-11-15, notes 13, 21, 22, 24;
+// full cover page, Richard, 2026-11-16):
 // a cottage in the sunrise field, slightly elevated porch, wooden
 // front door, a welcome mat that says WELCOME, and a stepping-stone
-// pathway. One tap on the door / sign / image opens the first page
-// and begins the journey. It is NOT a gate in front of help: the tab
-// buttons above this page are always open, the true message, the
-// breathing, and the crisis numbers are all underneath it, and there
-// is a "skip the welcome" button that goes straight in. Once you
-// have come in, it does not show again — a localStorage flag, like
-// What's New — and the next screen says, in Richard's words:
-// "please feel free to choose any option, you may choose as many
-// as you like".
+// pathway. On first open the cottage is ALL you see — a full-screen
+// cover, no tab buttons, no Home content underneath it. One tap on
+// the door / sign / image opens the first page and begins the
+// journey. It is NOT a gate in front of help: a small
+// "I need help right now — skip the welcome" button on the cover
+// itself goes straight in. Once you have come in, it does not show
+// again — a localStorage flag, like What's New — and the next screen
+// says, in Richard's words: "please feel free to choose any option,
+// you may choose as many as you like".
 const WELCOME_KEY = "richards-resource:welcome-seen";
 const WELCOME_CHOOSE_TEXT = "please feel free to choose any option, you may choose as many as you like";
 
-function WelcomeIntro() {
-  const [entered, setEntered] = useState(() => safeLocalGet(WELCOME_KEY) === "seen");
-  if (entered) {
-    return (
-      <p className="felt-soft mb-5 rounded-[var(--radius)] border-2 border-[var(--leaf)] bg-[var(--leaf-soft)] px-4 py-3 text-center font-bold leading-relaxed text-[var(--text)]" role="note">
-        {WELCOME_CHOOSE_TEXT}
-      </p>
-    );
-  }
-  const enter = () => {
-    safeLocalSet(WELCOME_KEY, "seen");
-    setEntered(true);
-  };
+function WelcomeCover({ onEnter }: { onEnter: () => void }) {
   return (
-    <div className="mb-5" role="region" aria-label="Welcome to Richard's Resource">
-      <button type="button" onClick={enter} aria-label="Open the door and begin — tap the cottage to enter Richard's Resource" className="felt-card block w-full overflow-hidden rounded-[var(--radius)] border-2 border-[var(--sun)] bg-[var(--surface)] p-0 text-left">
-        <img src={welcomeCottage} alt="A cottage in a sunrise field with a wooden front door, a welcome mat that says WELCOME, and a stepping-stone pathway. Tap the door to come in." className="block h-auto w-full" />
-        <span className="block px-4 py-3 text-center font-display text-lg font-bold text-[var(--text)]">Welcome — tap the door to come in</span>
-        <span className="block px-4 pb-4 text-center text-sm leading-relaxed text-[var(--dim)]">“open please come in” — one tap on the door, and you are in.</span>
-      </button>
-      <button type="button" onClick={enter} className="mt-2 min-h-11 w-full rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 text-sm font-semibold text-[var(--text)]">
-        I need help right now — skip the welcome
-      </button>
-      <p className="mt-2 text-center text-sm text-[var(--dim)]">The tabs above are always open — you can tap any tab without entering here.</p>
+    <div className="felt-page flex min-h-dvh flex-col bg-[var(--bg)]" role="region" aria-label="Welcome to Richard's Resource">
+      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col justify-center px-4 py-6">
+        <button type="button" onClick={onEnter} aria-label="Open the door and begin — tap the cottage to enter Richard's Resource" className="felt-card block w-full overflow-hidden rounded-[var(--radius)] border-2 border-[var(--sun)] bg-[var(--surface)] p-0 text-left">
+          <img src={welcomeCottage} alt="A cottage in a sunrise field with a wooden front door, a welcome mat that says WELCOME, and a stepping-stone pathway. Tap the door to come in." className="block h-auto w-full" />
+          <span className="block px-4 py-3 text-center font-display text-lg font-bold text-[var(--text)]">Welcome — tap the door to come in</span>
+          <span className="block px-4 pb-4 text-center text-sm leading-relaxed text-[var(--dim)]">“open please come in” — one tap on the door, and you are in.</span>
+        </button>
+        <button type="button" onClick={onEnter} className="mt-4 min-h-11 w-full rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 text-sm font-semibold text-[var(--text)]">
+          I need help right now — skip the welcome
+        </button>
+      </main>
     </div>
+  );
+}
+
+// After first entry, Home shows this line instead of the cover,
+// in Richard's words (note 24, 'choose' not 'use'/'select').
+function WelcomeIntro() {
+  return (
+    <p className="felt-soft mb-5 rounded-[var(--radius)] border-2 border-[var(--leaf)] bg-[var(--leaf-soft)] px-4 py-3 text-center font-bold leading-relaxed text-[var(--text)]" role="note">
+      {WELCOME_CHOOSE_TEXT}
+    </p>
   );
 }
 
@@ -4530,6 +4530,15 @@ const TAB_TO_POINT_TAB: Record<TabId, PointTab> = {
 
 export function App() {
   const [tab, setTab] = useState<TabId>("home");
+  // Full cover page (Richard, 2026-11-16): on first open the cottage
+  // is all you see, until you tap the door or skip. After that the
+  // flag is set and returning visitors go straight to Home.
+  const [welcomeEntered, setWelcomeEntered] = useState(() => safeLocalGet(WELCOME_KEY) === "seen");
+  const enterWelcome = () => {
+    safeLocalSet(WELCOME_KEY, "seen");
+    setWelcomeEntered(true);
+    if (typeof window !== "undefined") window.scrollTo(0, 0);
+  };
   const [showTerms, setShowTerms] = useState(false);
   const [surfCategory, setSurfCategory] = useState<Category | null>(null);
   const [pendingRide, setPendingRide] = useState<boolean | null>(null);
@@ -4664,6 +4673,14 @@ export function App() {
   });
 
   const activeSurf: Category | null = surfCategory ?? (tab !== "home" && tab !== "resources" && tab !== "wellbeing" && tab !== "food" && tab !== "screens" && tab !== "longevity" && tab !== "peace" ? tab : null);
+
+  // Full cover page: before first entry, the cottage is all you
+  // see — no tab buttons, no Home content, no footer. Tap the door
+  // or "skip the welcome" to enter. All hooks above have run, so
+  // this early return is safe.
+  if (!welcomeEntered) {
+    return <WelcomeCover onEnter={enterWelcome} />;
+  }
 
   return (
     <PointsContext.Provider value={pointsApi}>

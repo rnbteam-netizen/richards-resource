@@ -36,32 +36,42 @@ test("10. What's New is click-to-open, not full wordy text on Home", () => {
   assert.ok(banner.includes("it will not come back for this version"), "banner must say it will not come back");
 });
 
-test("13/21/22/24. Welcome cottage intro first on Home, tap the door to enter, never a gate", () => {
+test("13/21/22/24. Welcome cottage is a FULL COVER PAGE first, tap the door to enter, never a gate", () => {
   const imgPath = path.join(root, "client", "src", "assets", "welcome-cottage.jpg");
   assert.ok(existsSync(imgPath), "the chosen cottage image must live in the app's client assets");
   const buf = readFileSync(imgPath);
   assert.deepEqual([...buf.subarray(0, 3)], [0xff, 0xd8, 0xff], "cottage image must be a real JPEG");
   assert.ok(buf.length > 100000, "cottage image must be the full 1920x1280 picture, not a placeholder");
   assert.ok(src.includes('import welcomeCottage from "./assets/welcome-cottage.jpg"'), "the image must be imported so Vite bundles it");
-  assert.ok(src.includes("function WelcomeIntro()"), "a WelcomeIntro component must exist");
-  assert.ok(home.includes("<WelcomeIntro />"), "Home must render the Welcome intro");
-  // First thing on Home: before the true message, What's New, the tagline and the banner.
+  // The cover itself: a dedicated full-screen component.
+  assert.ok(src.includes("function WelcomeCover("), "a WelcomeCover component must exist");
+  const cover = src.slice(src.indexOf("function WelcomeCover("), src.indexOf("function WelcomeIntro()"));
+  assert.ok(cover.includes("min-h-dvh"), "the cover must be full-screen");
+  assert.ok(cover.includes('aria-label="Open the door and begin'), "the cottage must be a tap-to-enter button");
+  assert.ok(cover.includes("WELCOME"), "the image alt text must name the WELCOME mat");
+  assert.ok(cover.includes("Tap the door to come in"), "the cover must say tap the door to come in");
+  assert.ok(cover.includes("open please come in"), "the cover must carry the sign wording");
+  // Not a gate: a skip button on the cover itself goes straight in.
+  assert.ok(cover.includes("skip the welcome"), "there must be a skip-the-welcome button on the cover");
+  assert.ok(cover.includes("I need help right now"), "the skip button must offer help right now");
+  assert.ok(!src.includes("The tabs above are always open"), "no tabs are shown above the cover, so that line must be gone");
+  // The App gates on the cover: first open shows ONLY the cover —
+  // no tab nav, no Home, no footer — until the door is tapped.
+  const app = src.slice(src.indexOf("export function App()"));
+  assert.ok(src.includes('const WELCOME_KEY = "richards-resource:welcome-seen"'), "the cover must use its own localStorage key");
+  assert.ok(app.includes('safeLocalGet(WELCOME_KEY) === "seen"'), "the App must hide the cover once the flag is set");
+  assert.ok(app.includes('safeLocalSet(WELCOME_KEY, "seen")'), "entering must record the seen flag locally");
+  assert.ok(app.includes("return <WelcomeCover onEnter={enterWelcome} />;"), "the App must return only the cover before first entry");
+  assert.ok(app.indexOf("if (!welcomeEntered)") < app.indexOf('<nav aria-label="Sections"'), "the cover gate must come before the tab nav");
+  assert.ok(app.indexOf("if (!welcomeEntered)") < app.indexOf("<HomePage"), "the cover gate must come before Home");
+  assert.ok(app.indexOf("if (!welcomeEntered)") < app.indexOf("<MeadowFooter"), "the cover gate must come before the footer");
+  // After tapping, Home shows the choose wording, verbatim, with
+  // 'choose' not 'use'/'select' — via the WelcomeIntro line on Home.
+  assert.ok(src.includes("function WelcomeIntro()"), "a WelcomeIntro component must exist on Home");
+  assert.ok(home.includes("<WelcomeIntro />"), "Home must render the Welcome intro line");
   const TRUE = "We don&apos;t share your data. This is your personal journey... BUT YOU ARE NOT ALONE. Help is at your fingertips.";
   assert.ok(home.indexOf("<WelcomeIntro />") < home.indexOf(TRUE), "intro must come before the true message");
   assert.ok(home.indexOf("<WelcomeIntro />") < home.indexOf("<WhatsNewBanner />"), "intro must come before What's New");
-  // The door is the entry: one tap, on the image button.
-  const intro = src.slice(src.indexOf("function WelcomeIntro()"), src.indexOf("function HomePage("));
-  assert.ok(intro.includes('aria-label="Open the door and begin'), "the cottage must be a tap-to-enter button");
-  assert.ok(intro.includes("WELCOME"), "the image alt text must name the WELCOME mat");
-  assert.ok(intro.includes("Tap the door to come in"), "the intro must say tap the door to come in");
-  // Not a gate: a skip button, and the tabs above are always open.
-  assert.ok(intro.includes("skip the welcome"), "there must be a skip-the-welcome button");
-  assert.ok(intro.includes("The tabs above are always open"), "the intro must say the tabs are always open");
-  // Does not reappear after first entry: its own localStorage flag.
-  assert.ok(src.includes('const WELCOME_KEY = "richards-resource:welcome-seen"'), "intro must use its own localStorage key");
-  assert.ok(intro.includes("safeLocalSet(WELCOME_KEY, \"seen\")"), "entering must record the seen flag locally");
-  assert.ok(intro.includes('safeLocalGet(WELCOME_KEY) === "seen"'), "intro must hide once the flag is set");
-  // After tapping, the next screen says, verbatim, with 'choose' not 'use'/'select'.
   assert.ok(src.includes("please feel free to choose any option, you may choose as many as you like"), "Home must carry the exact choose wording");
   assert.ok(!src.includes("please feel free to select any option"), "the old 'select' wording must not appear");
   assert.ok(!src.includes("please feel free to choose any option, you may use as many as you like"), "the wording must say 'choose', not 'use'");

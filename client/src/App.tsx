@@ -4213,17 +4213,18 @@ function WelcomeCover({ onEnter }: { onEnter: () => void }) {
   );
 }
 
-// After first entry, Home shows the cottage again — smaller,
-// banner-sized, just above the choose line, on every Home visit
-// (Richard, 2026-11-16: he was disappointed it was only on the
-// first view). It is the same WELCOME-mat image, not the full cover
-// again, and it is not a button — the cover stays the only tap-to-
-// enter version, for first-time visitors. The choose line follows
-// it, in Richard's words (note 24, 'choose' not 'use'/'select').
+// After first entry, Home shows the cottage again — the FULL image,
+// uncropped (h-auto, no object-cover), just above the choose line,
+// on every Home visit (Richard, 2026-11-16: the cropped banner hid
+// the stepping-stone pathway and the background scenery). It is the
+// same WELCOME-mat image, not the full cover again, and it is not a
+// button — the cover stays the only tap-to-enter version, for
+// first-time visitors. The choose line follows it, in Richard's
+// words (note 24, 'choose' not 'use'/'select').
 function WelcomeIntro() {
   return (
     <div className="mb-5">
-      <img src={welcomeCottage} alt="A cottage in a sunrise field with a wooden front door, a welcome mat that says WELCOME, and a stepping-stone pathway." className="block h-36 w-full rounded-[var(--radius)] border-2 border-[var(--sun)] object-cover sm:h-44" />
+      <img src={welcomeCottage} alt="A cottage in a sunrise field with a wooden front door, a welcome mat that says WELCOME, and a stepping-stone pathway." className="block h-auto w-full rounded-[var(--radius)] border-2 border-[var(--sun)]" />
       <p className="felt-soft mt-3 rounded-[var(--radius)] border-2 border-[var(--leaf)] bg-[var(--leaf-soft)] px-4 py-3 text-center font-bold leading-relaxed text-[var(--text)]" role="note">
         {WELCOME_CHOOSE_TEXT}
       </p>

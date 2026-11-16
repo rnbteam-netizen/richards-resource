@@ -81,10 +81,14 @@ test("13/21/22/24b. After entry, the cottage stays on Home, just above the choos
   // WelcomeIntro is what Home renders after the cover is entered.
   assert.ok(src.includes("function WelcomeIntro()"), "a WelcomeIntro component must exist on Home");
   const intro = src.slice(src.indexOf("function WelcomeIntro()"), src.indexOf("function HomePage("));
-  // The same cottage image, banner-sized — not the full cover again.
+  // The same cottage image, shown FULL and uncropped — no fixed
+  // height, no object-cover crop — so the stepping-stone pathway
+  // and the background scenery are visible (Richard, 2026-11-16:
+  // the cropped banner hid them). Not the full cover again.
   assert.ok(intro.includes("src={welcomeCottage}"), "Home must show the cottage image above the choose line");
-  assert.ok(intro.includes("object-cover"), "the Home cottage must be a cropped banner, not the full picture");
-  assert.ok(intro.includes("h-36"), "the Home cottage must be banner-sized (h-36, sm:h-44), not full-screen");
+  assert.ok(intro.includes("h-auto w-full"), "the Home cottage must show the full image, uncropped (h-auto w-full)");
+  assert.ok(!intro.includes("object-cover"), "the Home cottage must not crop the image with object-cover");
+  assert.ok(!intro.includes("h-36"), "the Home cottage must not use a fixed banner height (h-36) that crops it");
   assert.ok(!intro.includes("min-h-dvh"), "the Home cottage must not be a full-screen cover");
   assert.ok(intro.includes("WELCOME"), "the Home cottage alt text must name the WELCOME mat");
   assert.ok(!intro.includes("Tap the door to come in"), "the Home cottage is not a tap-to-enter button, so it must not say tap the door");

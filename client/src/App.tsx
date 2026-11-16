@@ -3,6 +3,7 @@ import { useIsMutating, useMutation, useQuery, useQueryClient } from "@tanstack/
 import { api, type ApiResponse } from "./api";
 import { sounds, type CalmToneKind } from "./sound";
 import { speakText, stopSpeaking } from "./speech";
+import welcomeCottage from "./assets/welcome-cottage.jpg";
 
 type Category = "alcohol" | "smoking" | "gambling" | "drugs" | "codependency";
 type Profile = ApiResponse<typeof api, "getState">["profiles"][number];
@@ -205,7 +206,13 @@ const WHATS_NEW_ITEMS = [
 function WhatsNewBanner() {
   // Shown only if this browser hasn't seen this version yet. The
   // initial state reads localStorage once; dismissing writes the flag.
+  // Click-to-open (Richard, 2026-11-15, note 10): the full wordy list
+  // is hidden until tapped, so Home stays short and easy to read.
+  // It starts closed; tapping the header opens it, tapping again
+  // closes it. Dismissing (X or "Got it") is unchanged: it writes
+  // the seen-version flag, so it will not come back for this version.
   const [visible, setVisible] = useState(() => safeLocalGet(WHATS_NEW_KEY) !== WHATS_NEW_VERSION);
+  const [open, setOpen] = useState(false);
   if (!visible) return null;
   const dismiss = () => {
     safeLocalSet(WHATS_NEW_KEY, WHATS_NEW_VERSION);
@@ -214,25 +221,34 @@ function WhatsNewBanner() {
   return (
     <div className="felt-card mb-5 rounded-[var(--radius)] border-2 border-[var(--sun)] bg-[var(--amber-soft)] p-5" role="region" aria-label="What's new in this version">
       <div className="flex items-start justify-between gap-3">
-        <p className="font-display text-lg font-bold text-[var(--text)]">✨ What's new</p>
+        <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-label={open ? "Close what's new" : "Open what's new"} className="min-h-11 flex-1 rounded-[var(--radius)] text-left font-display text-lg font-bold text-[var(--text)]">
+          ✨ What's new {open ? "— tap to close" : "— tap to open"}
+        </button>
         <button type="button" onClick={dismiss} aria-label="Close what's new" className="min-h-11 min-w-11 shrink-0 rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-3 text-lg font-bold text-[var(--text)]">
           ✕
         </button>
       </div>
-      <ul className="mt-2 space-y-1.5">
-        {WHATS_NEW_ITEMS.map((item) => (
-          <li key={item} className="flex gap-2 text-sm leading-relaxed text-[var(--text)]">
-            <span aria-hidden className="mt-0.5 text-[var(--accent)]">•</span><span>{item}</span>
-          </li>
-        ))}
-      </ul>
-      <p className="mt-3 text-sm text-[var(--dim)]">
-        No notifications, no emails — this banner is the only announcement, and it shows once per version.
-      </p>
-      <button type="button" onClick={dismiss} aria-label="Dismiss what's new" className="felt-btn mt-3 min-h-14 w-full rounded-[var(--radius)] bg-[var(--accent)] px-4 text-base font-bold text-white">
-        Got it — hide this
-      </button>
-      <p className="mt-2 text-center text-sm text-[var(--dim)]">Tap “Got it” or ✕ above to hide this — it will not come back for this version.</p>
+      {!open && (
+        <p className="mt-1 text-sm leading-relaxed text-[var(--dim)]">What&apos;s new in version {WHATS_NEW_VERSION} — tap to open and see.</p>
+      )}
+      {open && (
+        <>
+          <ul className="mt-2 space-y-1.5">
+            {WHATS_NEW_ITEMS.map((item) => (
+              <li key={item} className="flex gap-2 text-sm leading-relaxed text-[var(--text)]">
+                <span aria-hidden className="mt-0.5 text-[var(--accent)]">•</span><span>{item}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-3 text-sm text-[var(--dim)]">
+            No notifications, no emails — this banner is the only announcement, and it shows once per version.
+          </p>
+          <button type="button" onClick={dismiss} aria-label="Dismiss what's new" className="felt-btn mt-3 min-h-14 w-full rounded-[var(--radius)] bg-[var(--accent)] px-4 text-base font-bold text-white">
+            Got it — hide this
+          </button>
+          <p className="mt-2 text-center text-sm text-[var(--dim)]">Tap “Got it” or ✕ above to hide this — it will not come back for this version.</p>
+        </>
+      )}
     </div>
   );
 }
@@ -997,6 +1013,7 @@ function MeadowFooter({ onTerms }: { onTerms: () => void }) {
         </p>
         <p className="mt-1 text-center font-display text-base font-bold text-[var(--accent)]">Making the world 🌎 a happier place ❤️</p>
         <p className="mt-1 text-center text-sm font-semibold text-[var(--dim)]">We don't share your data. This is your personal journey.</p>
+        <div className="mt-2"><FeedbackContact /></div>
         <p className="mt-1 text-center text-xs text-[var(--dim)]">© 2026 Richard's Resource. All rights reserved.</p>
         <p className="mt-2 text-center">
           <button type="button" onClick={onTerms} className="text-sm font-semibold text-[var(--accent)] underline">Terms of Use</button>
@@ -4140,9 +4157,66 @@ function AddToHomeScreenHint() {
       <div>
         <p className="font-display text-base font-bold text-[var(--text)]">Add RR to your home screen</p>
         <p className="mt-0.5 text-sm leading-relaxed text-[var(--text)]">
-          Tap your browser menu, then <strong>Add to Home Screen</strong>. RR opens full-screen, like an app, and updates automatically.
+          It takes a few taps, not one touch: in Chrome, tap the three dots, then <strong>Add to Home Screen</strong>, then <strong>Add</strong>. RR opens full-screen, like an app, and updates automatically.
         </p>
       </div>
+    </div>
+  );
+}
+
+// Contact for feedback (Richard, 2026-11-15, note 20): a small
+// tap-to-email link, in Help & Resources and in the footer. Nothing
+// required, no account, no form, no gate in front of help.
+const CONTACT_EMAIL = "richardsresource3@gmail.com";
+
+function FeedbackContact() {
+  return (
+    <p className="text-center text-sm leading-relaxed text-[var(--text)]">
+      Questions or feedback? Email{" "}
+      <a className="font-semibold text-[var(--accent)] underline" href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
+    </p>
+  );
+}
+
+// Warm Welcome intro (Richard, 2026-11-15, notes 13, 21, 22, 24):
+// a cottage in the sunrise field, slightly elevated porch, wooden
+// front door, a welcome mat that says WELCOME, and a stepping-stone
+// pathway. One tap on the door / sign / image opens the first page
+// and begins the journey. It is NOT a gate in front of help: the tab
+// buttons above this page are always open, the true message, the
+// breathing, and the crisis numbers are all underneath it, and there
+// is a "skip the welcome" button that goes straight in. Once you
+// have come in, it does not show again — a localStorage flag, like
+// What's New — and the next screen says, in Richard's words:
+// "please feel free to choose any option, you may choose as many
+// as you like".
+const WELCOME_KEY = "richards-resource:welcome-seen";
+const WELCOME_CHOOSE_TEXT = "please feel free to choose any option, you may choose as many as you like";
+
+function WelcomeIntro() {
+  const [entered, setEntered] = useState(() => safeLocalGet(WELCOME_KEY) === "seen");
+  if (entered) {
+    return (
+      <p className="felt-soft mb-5 rounded-[var(--radius)] border-2 border-[var(--leaf)] bg-[var(--leaf-soft)] px-4 py-3 text-center font-bold leading-relaxed text-[var(--text)]" role="note">
+        {WELCOME_CHOOSE_TEXT}
+      </p>
+    );
+  }
+  const enter = () => {
+    safeLocalSet(WELCOME_KEY, "seen");
+    setEntered(true);
+  };
+  return (
+    <div className="mb-5" role="region" aria-label="Welcome to Richard's Resource">
+      <button type="button" onClick={enter} aria-label="Open the door and begin — tap the cottage to enter Richard's Resource" className="felt-card block w-full overflow-hidden rounded-[var(--radius)] border-2 border-[var(--sun)] bg-[var(--surface)] p-0 text-left">
+        <img src={welcomeCottage} alt="A cottage in a sunrise field with a wooden front door, a welcome mat that says WELCOME, and a stepping-stone pathway. Tap the door to come in." className="block h-auto w-full" />
+        <span className="block px-4 py-3 text-center font-display text-lg font-bold text-[var(--text)]">Welcome — tap the door to come in</span>
+        <span className="block px-4 pb-4 text-center text-sm leading-relaxed text-[var(--dim)]">“open please come in” — one tap on the door, and you are in.</span>
+      </button>
+      <button type="button" onClick={enter} className="mt-2 min-h-11 w-full rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 text-sm font-semibold text-[var(--text)]">
+        I need help right now — skip the welcome
+      </button>
+      <p className="mt-2 text-center text-sm text-[var(--dim)]">The tabs above are always open — you can tap any tab without entering here.</p>
     </div>
   );
 }
@@ -4164,9 +4238,10 @@ function HomePage({ profiles, logs, pointEvents, dayMarks, onGo, onSurf }: {
   });
   return (
     <div>
-      {/* The true message (Richard, 2026-11-13): the first thing a
-          visitor sees when the app opens, with the privacy line —
-          this is your personal journey, and you are not alone. */}
+      <WelcomeIntro />
+      {/* The true message (Richard, 2026-11-13): right after the
+          Welcome intro, with the privacy line — this is your
+          personal journey, and you are not alone. */}
       <div className="felt-soft mb-5 rounded-[var(--radius)] border-2 border-[var(--leaf)] bg-[var(--leaf-soft)] px-4 py-3 text-center" role="note">
         <p className="font-bold leading-relaxed text-[var(--text)]">We don&apos;t share your data. This is your personal journey... BUT YOU ARE NOT ALONE. Help is at your fingertips.</p>
       </div>
@@ -4175,12 +4250,17 @@ function HomePage({ profiles, logs, pointEvents, dayMarks, onGo, onSurf }: {
       {/* Tagline (Richard, 2026-11-12): "Making the world 🌎 a happier
           place" — right above the banner on Home, and in the footer. */}
       <p className="mb-4 text-center font-display text-lg font-bold text-[var(--accent)]">Making the world 🌎 a happier place ❤️</p>
-      <div className="felt-card rounded-[var(--radius)] border-4 border-[var(--sun)] bg-[var(--amber-soft)] px-5 py-6 text-center">
-        <h1 className="font-display text-[28px] font-black leading-[1.15] tracking-tight text-[var(--text)] sm:text-4xl sm:leading-[1.15]">
+      {/* Home banner (Richard, 2026-11-12): "The best FREE self-help
+          app EVER!" — shrunk to about 1/4 its size (Richard,
+          2026-11-15, note 16): roughly half the font size and
+          padding, so about a quarter of the area. It was screaming;
+          now it is a small line, not a shout. */}
+      <div className="felt-card rounded-[var(--radius)] border-2 border-[var(--sun)] bg-[var(--amber-soft)] px-3 py-3 text-center">
+        <h1 className="font-display text-sm font-black leading-snug tracking-tight text-[var(--text)] sm:text-base">
           <span className="block text-[var(--accent)]">The best FREE self-help app EVER!</span>
-          <span className="mt-3 block">YOU CAN DO IT!</span>
-          <span className="mt-3 block">A BRIGHTER FUTURE IS WITHIN YOUR GRASP.</span>
-          <span className="mt-3 block text-[var(--accent)]">GET STARTED TODAY — download the app for free.</span>
+          <span className="mt-1 block">YOU CAN DO IT!</span>
+          <span className="mt-1 block">A BRIGHTER FUTURE IS WITHIN YOUR GRASP.</span>
+          <span className="mt-1 block text-[var(--accent)]">GET STARTED TODAY — download the app for free.</span>
         </h1>
       </div>
 
@@ -4382,6 +4462,7 @@ function ResourcesPage({ profiles, logs, pointEvents, dayMarks, onTerms }: {
         Every service below is free. Helplines are confidential — you don't need insurance, and you don't have to give
         your name. If you're not sure which fits, start with SAMHSA: they route people to everything else.
       </p>
+      <div className="mt-4"><FeedbackContact /></div>
       <div className="mt-4"><CrisisStrip /></div>
       <Section title="Your data — save it to your phone">
         <YourDataSection profiles={profiles} logs={logs} pointEvents={pointEvents} dayMarks={dayMarks} />

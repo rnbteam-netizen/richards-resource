@@ -12,21 +12,34 @@
 // page cannot invent a voice, and it cannot guarantee one — the list
 // of voices belongs to the phone, and it differs by phone. The only
 // signal a browser exposes is the voice's name (and language), so
-// we pick, in order: a voice whose name says it is female, or a
-// well-known female voice on Android / iPhone ("Google US English",
-// "Samantha", "Zira", "Aria", "Jenny"), or an English voice, or the
-// phone's default voice. If no female voice is available, we use the
-// best voice the phone offers and say so plainly in the app copy —
-// we never claim a voice is female when it is not.
+// we pick, in order: an en-US female voice, or a well-known female
+// voice on Android / iPhone ("Google US English", "Samantha", "Zira",
+// "Aria", "Jenny"), or an en-US voice, or an English female voice,
+// or an English voice, or the phone's default voice. US English
+// comes first on purpose (Richard, 2026-11-15): the old order picked
+// the first female-named voice in any language, which could be a
+// non-US English voice that sounded like garbled English with an
+// accent. If no female voice is available, we use the best voice
+// the phone offers and say so plainly in the app copy — we never
+// claim a voice is female when it is not.
 
 export function pickFemaleVoice(
   voices: readonly SpeechSynthesisVoice[],
 ): SpeechSynthesisVoice | null {
   if (voices.length === 0) return null;
+  const isEnUs = (v: SpeechSynthesisVoice) => v.lang.toLowerCase() === "en-us";
+  const isEnglish = (v: SpeechSynthesisVoice) => v.lang.toLowerCase().startsWith("en");
   const femaleName = /female|samantha|zira|aria|jenny|susan|karen|moira|tessa|google us english|microsoft aria|microsoft jenny|microsoft zira/i;
-  const female = voices.find((v) => femaleName.test(v.name));
-  if (female) return female;
-  const english = voices.find((v) => v.lang.toLowerCase().startsWith("en"));
+  const isFemaleNamed = (v: SpeechSynthesisVoice) => femaleName.test(v.name);
+  // US English first, so a non-US English voice is never picked
+  // ahead of a clear US one.
+  const enUsFemale = voices.find((v) => isEnUs(v) && isFemaleNamed(v));
+  if (enUsFemale) return enUsFemale;
+  const enUs = voices.find((v) => isEnUs(v));
+  if (enUs) return enUs;
+  const englishFemale = voices.find((v) => isEnglish(v) && isFemaleNamed(v));
+  if (englishFemale) return englishFemale;
+  const english = voices.find((v) => isEnglish(v));
   if (english) return english;
   return voices[0] ?? null;
 }

@@ -5,9 +5,12 @@
 // Richard rediscovered the breathing issue: the words inside the breathing
 // cloud flash too quickly once it is turned on — the 1-second "pause"
 // most of all. Fix: when the breathing is running / turned on, the circle
-// shows NO words at all, just the empty expanding/contracting circle.
-// When it is NOT running, the idle words stay, so the user still knows
-// what the circle is. The caption below the circle ("Slow and easy:
+// shows NO words at all, just the expanding/contracting circle.
+// Richard, 2026-11-16, do both: while running the circle shows a static
+// 🛑 inside it, tap it to stop, and the bottom Stop button carries a 🛑
+// too ("🛑 Stop here — I've settled enough"). The 🛑 never flashes or
+// changes. When it is NOT running, the idle words stay, so the user still
+// knows what the circle is. The caption below the circle ("Slow and easy:
 // in… 2, 3 — pause — out… 2, 3, 4 — pause.") is outside the cloud and
 // stays, and the 3/1/4/1 timing, the circle animation and the tones
 // are unchanged.
@@ -25,18 +28,30 @@ const calming = src.slice(src.indexOf("function CalmingBreathing()"), src.indexO
 const smoking = src.slice(src.indexOf("function SmokingHook()"), src.indexOf("function GamblingHook()"));
 const CAPTION = "Slow and easy: in… 2, 3 — pause — out… 2, 3, 4 — pause.";
 
-test("Breathing: no words inside the circle while it is running", () => {
+test("Breathing: 🛑 inside the circle while it is running, tap it to stop — and 🛑 on the bottom Stop button too", () => {
   // No phase-word renderer may survive anywhere: the words it produced
   // ("breathe in", "breathe out", "pause") flashed too quickly.
   assert.ok(!src.includes("breathPhaseLabel"), "breathPhaseLabel must be gone — no phase words are rendered inside a circle");
-  // StepPause (the open-ended pause on every tab except Screens): empty
-  // while running, idle words when stopped.
-  assert.ok(stepPause.includes('{running ? "" : "breathe with the circle"}'), "StepPause circle must be empty while running and read 'breathe with the circle' when stopped");
-  // CalmingBreathing (on every tab): same.
-  assert.ok(calming.includes('{running ? "" : "breathe with the circle"}'), "CalmingBreathing circle must be empty while running and read 'breathe with the circle' when stopped");
-  // Smoking hook (one slow breath): empty while breathing, idle and done
-  // words kept when not breathing.
-  assert.ok(smoking.includes('{phase === "breathing" ? "" : phase === "done" ? "that\'s real air" : "one clean breath"}'), "Smoking circle must be empty while breathing, 'that's real air' when done, 'one clean breath' when idle");
+  // StepPause (the open-ended pause on every tab except Screens): a static
+  // 🛑 inside the circle while running, tapping it stops (stopPause);
+  // idle words when stopped.
+  assert.ok(stepPause.includes('aria-label="Stop breathing" onClick={stopPause}'), "StepPause running circle must be a tappable Stop button wired to stopPause");
+  assert.ok(stepPause.includes('<span aria-hidden="true" className="text-4xl">🛑</span>'), "StepPause running circle must show a static 🛑");
+  assert.ok(stepPause.includes("breathe with the circle"), "StepPause circle must still read 'breathe with the circle' when stopped");
+  // CalmingBreathing (on every tab): same in-circle 🛑, wired to stop().
+  assert.ok(calming.includes('aria-label="Stop breathing" onClick={stop}'), "CalmingBreathing running circle must be a tappable Stop button wired to stop");
+  assert.ok(calming.includes('<span aria-hidden="true" className="text-4xl">🛑</span>'), "CalmingBreathing running circle must show a static 🛑");
+  assert.ok(calming.includes("breathe with the circle"), "CalmingBreathing circle must still read 'breathe with the circle' when stopped");
+  // Smoking hook (one slow breath): 🛑 while breathing, wired to
+  // stopBreath (ends the breath, goes to done); idle and done words kept.
+  assert.ok(smoking.includes('aria-label="Stop breathing" onClick={stopBreath}'), "Smoking running circle must be a tappable Stop button wired to stopBreath");
+  assert.ok(smoking.includes('<span aria-hidden="true" className="text-3xl">🛑</span>'), "Smoking running circle must show a static 🛑");
+  assert.ok(smoking.includes("that's real air"), "Smoking circle must still read 'that's real air' when done");
+  assert.ok(smoking.includes("one clean breath"), "Smoking circle must still read 'one clean breath' when idle");
+  // Do both (Richard, 2026-11-16): 🛑 on the bottom Stop buttons too.
+  assert.ok(calming.includes("🛑 Stop here — I've settled enough"), "CalmingBreathing bottom Stop button must read '🛑 Stop here — I've settled enough'");
+  const stepStopButtons = (stepPause.match(/🛑 \{stopLabel\}/g) ?? []).length;
+  assert.equal(stepStopButtons, 3, "StepPause must show 🛑 on all three of its stop/end buttons (open running, open ended, steps running)");
 });
 
 test("Breathing: caption below the circle, timing and animation unchanged", () => {

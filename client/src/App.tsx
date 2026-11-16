@@ -1138,6 +1138,17 @@ function StepPause({ borderClass, buttonClass, title, hook, earlyMsg, midMsg, la
     if (onSettle) onSettle(elapsed > 0);
   };
 
+  // Richard, 2026-11-16: while the circle is running it shows a static
+  // 🛑 inside it — tap the circle to stop, the same stop as the button
+  // below. Open mode ends the pause; steps mode stops the rung.
+  const stopPause = () => {
+    if (mode === "open") endOpenPause();
+    else {
+      setRunning(false);
+      onSettle?.(banked > 0);
+    }
+  };
+
   const restartOpenPause = () => {
     setElapsed(0);
     setEnded(false);
@@ -1165,9 +1176,15 @@ function StepPause({ borderClass, buttonClass, title, hook, earlyMsg, midMsg, la
       </p>
       {showHook && <p className="mx-auto mt-3 max-w-md font-medium leading-relaxed text-[var(--text)]">{hook}</p>}
       <div className="mx-auto mt-5 flex h-36 w-36 items-center justify-center">
-        <div className={`breathe-circle sun-glow flex h-32 w-32 items-center justify-center rounded-full bg-[#ffd971] ${running ? "" : "[animation-play-state:paused]"}`}>
-          <span className="px-3 text-sm font-semibold text-[#7c2d12]">{running ? "" : "breathe with the circle"}</span>
-        </div>
+        {running ? (
+          <button type="button" aria-label="Stop breathing" onClick={stopPause} className="breathe-circle sun-glow flex h-32 w-32 cursor-pointer items-center justify-center rounded-full bg-[#ffd971]">
+            <span aria-hidden="true" className="text-4xl">🛑</span>
+          </button>
+        ) : (
+          <div className="breathe-circle sun-glow flex h-32 w-32 items-center justify-center rounded-full bg-[#ffd971] [animation-play-state:paused]">
+            <span className="px-3 text-sm font-semibold text-[#7c2d12]">breathe with the circle</span>
+          </div>
+        )}
       </div>
       <p className="mb-4 mt-1 text-sm text-[var(--dim)]">Slow and easy: in… 2, 3 — pause — out… 2, 3, 4 — pause.</p>
       <p className="text-4xl font-bold tabular-nums text-[var(--text)]" aria-live="polite">
@@ -1184,12 +1201,12 @@ function StepPause({ borderClass, buttonClass, title, hook, earlyMsg, midMsg, la
           )}
           {!running && elapsed > 0 && (
             <button type="button" onClick={endOpenPause} className="mt-2 min-h-11 w-full rounded-[var(--radius)] border border-[var(--border)] px-4 text-sm font-medium text-[var(--text)]">
-              {stopLabel}
+              🛑 {stopLabel}
             </button>
           )}
           {running && (
             <button type="button" onClick={endOpenPause} className="mt-4 min-h-11 w-full rounded-[var(--radius)] border border-[var(--border)] px-4 text-sm font-medium text-[var(--text)]">
-              {stopLabel}
+              🛑 {stopLabel}
             </button>
           )}
         </>
@@ -1215,7 +1232,7 @@ function StepPause({ borderClass, buttonClass, title, hook, earlyMsg, midMsg, la
       )}
       {mode === "steps" && running && (
         <button type="button" onClick={() => { setRunning(false); onSettle?.(banked > 0); }} className="mt-4 min-h-11 w-full rounded-[var(--radius)] border border-[var(--border)] px-4 text-sm font-medium text-[var(--text)]">
-          {stopLabel}
+          🛑 {stopLabel}
         </button>
       )}
       {mode === "steps" && finishedSecs != null && (
@@ -1431,9 +1448,15 @@ function CalmingBreathing() {
         A slow breath calms the body down, whatever this tab is asking of you. Breathe with the circle — no hurry, no goal, just this breath.
       </p>
       <div className="mx-auto mt-5 flex h-36 w-36 items-center justify-center">
-        <div className={`breathe-circle sun-glow flex h-32 w-32 items-center justify-center rounded-full bg-[#ffd971] ${running ? "" : "[animation-play-state:paused]"}`}>
-          <span className="px-3 text-sm font-semibold text-[#7c2d12]">{running ? "" : "breathe with the circle"}</span>
-        </div>
+        {running ? (
+          <button type="button" aria-label="Stop breathing" onClick={stop} className="breathe-circle sun-glow flex h-32 w-32 cursor-pointer items-center justify-center rounded-full bg-[#ffd971]">
+            <span aria-hidden="true" className="text-4xl">🛑</span>
+          </button>
+        ) : (
+          <div className="breathe-circle sun-glow flex h-32 w-32 items-center justify-center rounded-full bg-[#ffd971] [animation-play-state:paused]">
+            <span className="px-3 text-sm font-semibold text-[#7c2d12]">breathe with the circle</span>
+          </div>
+        )}
       </div>
       <p className="mb-4 mt-1 text-sm text-[var(--dim)]">Slow and easy: in… 2, 3 — pause — out… 2, 3, 4 — pause.</p>
       <div className="mx-auto mb-4 max-w-md rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface-warm)] px-3 py-3 text-left">
@@ -1494,7 +1517,7 @@ function CalmingBreathing() {
       )}
       {running && (
         <button type="button" onClick={stop} aria-label="Stop calming breathing" className="min-h-11 w-full rounded-[var(--radius)] border border-[var(--border)] px-4 text-sm font-medium text-[var(--text)]">
-          Stop here — I've settled enough
+          🛑 Stop here — I've settled enough
         </button>
       )}
       {!running && finished && (
@@ -1595,12 +1618,26 @@ function SmokingHook() {
     // pause 1 — with the circle showing no words while it runs.
     timersRef.current.push(setTimeout(() => setPhase("done"), BREATH_CYCLE_MS));
   };
+  // Richard, 2026-11-16: while the circle is breathing it shows a static
+  // 🛑 inside it — tap the circle to stop, the same end as the cycle
+  // finishing on its own (goes to "that's real air").
+  const stopBreath = () => {
+    timersRef.current.forEach(clearTimeout);
+    timersRef.current = [];
+    setPhase("done");
+  };
   return (
     <HookShell pastelBg="#dceef7" pastelBorder="#5b9bbf" title="Take the breath the cigarette promises you" intro="Most of what a cigarette sells is this: a pause, and one deep breath. That part was always free. Try it — breathe with the circle, slowly in, a short hold, then a long slow out, once through.">
       <div className="flex flex-col items-center">
-        <div className={`breathe-circle sun-glow flex h-28 w-28 items-center justify-center rounded-full bg-[#ffd971] ${phase === "breathing" ? "" : "[animation-play-state:paused]"}`} aria-hidden="true">
-          <span className="px-3 text-center text-sm font-semibold text-[#7c2d12]">{phase === "breathing" ? "" : phase === "done" ? "that's real air" : "one clean breath"}</span>
-        </div>
+        {phase === "breathing" ? (
+          <button type="button" aria-label="Stop breathing" onClick={stopBreath} className="breathe-circle sun-glow flex h-28 w-28 cursor-pointer items-center justify-center rounded-full bg-[#ffd971]">
+            <span aria-hidden="true" className="text-3xl">🛑</span>
+          </button>
+        ) : (
+          <div className="breathe-circle sun-glow flex h-28 w-28 items-center justify-center rounded-full bg-[#ffd971] [animation-play-state:paused]" aria-hidden="true">
+            <span className="px-3 text-center text-sm font-semibold text-[#7c2d12]">{phase === "done" ? "that's real air" : "one clean breath"}</span>
+          </div>
+        )}
         {phase === "idle" && (
           <button type="button" onClick={start} className="felt-btn mt-4 min-h-12 w-full rounded-[var(--radius)] bg-[var(--sky-deep)] px-4 text-base font-semibold text-white">
             Breathe with me — one slow breath, about 9 seconds

@@ -395,7 +395,7 @@ function TermsPage({ onBack }: { onBack: () => void }) {
         <section>
           <p className="font-semibold text-[var(--text)]">6. Donations.</p>
           <p className="mt-1 text-sm leading-relaxed text-[var(--text)]">
-            Donations, when available, are optional personal gifts to support Richard&apos;s Resource. They are NOT tax
+            Donations are optional personal gifts to support Richard&apos;s Resource, made on Stripe&apos;s secure page. They are NOT tax
             deductible — Richard&apos;s Resource is not a charity or a tax-exempt organisation.
           </p>
         </section>
@@ -1276,21 +1276,16 @@ function StepPause({ borderClass, buttonClass, title, hook, earlyMsg, midMsg, la
 /* ---------- donations: free app, optional gift, not tax deductible ---------- */
 
 // Richard asked for a donation option (2026-11-10) and was clear it is
-// NOT tax deductible. There is no merchant account or payment method
-// connected yet — his old credit-union merchant account was closed and
-// restoring it is still in progress — so this section must be honest:
-// it lets a visitor pick an amount they'd like to give, but it does NOT
-// take a payment, does NOT ask for or collect any card details, and has
-// no payment link. The button says "Donations coming soon" and, when
-// tapped, says plainly that no payment method is available yet. When a
-// real payment method is set up, that will be said here.
+// NOT tax deductible. Live since 2026-11-17: donations go through a
+// Stripe Payment Link (live account "Richard's Resource", personal
+// account in Richard Vessey's name; statement descriptor is
+// "RICHARDS RESOURCE" — Stripe would not allow "RR Donation"). The link
+// is "Customers choose what to pay", preset $10, so the visitor picks
+// the amount on Stripe's own secure page — $5, $10, $25, or any amount.
+// This section never asks for or collects card details here; the green
+// button is a plain link to Stripe, opening in a new tab.
+const DONATION_URL = "https://buy.stripe.com/aFa5kD8QD4eh974g8K0kE00";
 function DonationSection() {
-  const [selected, setSelected] = useState<number | null>(10);
-  const [custom, setCustom] = useState("");
-  const [notice, setNotice] = useState(false);
-  const customId = useIdSafe("donation-custom");
-  const customValue = Number.parseFloat(custom);
-  const chosen = custom.trim() !== "" && Number.isFinite(customValue) && customValue > 0 ? customValue : selected;
   return (
     <div className="felt-card rounded-[var(--radius)] border-2 border-[var(--sun)] bg-[var(--surface-warm)] p-5">
       <h3 className="flex items-center gap-2 font-display text-xl font-bold text-[var(--text)]">
@@ -1309,83 +1304,23 @@ function DonationSection() {
           not a charitable contribution you can deduct on your taxes.
         </p>
       </div>
-      <p className="mt-4 font-semibold text-[var(--text)]">Choose an amount</p>
-      <div className="mt-2 flex flex-wrap gap-2" role="group" aria-label="Suggested donation amounts">
-        {[5, 10, 25].map((amount) => {
-          const isChosen = custom.trim() === "" && selected === amount;
-          return (
-            <button
-              key={amount}
-              type="button"
-              aria-pressed={isChosen}
-              aria-label={`Choose a donation of $${amount}`}
-              onClick={() => { setSelected(amount); setCustom(""); setNotice(false); }}
-              className={`felt-btn min-h-12 min-w-20 rounded-[var(--radius)] px-4 text-lg font-bold ${isChosen ? "bg-[var(--accent)] text-white" : "border-2 border-[var(--border)] bg-[var(--surface)] text-[var(--text)]"}`}
-            >
-              ${amount}
-            </button>
-          );
-        })}
-      </div>
-      <div className="mt-3">
-        <label htmlFor={customId} className="font-semibold text-[var(--text)]">Or enter your own amount (US dollars)</label>
-        <div className="mt-1 flex items-center gap-2">
-          <span aria-hidden="true" className="font-bold text-[var(--text)]">$</span>
-          <input
-            id={customId}
-            type="number"
-            inputMode="decimal"
-            min="1"
-            step="1"
-            value={custom}
-            onChange={(e) => { setCustom(e.target.value); setNotice(false); }}
-            placeholder="Any amount"
-            className="min-h-12 w-full rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-3 text-[var(--text)]"
-          />
-        </div>
-      </div>
-      {chosen != null && (
-        <p className="mt-3 text-sm font-medium text-[var(--text)]" aria-live="polite">
-          You've chosen {chosen.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 })} — thank you for wanting to help.
-        </p>
-      )}
-      <button
-        type="button"
-        onClick={() => setNotice(true)}
-        className="felt-btn mt-4 min-h-12 w-full rounded-[var(--radius)] bg-[var(--leaf)] px-4 text-base font-bold text-white"
+      <p className="mt-4 leading-relaxed text-[var(--text)]">
+        You choose the amount on Stripe's secure page — $5, $10, $25, or any amount you like.
+      </p>
+      <a
+        href={DONATION_URL}
+        target="_blank"
+        rel="noreferrer"
+        className="felt-btn mt-4 flex min-h-12 w-full items-center justify-center rounded-[var(--radius)] bg-[var(--leaf)] px-4 text-center text-base font-bold text-white"
       >
-        Donations coming soon
-      </button>
-      {notice && (
-        <div className="felt-soft mt-3 rounded-[var(--radius)] bg-[var(--surface)] px-4 py-3" aria-live="polite">
-          <p className="font-semibold text-[var(--text)]">Donations aren't set up yet — thank you for offering.</p>
-          <p className="mt-1 text-sm leading-relaxed text-[var(--text)]">
-            There's no payment method connected to the app yet, so we can't take a donation today — and we won't ask
-            for any card details here. When donations become available, we'll say so right here in this section.
-            Until then, the best support is to use the app, get well, and pass it on to someone who needs it.
-          </p>
-        </div>
-      )}
-      {!notice && (
-        <p className="mt-2 text-center text-sm text-[var(--dim)]">
-          No payment method is connected yet, so no donation can be taken today and no card details are asked for.
-          When donations are available, we'll say so here.
-        </p>
-      )}
+        Donate securely with Stripe
+      </a>
+      <p className="mt-2 text-center text-sm text-[var(--dim)]">
+        You'll pay on Stripe's secure page. We never ask for card details here, and your donation shows on your
+        statement as RICHARDS RESOURCE.
+      </p>
     </div>
   );
-}
-
-// Tiny stable-id helper for the donation custom-amount field (the
-// section can appear on Home or on Help & Resources, never both at once).
-let donationIdCounter = 0;
-function useIdSafe(prefix: string): string {
-  const ref = useRef<string>("");
-  if (ref.current === "") {
-    donationIdCounter += 1;
-    ref.current = `${prefix}-${donationIdCounter}`;
-  }
-  return ref.current;
 }
 
 // the tab itself. This is that one shared exercise, on the same rhythm

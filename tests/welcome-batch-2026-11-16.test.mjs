@@ -105,6 +105,29 @@ test("13/21/22/24b. After entry, the cottage stays on Home, just above the choos
   assert.ok(cover.includes("skip the welcome"), "the cover must still carry the skip-the-welcome button");
 });
 
+test("24c. Cursor is a hand over the cottage door and the skip button on a laptop (Brian, 2026-11-16)", () => {
+  // Brian, on his laptop: the cursor did not change when hovering over
+  // the cottage on the cover — no hand to show it is a link. Root
+  // cause: Tailwind v4 preflight does not give buttons a pointer
+  // cursor by default. Fix: a global rule in theme.css, plus
+  // cursor-pointer pinned on the cover's two buttons.
+  const css = readFileSync(path.join(root, "client", "src", "theme.css"), "utf8");
+  assert.ok(css.includes("button, a"), "theme.css must have a button/link cursor rule");
+  assert.ok(css.includes("cursor: pointer"), "theme.css must set the pointer cursor for buttons and links");
+  const cover = src.slice(src.indexOf("function WelcomeCover("), src.indexOf("function WelcomeIntro()"));
+  // Both cover buttons must carry cursor-pointer explicitly.
+  assert.ok(cover.includes("cursor-pointer"), "the cover buttons must carry cursor-pointer");
+  const buttons = cover.match(/<button[^>]*className="[^"]*"/g) ?? [];
+  assert.equal(buttons.length, 2, "the cover must have exactly two buttons (cottage + skip)");
+  assert.ok(buttons.every((b) => b.includes("cursor-pointer")), "both cover buttons must have cursor-pointer");
+  assert.ok(cover.includes("Open the door and begin"), "the cottage button must still be the tap-to-enter button");
+  // The Home banner cottage is NOT a button/link, so it must NOT
+  // get a pointer cursor — leave it as a plain image.
+  const intro = src.slice(src.indexOf("function WelcomeIntro()"), src.indexOf("function HomePage("));
+  assert.ok(!intro.includes("cursor-pointer"), "the Home cottage is not a button, so it must not show a pointer cursor");
+  assert.ok(!intro.includes("<button"), "the Home cottage must not be a button");
+});
+
 test("16. Home banner 'The best FREE self-help app EVER!' is about 1/4 its size", () => {
   assert.ok(src.includes("The best FREE self-help app EVER!"), "banner wording must be unchanged");
   assert.ok(!home.includes("text-[28px]"), "the banner must no longer be 28px");

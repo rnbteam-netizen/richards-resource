@@ -4232,12 +4232,12 @@ function WelcomeCover({ onEnter }: { onEnter: () => void }) {
   return (
     <div className="felt-page flex min-h-dvh flex-col bg-[var(--bg)]" role="region" aria-label="Welcome to Richard's Resource">
       <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col justify-center px-4 py-6">
-        <button type="button" onClick={onEnter} aria-label="Open the door and begin — tap the cottage to enter Richard's Resource" className="felt-card block w-full overflow-hidden rounded-[var(--radius)] border-2 border-[var(--sun)] bg-[var(--surface)] p-0 text-left">
+        <button type="button" onClick={onEnter} aria-label="Open the door and begin — tap the cottage to enter Richard's Resource" className="felt-card block w-full cursor-pointer overflow-hidden rounded-[var(--radius)] border-2 border-[var(--sun)] bg-[var(--surface)] p-0 text-left">
           <img src={welcomeCottage} alt="A cottage in a sunrise field with a wooden front door, a welcome mat that says WELCOME, and a stepping-stone pathway. Tap the door to come in." className="block h-auto w-full" />
           <span className="block px-4 py-3 text-center font-display text-lg font-bold text-[var(--text)]">Welcome — tap the door to come in</span>
           <span className="block px-4 pb-4 text-center text-sm leading-relaxed text-[var(--dim)]">“open please come in” — one tap on the door, and you are in.</span>
         </button>
-        <button type="button" onClick={onEnter} className="mt-4 min-h-11 w-full rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 text-sm font-semibold text-[var(--text)]">
+        <button type="button" onClick={onEnter} className="mt-4 min-h-11 w-full cursor-pointer rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 text-sm font-semibold text-[var(--text)]">
           I need help right now — skip the welcome
         </button>
       </main>

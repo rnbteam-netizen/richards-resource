@@ -109,6 +109,13 @@
   button, [role="button"], select, summary, input:not([type="checkbox"], [type="radio"]) {
     min-height: 2.25rem;
   }
+  /* Pointer cursor on buttons and links (Brian, 2026-11-16): Tailwind
+     v4 preflight does not give buttons a pointer cursor, so on a laptop
+     the cottage door on the cover looked like plain text — no hand to
+     show it is tappable. Links and buttons must show the hand. */
+  button, a {
+    cursor: pointer;
+  }
   button, input, textarea, select {
     font-family: inherit;
   }

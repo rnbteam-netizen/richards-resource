@@ -1,9 +1,11 @@
 // Private, anonymous download count (Richard, 2026-11-16):
-// GET /counts returns only two aggregate numbers —
-// { welcomeDevices, devicesSeen } — distinct anonymous device_ids
-// that claimed the +10 welcome points, and distinct anonymous
-// device_ids with any points at all. No device ids, no rows, no
-// personal data. Spawns the built server (dist-server/server.js)
+// GET /counts returns only three aggregate numbers —
+// { welcomeDevices, devicesSeen, totalPoints } — distinct anonymous
+// device_ids that claimed the +10 welcome points, distinct anonymous
+// device_ids with any points at all, and the sum of all points
+// (totalPoints, Richard 2026-11-17: engagement, not benefit).
+// No device ids, no rows, no personal data. Spawns the built server
+// (dist-server/server.js)
 // with no DATABASE_URL, so it uses the in-memory Postgres fallback
 // — same queries as production, no account, no card, no network.
 import { test, before, after } from "node:test";
@@ -55,14 +57,16 @@ before(async () => {
 
 after(() => { proc?.kill(); });
 
-test("/counts returns only two aggregate numbers, starting at zero", async () => {
+test("/counts returns only three aggregate numbers, starting at zero", async () => {
   const counts = await getCounts();
-  // Only the two aggregate keys — no device ids, no rows, nothing else.
-  assert.deepEqual(Object.keys(counts).sort(), ["devicesSeen", "welcomeDevices"]);
+  // Only the three aggregate keys — no device ids, no rows, nothing else.
+  assert.deepEqual(Object.keys(counts).sort(), ["devicesSeen", "totalPoints", "welcomeDevices"]);
   assert.equal(counts.welcomeDevices, 0);
   assert.equal(counts.devicesSeen, 0);
+  assert.equal(counts.totalPoints, 0);
   assert.ok(Number.isInteger(counts.welcomeDevices));
   assert.ok(Number.isInteger(counts.devicesSeen));
+  assert.ok(Number.isInteger(counts.totalPoints));
 });
 
 test("/counts counts distinct anonymous devices, welcome <= seen", async () => {
@@ -86,8 +90,10 @@ test("/counts counts distinct anonymous devices, welcome <= seen", async () => {
   await call(c, "awardTouches", { tab: "home", count: 3 });
 
   const counts = await getCounts();
-  assert.deepEqual(Object.keys(counts).sort(), ["devicesSeen", "welcomeDevices"]);
+  assert.deepEqual(Object.keys(counts).sort(), ["devicesSeen", "totalPoints", "welcomeDevices"]);
   assert.equal(counts.welcomeDevices, 2);
   assert.equal(counts.devicesSeen, 3);
+  // Total points: A 10 welcome + 5 touches, B 10 welcome, C 3 touches.
+  assert.equal(counts.totalPoints, 28);
   assert.ok(counts.welcomeDevices <= counts.devicesSeen);
 });

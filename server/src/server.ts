@@ -1,14 +1,17 @@
 // Richard's Resource — standalone public server.
 // Serves the built client from client/dist/ and exposes:
 //   GET  /health          -> {"status":"ok"}
-//   GET  /counts          -> {"welcomeDevices":N,"devicesSeen":M}
+//   GET  /counts          -> {"welcomeDevices":N,"devicesSeen":M,"totalPoints":P}
 //                            Aggregate counts only, for Richard — how
 //                            many distinct anonymous devices claimed the
-//                            +10 welcome points, and how many distinct
-//                            anonymous devices have any points at all.
+//                            +10 welcome points, how many distinct
+//                            anonymous devices have any points at all,
+//                            and the sum of all points in the points
+//                            table (totalPoints, an engagement measure:
+//                            it rises when people actually use the app).
 //                            No device ids, no rows, no personal data.
 //                            Anyone who guesses the URL sees just those
-//                            two numbers. Not shown in the app UI.
+//                            three numbers. Not shown in the app UI.
 //   POST /actions         -> {action, deviceId, args} dispatches one of
 //                            the 7 actions in actions.ts, with Zod
 //                            validation. The point values live on the
@@ -49,9 +52,18 @@ app.get("/counts", async (_req: Request, res: Response) => {
     const seen = await db.query(
       `SELECT COUNT(DISTINCT device_id) AS n FROM points`,
     );
+    // Total points (Richard, 2026-11-17): sum of the points column —
+    // welcome +10, +1 per touch, +5 per field, +50 per quit date,
+    // +100 per successful day / daily check-in, −100 per relapse.
+    // Net sum, so a relapse lowers it. Counting really starts from
+    // the Neon fix on 2026-11-17; anything before that is gone.
+    const total = await db.query(
+      `SELECT COALESCE(SUM(points), 0) AS n FROM points`,
+    );
     res.json({
       welcomeDevices: Number(welcome.rows[0]?.n ?? 0),
       devicesSeen: Number(seen.rows[0]?.n ?? 0),
+      totalPoints: Number(total.rows[0]?.n ?? 0),
     });
   } catch (err) {
     // eslint-disable-next-line no-console

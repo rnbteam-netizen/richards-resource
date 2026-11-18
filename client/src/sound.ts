@@ -24,6 +24,9 @@
 //    brainwaves, calm anyone down, or help anyone sleep — it is just
 //    a soft sound to breathe along with, and it stops when the
 //    breathing exercise stops.
+// 3. Happy Button sounds (Home, Richard, 2026-11-18): one fixed tap
+//    tone, the same on every tap, and one big carnival bell when a
+//    thermometer fills. See HAPPY_TAP_* / HAPPY_BELL_* below.
 //
 // Privacy: no recording, no microphone, no data leaves the phone for
 // any of this. Sound on/off is not saved to the server and not tied
@@ -63,6 +66,31 @@ export const SLOT_TONE_SPECS: Record<SlotSoundKind, { frequencyHz: number; durat
   chime: { frequencyHz: 784, durationMs: 350, type: "sine" },
   low: { frequencyHz: 160, durationMs: 500, type: "sine" },
 };
+
+// Happy Button sounds (Richard, 2026-11-18): the live button was
+// silent — the mock-up's sound never carried over, so it lives here
+// now, in the same Web Audio engine, no audio files.
+//
+// The tap tone is ONE fixed tone, the same on every tap: 660 Hz,
+// 350 ms, gain 0.12. A bit louder than the mock-up's whisper
+// (0.07) — the same level as the other short tones in this engine.
+// Each tap is a moment of happiness, NOT a degree of it, so the
+// tone must never rise in pitch or loudness as the thermometer
+// fills: playHappySound takes no fill level, no count, and nothing
+// that could make it rise. "I'm feeling happy" — TAP, done; next
+// time, the same thing.
+//
+// The bell is the strongman-game bell: one strike at the top, a
+// fundamental (1046 Hz) with harmonics (1568, 2093 Hz) that ring
+// together for about 1.2 seconds, then fade. It plays only when a
+// thermometer fills, never on an ordinary tap.
+export type HappySoundKind = "tap" | "bell";
+export const HAPPY_TAP_FREQUENCY_HZ = 660;
+export const HAPPY_TAP_DURATION_MS = 350;
+export const HAPPY_TAP_GAIN = 0.12;
+export const HAPPY_BELL_FREQUENCIES_HZ: [number, number, number] = [1046, 1568, 2093];
+export const HAPPY_BELL_DURATION_MS = 1200;
+export const HAPPY_BELL_GAIN = 0.14;
 
 type ToneNodes = {
   left: OscillatorNode;
@@ -142,6 +170,24 @@ class AppSounds {
   playDoneSound(): void {
     this.playTone(523, 220, "sine", 0.12);
     this.playTone(784, 350, "sine", 0.12, 140);
+  }
+
+  // Happy Button sounds (Richard, 2026-11-18). The tap tone is one
+  // fixed tone — the same 660 Hz, the same loudness, on every tap,
+  // whatever the thermometer shows. It takes no fill level, so it
+  // cannot rise: a moment, not a degree. The bell rings only when
+  // a thermometer fills — one strike, fundamental plus harmonics,
+  // ringing together. Both are Web Audio, tap-only, off by default
+  // (the caller guards them with its own toggle, like the slot
+  // sounds); the calm tones above are untouched.
+  playHappySound(kind: HappySoundKind): void {
+    if (kind === "bell") {
+      this.playTone(HAPPY_BELL_FREQUENCIES_HZ[0], HAPPY_BELL_DURATION_MS, "sine", HAPPY_BELL_GAIN);
+      this.playTone(HAPPY_BELL_FREQUENCIES_HZ[1], 1000, "sine", 0.07);
+      this.playTone(HAPPY_BELL_FREQUENCIES_HZ[2], 800, "sine", 0.04);
+      return;
+    }
+    this.playTone(HAPPY_TAP_FREQUENCY_HZ, HAPPY_TAP_DURATION_MS, "sine", HAPPY_TAP_GAIN);
   }
 
   playSlotSound(kind: SlotSoundKind): void {

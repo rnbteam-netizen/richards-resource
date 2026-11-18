@@ -4235,8 +4235,15 @@ function WelcomeIntro() {
 // the points survive on the server (there is no account, so there is
 // no other way to keep a board). The cork board is collapsed under
 // the button, tap to open, with small pinned cards so there is room
-// for many more. Sound: none here — silent, like the mock-up with
-// sound off; the app's other tones are untouched.
+// for many more. Sound (Richard, 2026-11-18): the live button was
+// silent at first — the mock-up's sound never carried over. Now it
+// has its own toggle, OFF by default, like the slot sounds: one
+// fixed tap tone, the same on every tap (a moment, not a degree —
+// it never rises in pitch or loudness as the thermometer fills),
+// and a big carnival bell when a thermometer fills and pins. Web
+// Audio only, no audio files, tap-only, never on its own, and it
+// follows the phone's volume and silent switch. The app's other
+// calm tones are untouched — Richard says they are just right.
 const HAPPY_BUTTON_KEY = "richards-resource:happy-button:v1";
 const HAPPY_THERMOMETER_CAPACITY = 8;
 const HAPPY_SPRING_FILL = "linear-gradient(180deg, #cdb4f0 0%, #f7a8c8 30%, #fde9a8 58%, #a8dcc0 80%, #8ec9ee 100%)";
@@ -4261,6 +4268,10 @@ function HappyButton() {
   const [state, setState] = useState<HappyButtonState>(loadHappyButtonState);
   const [boardOpen, setBoardOpen] = useState(false);
   const [moment, setMoment] = useState<"idle" | "full" | "pinned">("idle");
+  // Happy Button sounds (Richard, 2026-11-18): optional, OFF by
+  // default, its own toggle below — the same pattern as the slot
+  // sounds. Nothing plays on load; sound only ever comes from a tap.
+  const [soundOn, setSoundOn] = useState(false);
   const busyRef = useRef(false);
   const timerRef = useRef<number | null>(null);
   const today = localDay();
@@ -4276,11 +4287,18 @@ function HappyButton() {
 
   const push = () => {
     if (busyRef.current) return;
+    // Sound first, from this tap (a user gesture, so the audio
+    // engine can wake): the same tap tone every time, whatever the
+    // thermometer shows — a moment, not a degree. On the tap that
+    // fills the thermometer, the tap tone still plays, and the big
+    // carnival bell rings with it, for the fill and the pin.
+    if (soundOn) sounds.playHappySound("tap");
     // Points first: the server decides whether this push still
     // scores (up to 8 a day) — the thermometer moves either way.
     award("home", "happyMoment", today);
     const nextCurrent = state.current + 1;
     if (nextCurrent >= HAPPY_THERMOMETER_CAPACITY) {
+      if (soundOn) sounds.playHappySound("bell");
       busyRef.current = true;
       setMoment("full");
       save({ current: HAPPY_THERMOMETER_CAPACITY, pinned: state.pinned });
@@ -4379,6 +4397,36 @@ function HappyButton() {
           <>I&apos;m feeling <span style={{ color: "#be2a68" }}>happy</span></>
         )}
       </p>
+      {/* Happy Button sounds (Richard, 2026-11-18): off by default,
+          its own toggle. Turning it on warms up the audio from that
+          tap and plays the same tap tone once, so you know what it
+          sounds like. After that, the tone plays only when you tap
+          the button — the same tone every tap — and the big bell
+          only when a thermometer fills. It follows your phone's
+          volume and silent switch, and never plays on its own. */}
+      <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+        <button
+          type="button"
+          aria-pressed={soundOn}
+          aria-label={soundOn ? "Happy Button sounds on — tap to turn sound off" : "Happy Button sounds off — tap to turn sound on"}
+          onClick={() => {
+            const next = !soundOn;
+            setSoundOn(next);
+            if (next) {
+              sounds.prepareAudio();
+              sounds.playHappySound("tap");
+            }
+          }}
+          className={`min-h-11 rounded-[var(--radius)] px-3 text-sm font-semibold ${soundOn ? "felt-btn bg-[var(--amber)] text-white" : "border-2 border-[var(--border)] bg-[var(--surface)] text-[var(--text)]"}`}
+        >
+          {soundOn ? "🔊 Happy Button sounds: on" : "🔇 Happy Button sounds: off"}
+        </button>
+        <p className="text-sm text-[var(--dim)]">
+          {soundOn
+            ? "Sound on — the same tone on every tap, and a big bell when a thermometer fills. It follows your phone's volume and silent switch."
+            : "Sound is off. Turn it on if you like — it only plays after you tap, never on its own."}
+        </p>
+      </div>
       {/* Cork board — collapsed, tap to open; pinned cards small, so
           there is room for many more happy cards. */}
       <div className="mt-3">

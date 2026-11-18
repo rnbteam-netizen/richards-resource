@@ -92,7 +92,59 @@ test("Happy Button points: label, server action, and cap wiring", () => {
   assert.ok(api.includes('"happyMoment"'), "client PointAction must include happyMoment");
 });
 
-// HTTP: happyMoment pays 10 eight times a day, then 0, again tomorrow, per device.
+test("Happy Button sound: same tone every tap, big bell at the top, off by default", () => {
+  const sound = readFileSync(path.join(root, "client", "src", "sound.ts"), "utf8");
+  // One fixed tap tone, the same every time: 660 Hz, 350 ms, gain
+  // 0.12 — a bit louder than the mock-up's whisper (0.07), the same
+  // level as the app's other short tones. It must be a single
+  // constant, used as-is: no fill level, no count, nothing that
+  // could make it rise in pitch or loudness.
+  assert.ok(sound.includes("HAPPY_TAP_FREQUENCY_HZ = 660"), "tap tone must be one fixed 660 Hz");
+  assert.ok(sound.includes("HAPPY_TAP_DURATION_MS = 350"), "tap tone must be 350 ms");
+  assert.ok(sound.includes("HAPPY_TAP_GAIN = 0.12"), "tap tone must be gain 0.12 — louder than the mock-up's 0.07");
+  assert.ok(sound.includes('this.playTone(HAPPY_TAP_FREQUENCY_HZ, HAPPY_TAP_DURATION_MS, "sine", HAPPY_TAP_GAIN)'),
+    "the tap must play the fixed constant, never a computed frequency");
+  // The bell: one strike at the top — fundamental plus harmonics,
+  // ringing together for about 1.2 seconds, like the strongman
+  // carnival bell.
+  assert.ok(sound.includes("HAPPY_BELL_FREQUENCIES_HZ: [number, number, number] = [1046, 1568, 2093]"),
+    "bell must be a fundamental plus harmonics");
+  assert.ok(sound.includes("HAPPY_BELL_DURATION_MS = 1200"), "bell must ring for about 1.2 seconds");
+  assert.ok(sound.includes('this.playTone(HAPPY_BELL_FREQUENCIES_HZ[0], HAPPY_BELL_DURATION_MS, "sine", HAPPY_BELL_GAIN)'),
+    "the bell must strike its fundamental");
+  assert.ok(sound.includes("playHappySound"), "sound engine must offer playHappySound");
+  // The app's other calm tones are untouched — Richard says they
+  // are just right and must not be retuned.
+  assert.ok(sound.includes("CALM_TONE_GAIN = 0.22"), "calm tone gain must stay 0.22");
+  assert.ok(sound.includes("CALM_TONE_BASE_HZ = 200"), "calm tone base must stay 200 Hz");
+  assert.ok(sound.includes("CALM_TONE_BEAT_HZ = 10"), "calm tone beat must stay ~10 Hz");
+  assert.ok(sound.includes("SLEEPY_TONE_BEAT_HZ = 6"), "sleepy tone beat must stay ~6 Hz");
+
+  // The Happy Button's own toggle, off by default, like the slot
+  // sounds — not shared with any other toggle.
+  assert.ok(happy.includes("const [soundOn, setSoundOn] = useState(false)"),
+    "Happy Button sounds must default to off");
+  assert.ok(happy.includes("Happy Button sounds: off"), "toggle must show the off state");
+  assert.ok(happy.includes("Happy Button sounds: on"), "toggle must show the on state");
+  assert.ok(happy.includes("aria-pressed={soundOn}"), "toggle must expose its state");
+  // In push(): the tap tone on every tap, and the bell as well on
+  // the tap that fills the thermometer — the tap tone still plays
+  // on that 8th tap, the bell rings with it. Both guarded by the
+  // toggle, so nothing plays unless the visitor turned sound on.
+  const push = happy.slice(happy.indexOf("const push = () =>"), happy.indexOf("const t = state.current"));
+  assert.ok(push.includes('if (soundOn) sounds.playHappySound("tap")'),
+    "every tap must play the same tap tone, guarded by the toggle");
+  assert.ok(push.includes('if (soundOn) sounds.playHappySound("bell")'),
+    "the filling tap must also ring the bell, guarded by the toggle");
+  // Turning sound on previews the same tap tone once, so the
+  // visitor knows what it sounds like.
+  assert.equal((happy.match(/sounds\.playHappySound\("tap"\)/g) ?? []).length, 2,
+    "tap tone must be called exactly twice: once per push, once as the toggle preview");
+  // Sound follows the phone, never plays on its own.
+  assert.ok(happy.includes("follows your phone's volume and silent switch"),
+    "toggle must say sound follows the phone's volume and silent switch");
+  assert.ok(happy.includes("never on its own"), "toggle must say sound never plays on its own");
+});
 const PORT = 3460;
 const BASE = `http://127.0.0.1:${PORT}`;
 let proc;

@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS points (
   id BIGSERIAL PRIMARY KEY,
   device_id TEXT NOT NULL,
   tab TEXT NOT NULL CHECK (tab IN ('home','alcohol','smoking','gambling','drugs','codependency','food','screens','wellbeing','longevity','peace')),
-  action TEXT NOT NULL CHECK (action IN ('welcome','touch','field','quitDate','daySuccess','relapse','pause','plan','log','screening','slotLesson','phoneFree','checkin','screenOff','dailyCheckin','quietMoment')),
+  action TEXT NOT NULL CHECK (action IN ('welcome','touch','field','quitDate','daySuccess','relapse','pause','plan','log','screening','slotLesson','phoneFree','checkin','screenOff','dailyCheckin','quietMoment','happyMoment')),
   points INTEGER NOT NULL,
   day TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -54,6 +54,12 @@ ALTER TABLE points ADD CONSTRAINT points_tab_check CHECK (tab IN ('home','alcoho
 -- 'quietMoment' (+10, self-claimed, once per day) to the action CHECK.
 -- Same idempotent widen as above.
 ALTER TABLE points DROP CONSTRAINT IF EXISTS points_action_check;
-ALTER TABLE points ADD CONSTRAINT points_action_check CHECK (action IN ('welcome','touch','field','quitDate','daySuccess','relapse','pause','plan','log','screening','slotLesson','phoneFree','checkin','screenOff','dailyCheckin','quietMoment'));
+ALTER TABLE points ADD CONSTRAINT points_action_check CHECK (action IN ('welcome','touch','field','quitDate','daySuccess','relapse','pause','plan','log','screening','slotLesson','phoneFree','checkin','screenOff','dailyCheckin','quietMoment','happyMoment'));
 ALTER TABLE points DROP CONSTRAINT IF EXISTS points_tab_check;
 ALTER TABLE points ADD CONSTRAINT points_tab_check CHECK (tab IN ('home','alcohol','smoking','gambling','drugs','codependency','food','screens','wellbeing','longevity','peace'));
+
+-- 2026-11-18: Happy Button adds 'happyMoment' (+10, self-claimed, up
+-- to 8 scored pushes per local day, 80 max a day) to the action CHECK.
+-- Same idempotent widen as above.
+ALTER TABLE points DROP CONSTRAINT IF EXISTS points_action_check;
+ALTER TABLE points ADD CONSTRAINT points_action_check CHECK (action IN ('welcome','touch','field','quitDate','daySuccess','relapse','pause','plan','log','screening','slotLesson','phoneFree','checkin','screenOff','dailyCheckin','quietMoment','happyMoment'));

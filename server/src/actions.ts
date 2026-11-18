@@ -24,7 +24,7 @@ export type Db = PoolLike;
 
 export const categoryEnum = z.enum(["alcohol", "smoking", "gambling", "drugs", "codependency"]);
 export const pointTabEnum = z.enum(["home", "alcohol", "smoking", "gambling", "drugs", "codependency", "food", "screens", "wellbeing", "longevity", "peace"]);
-export const pointActionEnum = z.enum(["welcome", "touch", "field", "quitDate", "daySuccess", "relapse", "pause", "plan", "log", "screening", "slotLesson", "phoneFree", "checkin", "screenOff", "dailyCheckin", "quietMoment"]);
+export const pointActionEnum = z.enum(["welcome", "touch", "field", "quitDate", "daySuccess", "relapse", "pause", "plan", "log", "screening", "slotLesson", "phoneFree", "checkin", "screenOff", "dailyCheckin", "quietMoment", "happyMoment"]);
 export const dayString = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 export const deviceIdSchema = z.string().uuid();
 
@@ -47,6 +47,13 @@ export const deviceIdSchema = z.string().uuid();
 // screenOff. The client guards once per visit (the button goes away
 // after one tap); the server enforces once per local day per device,
 // so a second claim the same day pays 0 and a new day can count again.
+// Happy Button (Richard, 2026-11-18): +10 for "I'm feeling happy" —
+// a happy moment noticed, self-claimed on the visitor's own word, like
+// quietMoment. The server enforces up to 8 scored pushes per local day
+// per device (80 max a day — one full thermometer); a 9th push the same
+// day pays 0 but still fills the thermometer on the phone. The cap is
+// count-based, not existence-based, because the client alone cannot
+// count reliably: getState only returns the last 30 point events.
 // The older action values stay only so historical rows keep their meaning.
 export const POINT_VALUES: Record<z.infer<typeof pointActionEnum>, number> = {
   welcome: 10,
@@ -65,6 +72,7 @@ export const POINT_VALUES: Record<z.infer<typeof pointActionEnum>, number> = {
   screenOff: 10,
   dailyCheckin: 100,
   quietMoment: 10,
+  happyMoment: 10,
 };
 
 const profileShape = z.object({
@@ -243,6 +251,19 @@ export async function awardPoints(
   if (args.action === "quietMoment") {
     if (!day) throw new Error("awardPoints: quietMoment requires the local day as `day`");
     if (await exists(db, `SELECT 1 FROM points WHERE device_id = $1 AND tab = $2 AND action = 'quietMoment' AND day = $3 LIMIT 1`, [deviceId, args.tab, day])) {
+      return { ok: true as const, points: 0, already: true };
+    }
+  }
+  if (args.action === "happyMoment") {
+    if (!day) throw new Error("awardPoints: happyMoment requires the local day as `day`");
+    // 8 scored pushes a day (Richard, 2026-11-18 — he voted 8, not 10:
+    // 8 makes a more visible rise per push and 80 points a day is
+    // still plenty). Count today's rows on the server; a 9th push
+    // the same day pays 0 and inserts nothing.
+    const counted = await db.query(
+      `SELECT COUNT(*) AS n FROM points WHERE device_id = $1 AND tab = $2 AND action = 'happyMoment' AND day = $3`,
+      [deviceId, args.tab, day]);
+    if (Number(counted.rows[0]?.n ?? 0) >= 8) {
       return { ok: true as const, points: 0, already: true };
     }
   }

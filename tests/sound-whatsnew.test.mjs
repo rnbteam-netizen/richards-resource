@@ -77,7 +77,7 @@ test("calm tone: binaural-style, calm ~10 Hz and sleepy ~6 Hz, off by default, n
   assert.ok(src.includes("useEffect(() => () => sounds.stopCalmTone(), [])"),
     "tone must stop when the breathing exercise unmounts (tab left)");
   // Peace of Mind gets the tone through its one shared breathing exercise.
-  const peace = src.slice(src.indexOf("function PeacePage()"), src.indexOf("/* ---------- home & resources ---------- */"));
+  const peace = src.slice(src.indexOf("function PeacePage("), src.indexOf("/* ---------- home & resources ---------- */"));
   assert.ok(peace.includes("<CalmingBreathing />"), "Peace of Mind must include the breathing exercise with its tone toggle");
   const breathingCount = (peace.match(/<CalmingBreathing \/>/g) ?? []).length;
   assert.equal(breathingCount, 1, "Peace must still have exactly one breathing exercise");

@@ -122,8 +122,10 @@ test("24c. Cursor is a hand over the cottage door and the skip button on a lapto
   assert.ok(buttons.every((b) => b.includes("cursor-pointer")), "both cover buttons must have cursor-pointer");
   assert.ok(cover.includes("Open the door and begin"), "the cottage button must still be the tap-to-enter button");
   // The Home banner cottage is NOT a button/link, so it must NOT
-  // get a pointer cursor — leave it as a plain image.
-  const intro = src.slice(src.indexOf("function WelcomeIntro()"), src.indexOf("function HomePage("));
+  // get a pointer cursor — leave it as a plain image. The slice ends
+  // at the Happy Button section (2026-11-18), which sits between the
+  // intro and HomePage and does contain buttons of its own.
+  const intro = src.slice(src.indexOf("function WelcomeIntro()"), src.indexOf("/* ---------- the Happy Button"));
   assert.ok(!intro.includes("cursor-pointer"), "the Home cottage is not a button, so it must not show a pointer cursor");
   assert.ok(!intro.includes("<button"), "the Home cottage must not be a button");
 });

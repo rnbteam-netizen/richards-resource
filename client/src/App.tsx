@@ -68,12 +68,16 @@ const CAT_LABEL: Record<Category, string> = {
 // better than nothing. Peace of Mind adds the same idea: +10 when you tap
 // "I took a quiet moment" — meditation or prayer, on your own word, once
 // per visit in the app and once a day on the server, so a new day can
-// count again. The app can't check whether you meditated or prayed, and
-// it doesn't try. Values
+// count again. Home adds one more still: +10 when you tap the Happy
+// Button — "I'm feeling happy", a happy moment noticed, on your own
+// word, up to 8 scored pushes a day (80 max), one full thermometer's
+// worth; after that the button still works and the thermometer still
+// fills and pins, it just pays no more points that day. The app can't
+// check whether you meditated or prayed, and it doesn't try. Values
 // live on the server; the client only reports what happened. The older
 // action names remain in the label map so past events still read well.
 type PointTab = "home" | "alcohol" | "smoking" | "gambling" | "drugs" | "codependency" | "food" | "screens" | "wellbeing" | "longevity" | "peace";
-type PointAction = "welcome" | "touch" | "field" | "quitDate" | "daySuccess" | "relapse" | "pause" | "plan" | "log" | "screening" | "slotLesson" | "phoneFree" | "checkin" | "screenOff" | "dailyCheckin" | "quietMoment";
+type PointAction = "welcome" | "touch" | "field" | "quitDate" | "daySuccess" | "relapse" | "pause" | "plan" | "log" | "screening" | "slotLesson" | "phoneFree" | "checkin" | "screenOff" | "dailyCheckin" | "quietMoment" | "happyMoment";
 type PointEvent = ApiResponse<typeof api, "getState">["pointEvents"][number];
 type DayMark = ApiResponse<typeof api, "getState">["dayMarks"][number];
 
@@ -108,6 +112,7 @@ const POINT_ACTION_LABEL: Record<PointAction, string> = {
   screenOff: "Turned my screen off",
   dailyCheckin: "Completed today's check-in",
   quietMoment: "Took a quiet moment — meditation / prayer",
+  happyMoment: "Noticed a happy moment — Happy Button",
 };
 
 type PointsApi = {
@@ -3854,7 +3859,7 @@ function PeaceHook() {
   );
 }
 
-function PeacePage() {
+function PeacePage({ onGoHome }: { onGoHome?: () => void }) {
   const { award } = usePoints();
   // "I took a quiet moment" — +10, on your own word. The app can't
   // check whether you meditated or prayed, and it doesn't pretend to:
@@ -3934,6 +3939,13 @@ function PeacePage() {
         <p className="mt-3 leading-relaxed text-[var(--text)]">
           No judgement — not of your thoughts, not of yourself, not of how quiet you managed to be. A wandering
           mind is a normal mind. A minute of noticing is a real quiet moment.
+        </p>
+        <p className="mt-3 leading-relaxed text-[var(--text)]">
+          If you&apos;re feeling happy, the button is all yours —{" "}
+          <button type="button" onClick={onGoHome} className="font-semibold text-[var(--accent)] underline">
+            go back to Home and press it
+          </button>
+          .
         </p>
       </Section>
 
@@ -4172,6 +4184,9 @@ function WelcomeCover({ onEnter }: { onEnter: () => void }) {
           <span className="block px-4 py-3 text-center font-display text-lg font-bold text-[var(--text)]">Welcome — tap the door to come in</span>
           <span className="block px-4 pb-4 text-center text-sm leading-relaxed text-[var(--dim)]">“open please come in” — one tap on the door, and you are in.</span>
         </button>
+        {/* "We are so Happy you are here" (Richard, 2026-11-18): the
+            welcome line, on the cover under the cottage. */}
+        <p className="mt-4 text-center font-display text-xl font-bold text-[var(--accent)]">We are so Happy you are here</p>
         <button type="button" onClick={onEnter} className="mt-4 min-h-11 w-full cursor-pointer rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 text-sm font-semibold text-[var(--text)]">
           I need help right now — skip the welcome
         </button>
@@ -4199,6 +4214,220 @@ function WelcomeIntro() {
   );
 }
 
+/* ---------- the Happy Button (Richard, 2026-11-18) ---------- */
+
+// The Happy Button — one button only, on Home, just after the true
+// message. No scale, no numbers, no test: a mindfulness moment —
+// you stop, you notice "I'm feeling happy", and you tap it. Each
+// tap raises the thermometer a clear, visible step; 8 happy moments
+// fill one thermometer, it pins itself to your personal cork board
+// as a little trophy, and a fresh one starts. The button is round,
+// pale blue with pink lettering, and the thermometer fills with
+// spring pastels (lavender, pink, butter yellow, mint, pale blue) —
+// spring only, no fall colours. The card says only "I'm feeling
+// happy" on top, and "Feeling Happy" above the button — no scoring
+// explanation in the card itself. Points are awarded through the
+// server's happyMoment action and show up in the points box below,
+// like every other award.
+// The thermometer and cork board live in this browser's localStorage
+// only — the same pattern as the welcome flag — so clearing browser
+// data or switching phones starts the cork board empty again, while
+// the points survive on the server (there is no account, so there is
+// no other way to keep a board). The cork board is collapsed under
+// the button, tap to open, with small pinned cards so there is room
+// for many more. Sound: none here — silent, like the mock-up with
+// sound off; the app's other tones are untouched.
+const HAPPY_BUTTON_KEY = "richards-resource:happy-button:v1";
+const HAPPY_THERMOMETER_CAPACITY = 8;
+const HAPPY_SPRING_FILL = "linear-gradient(180deg, #cdb4f0 0%, #f7a8c8 30%, #fde9a8 58%, #a8dcc0 80%, #8ec9ee 100%)";
+
+type HappyButtonState = { current: number; pinned: number };
+
+function loadHappyButtonState(): HappyButtonState {
+  try {
+    const raw = window.localStorage.getItem(HAPPY_BUTTON_KEY);
+    if (!raw) return { current: 0, pinned: 0 };
+    const parsed = JSON.parse(raw) as Partial<HappyButtonState>;
+    const current = typeof parsed.current === "number" ? Math.max(0, Math.min(HAPPY_THERMOMETER_CAPACITY, Math.floor(parsed.current))) : 0;
+    const pinned = typeof parsed.pinned === "number" ? Math.max(0, Math.floor(parsed.pinned)) : 0;
+    return { current, pinned };
+  } catch {
+    return { current: 0, pinned: 0 };
+  }
+}
+
+function HappyButton() {
+  const { award } = usePoints();
+  const [state, setState] = useState<HappyButtonState>(loadHappyButtonState);
+  const [boardOpen, setBoardOpen] = useState(false);
+  const [moment, setMoment] = useState<"idle" | "full" | "pinned">("idle");
+  const busyRef = useRef(false);
+  const timerRef = useRef<number | null>(null);
+  const today = localDay();
+
+  useEffect(() => () => {
+    if (timerRef.current != null) window.clearTimeout(timerRef.current);
+  }, []);
+
+  const save = (next: HappyButtonState) => {
+    setState(next);
+    safeLocalSet(HAPPY_BUTTON_KEY, JSON.stringify(next));
+  };
+
+  const push = () => {
+    if (busyRef.current) return;
+    // Points first: the server decides whether this push still
+    // scores (up to 8 a day) — the thermometer moves either way.
+    award("home", "happyMoment", today);
+    const nextCurrent = state.current + 1;
+    if (nextCurrent >= HAPPY_THERMOMETER_CAPACITY) {
+      busyRef.current = true;
+      setMoment("full");
+      save({ current: HAPPY_THERMOMETER_CAPACITY, pinned: state.pinned });
+      const pinned = state.pinned + 1;
+      timerRef.current = window.setTimeout(() => {
+        save({ current: 0, pinned });
+        setMoment("pinned");
+        busyRef.current = false;
+      }, 1400);
+    } else {
+      setMoment("idle");
+      save({ current: nextCurrent, pinned: state.pinned });
+    }
+  };
+
+  const t = state.current / HAPPY_THERMOMETER_CAPACITY;
+  const fillPct = Math.max(4, t * 100);
+  const isFull = state.current >= HAPPY_THERMOMETER_CAPACITY;
+
+  return (
+    <div className="felt-card mb-5 rounded-[var(--radius)] border-2 border-[var(--sun)] bg-[var(--surface)] p-5" role="region" aria-label="Happy Button">
+      <p className="text-center font-display text-2xl font-bold leading-snug text-[var(--text)]">
+        I&apos;m feeling <em style={{ color: "#be2a68" }}>happy</em>
+      </p>
+      <div className="mt-4 flex items-stretch justify-center gap-4">
+        {/* Thermometer — no numbers, no scale. The sun climbs as it fills. */}
+        <div className="relative flex w-[120px] shrink-0 flex-col items-center pt-1" aria-hidden="true">
+          <div
+            style={{
+              position: "absolute", top: 0, left: "50%", width: 64, height: 64, marginLeft: -32, borderRadius: "50%",
+              background: "radial-gradient(circle at 42% 38%, #fff6c9 0%, #fde9a8 55%, #f7a8c8 100%)",
+              boxShadow: "0 0 0 8px rgba(253, 233, 168, .22), 0 0 32px rgba(247, 168, 200, .5)",
+              transform: `translateY(${28 - t * 30}px) scale(${0.72 + t * 0.38})`,
+              opacity: 0.45 + t * 0.55,
+              transition: "transform 1s cubic-bezier(.22, 1, .36, 1), opacity 1s ease",
+            }}
+          />
+          <div className="relative z-[1] mt-[44px] flex flex-col items-center">
+            <div
+              style={{
+                position: "relative", width: 48, height: 168, borderRadius: "24px 24px 6px 6px",
+                background: "color-mix(in srgb, var(--surface) 55%, #dceefb)",
+                border: "3px solid color-mix(in srgb, var(--text) 55%, transparent)",
+                overflow: "hidden", boxShadow: "inset 0 0 0 4px rgba(255,255,255,.35)",
+              }}
+            >
+              <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: `${fillPct}%`, background: HAPPY_SPRING_FILL, transition: "height 1s cubic-bezier(.22, 1, .36, 1)" }} />
+              <div style={{ position: "absolute", top: 8, bottom: 8, left: 8, width: 8, borderRadius: 6, background: "rgba(255,255,255,.5)", zIndex: 3 }} />
+            </div>
+            <div
+              style={{
+                position: "relative", zIndex: 2, width: 76, height: 76, marginTop: -12, borderRadius: "50%",
+                border: "3px solid color-mix(in srgb, var(--text) 55%, transparent)",
+                background: "radial-gradient(circle at 40% 34%, #bfe3f7 0%, #f7a8c8 58%, #cdb4f0 115%)",
+                boxShadow: isFull
+                  ? "inset -8px -10px 18px rgba(90,90,160,.22), inset 6px 8px 14px rgba(255,255,255,.5), 0 0 0 10px rgba(191,227,247,.35), 0 0 40px rgba(247,168,200,.7)"
+                  : "inset -8px -10px 18px rgba(90, 90, 160, .22), inset 6px 8px 14px rgba(255,255,255,.45), 0 8px 18px rgba(140, 170, 220, .3)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                transform: isFull ? "scale(1.07)" : undefined, transition: "box-shadow .6s ease, transform .6s ease",
+              }}
+            >
+              <svg width="34" height="34" viewBox="0 0 48 48" fill="none" stroke="#fff7e0" strokeWidth="3.4" strokeLinecap="round" aria-hidden="true">
+                <circle cx="24" cy="24" r="8.5" fill="#fff7e0" stroke="none" />
+                <path d="M24 6v5M24 37v5M6 24h5M37 24h5M11.5 11.5l3.5 3.5M33 33l3.5 3.5M36.5 11.5L33 15M15 33l-3.5 3.5" />
+              </svg>
+            </div>
+          </div>
+        </div>
+        {/* The button itself — round, pale blue, pink lettering. */}
+        <div className="flex min-w-[170px] flex-1 flex-col items-center justify-center text-center">
+          <p className="text-xs font-extrabold uppercase tracking-[0.14em]" style={{ color: "#be2a68" }}>Feeling Happy</p>
+          <button
+            type="button"
+            onClick={push}
+            aria-label="Happy Button — I'm feeling happy"
+            aria-describedby="happy-moment-line"
+            style={{
+              marginTop: 10, width: 148, height: 148, borderRadius: "50%", border: "none", cursor: "pointer",
+              background: "radial-gradient(circle at 36% 30%, #e6f5fd 0%, #bfe3f7 52%, #8ec9ee 100%)",
+              color: "#be2a68", fontFamily: "var(--font-display, Georgia, serif)", fontSize: "1.55rem", lineHeight: 1.05,
+              boxShadow: "0 8px 0 #7fb8dd, 0 18px 34px rgba(120, 180, 225, .38)",
+              display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center",
+              WebkitTapHighlightColor: "transparent", touchAction: "manipulation", userSelect: "none",
+            }}
+          >
+            Happy<br />Button
+          </button>
+        </div>
+      </div>
+      <p id="happy-moment-line" className="mt-4 min-h-[1.6em] text-center text-lg font-extrabold leading-snug text-[var(--text)]" aria-live="polite">
+        {moment === "full" ? (
+          <span style={{ color: "#be2a68" }}>Full!</span>
+        ) : moment === "pinned" ? (
+          <span style={{ color: "#be2a68" }}>Pinned!</span>
+        ) : (
+          <>I&apos;m feeling <span style={{ color: "#be2a68" }}>happy</span></>
+        )}
+      </p>
+      {/* Cork board — collapsed, tap to open; pinned cards small, so
+          there is room for many more happy cards. */}
+      <div className="mt-3">
+        <button
+          type="button"
+          onClick={() => setBoardOpen((o) => !o)}
+          aria-expanded={boardOpen}
+          className="min-h-11 w-full rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface-warm)] px-4 font-semibold text-[var(--text)]"
+        >
+          Your cork board {state.pinned > 0 ? `(${state.pinned})` : ""} {boardOpen ? "— tap to close" : "— tap to open"}
+        </button>
+        {boardOpen && (
+          <div className="mt-3 rounded-[14px] p-3.5" style={{ background: "linear-gradient(180deg, #c9a87c 0%, #b08d5e 100%)", boxShadow: "inset 0 2px 3px rgba(255,255,255,.25)" }}>
+            <div
+              className="flex min-h-[300px] flex-wrap content-start items-start justify-center gap-x-3 gap-y-4 rounded-lg px-4 py-5"
+              style={{ background: "linear-gradient(160deg, #e8c9a8 0%, #d9b48c 100%)" }}
+            >
+              {state.pinned === 0 ? (
+                <p className="w-full py-24 text-center font-bold leading-relaxed" style={{ color: "#5b4632" }}>
+                  <span className="block font-display text-xl">Nothing pinned yet</span>
+                  Fill a thermometer and it will pin itself here.
+                </p>
+              ) : (
+                Array.from({ length: state.pinned }, (_, i) => (
+                  <div
+                    key={i}
+                    role="img"
+                    aria-label={`Full thermometer number ${i + 1}`}
+                    className="relative flex w-[54px] flex-col items-center rounded bg-[#fffdf6] px-0 pb-1.5 pt-2 shadow-md"
+                    style={{ transform: `rotate(${i % 2 === 0 ? -2.2 : 2.2}deg)` }}
+                  >
+                    <span className="absolute -top-[5px] left-1/2 z-[2] -ml-[5px] h-[10px] w-[10px] rounded-full" style={{ background: "radial-gradient(circle at 35% 30%, #ff9d9d 0%, #e0332e 55%, #a31616 100%)", boxShadow: "0 2px 3px rgba(60, 10, 0, .45)" }} aria-hidden="true" />
+                    <div className="relative h-9 w-3 overflow-hidden rounded-t-lg border-[1.5px] border-[rgba(44,42,51,.55)] bg-[#eef4f8]" aria-hidden="true">
+                      <div className="absolute inset-x-0 bottom-0 h-full" style={{ background: HAPPY_SPRING_FILL }} />
+                    </div>
+                    <div className="mt-[-4px] h-5 w-5 rounded-full border-[1.5px] border-[rgba(44,42,51,.55)]" style={{ background: "radial-gradient(circle at 40% 34%, #bfe3f7, #f7a8c8 60%, #cdb4f0 120%)" }} aria-hidden="true" />
+                    <p className="mt-1 text-center text-[0.58rem] font-black leading-tight text-[#4a4234]">Full!</p>
+                    <p className="text-center text-[0.52rem] font-bold leading-tight text-[#8a7c62]">No. {i + 1}</p>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function HomePage({ profiles, logs, pointEvents, dayMarks, onGo, onSurf }: {
   profiles: Profile[];
   logs: LogEntry[];
@@ -4217,12 +4446,20 @@ function HomePage({ profiles, logs, pointEvents, dayMarks, onGo, onSurf }: {
   return (
     <div>
       <WelcomeIntro />
+      {/* "We are so Happy you are here" (Richard, 2026-11-18): the
+          welcome line, at the top of Home, just above the true
+          message — it does not replace it. */}
+      <p className="mb-3 text-center font-display text-xl font-bold text-[var(--accent)]">We are so Happy you are here</p>
       {/* The true message (Richard, 2026-11-13): right after the
           Welcome intro, with the privacy line — this is your
           personal journey, and you are not alone. */}
       <div className="felt-soft mb-5 rounded-[var(--radius)] border-2 border-[var(--leaf)] bg-[var(--leaf-soft)] px-4 py-3 text-center" role="note">
         <p className="font-bold leading-relaxed text-[var(--text)]">We don&apos;t share your data. This is your personal journey... BUT YOU ARE NOT ALONE. Help is at your fingertips.</p>
       </div>
+      {/* The Happy Button (Richard, 2026-11-18): immediately after
+          the true-message box, so the order reads cottage → welcome
+          line → true message → Happy Button → the rest of Home. */}
+      <HappyButton />
       <WhatsNewBanner />
       <AddToHomeScreenHint />
       {/* Tagline (Richard, 2026-11-12): "Making the world 🌎 a happier
@@ -4401,6 +4638,7 @@ function HomePage({ profiles, logs, pointEvents, dayMarks, onGo, onSurf }: {
               <li><strong>+100</strong> — once a day, for completing the “Today I…” check-in above. Tick what is true, tap Done — 100 total, not 100 per item.</li>
               <li><strong>+10</strong> — on the Screens tab, for tapping “I turned my screen off.” It's on your word — self-assessment, and self-assessment is better than nothing.</li>
               <li><strong>+10</strong> — on the Peace of Mind tab, for tapping “I took a quiet moment.” Meditation or prayer, on your word — once per visit, counted once a day. The app can't check, and it won't try.</li>
+              <li><strong>+10</strong> — on Home, for tapping the Happy Button when you notice you&apos;re happy — up to 8 a day (80 max). After that the button still works and the thermometer still fills, it just pays no more points that day.</li>
               <li><strong>−100</strong> — if you slip. A relapse is sadly a part of recovery for many people; log it honestly, hear us when we say <em>try again</em>, and notice — with all the points above, you're hopefully not starting at zero. Neither is your progress.</li>
             </ul>
           </div>
@@ -4742,7 +4980,7 @@ export function App() {
             {tab === "food" && <FoodPage />}
             {tab === "screens" && <ScreensPage />}
             {tab === "longevity" && <LongevityPage />}
-            {tab === "peace" && <PeacePage />}
+            {tab === "peace" && <PeacePage onGoHome={() => setTab("home")} />}
             {state.isSuccess && tab !== "home" && tab !== "resources" && tab !== "wellbeing" && tab !== "food" && tab !== "screens" && tab !== "longevity" && tab !== "peace" && (
               <CategoryPage category={tab} profile={profileFor(tab)} logs={logs} dayMarks={dayMarks} onSurf={(c) => setSurfCategory(c)} />
             )}

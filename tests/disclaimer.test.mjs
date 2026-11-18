@@ -66,9 +66,9 @@ test("short one-line disclaimer at the top of the four relevant tabs", () => {
     "Feeling Unwell must show the short disclaimer");
   assert.ok(page("FoodPage", "ScreensPage").includes("<DisclaimerShort />"),
     "Food must show the short disclaimer");
-  assert.ok(src.slice(src.indexOf("function LongevityPage()"), src.indexOf("function PeacePage()")).includes("<DisclaimerShort />"),
+  assert.ok(src.slice(src.indexOf("function LongevityPage()"), src.indexOf("function PeacePage(")).includes("<DisclaimerShort />"),
     "Longevity must show the short disclaimer");
-  assert.ok(src.slice(src.indexOf("function PeacePage()"), src.indexOf("function HomePage")).includes("<DisclaimerShort />"),
+  assert.ok(src.slice(src.indexOf("function PeacePage("), src.indexOf("function HomePage")).includes("<DisclaimerShort />"),
     "Peace of Mind must show the short disclaimer");
 });
 
@@ -83,8 +83,8 @@ test("privacy line verbatim and crisis boxes unchanged", () => {
   for (const [fn, next] of [["WellbeingPage", "FoodPage"], ["FoodPage", "ScreensPage"]]) {
     assert.ok(page(fn, next).includes("<CrisisStrip />"), `${fn} must still show CrisisStrip`);
   }
-  assert.ok(src.slice(src.indexOf("function LongevityPage()"), src.indexOf("function PeacePage()")).includes("<CrisisStrip />"),
+  assert.ok(src.slice(src.indexOf("function LongevityPage()"), src.indexOf("function PeacePage(")).includes("<CrisisStrip />"),
     "Longevity must still show CrisisStrip");
-  assert.ok(src.slice(src.indexOf("function PeacePage()"), src.indexOf("/* ---------- home & resources")).includes("<CrisisStrip />"),
+  assert.ok(src.slice(src.indexOf("function PeacePage("), src.indexOf("/* ---------- home & resources")).includes("<CrisisStrip />"),
     "Peace of Mind must still show CrisisStrip");
 });

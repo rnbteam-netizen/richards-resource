@@ -17,7 +17,7 @@ import { randomUUID } from "node:crypto";
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const src = readFileSync(path.join(root, "client", "src", "App.tsx"), "utf8");
 const page = src.slice(
-  src.indexOf("function PeacePage()"),
+  src.indexOf("function PeacePage("),
   src.indexOf("/* ---------- home & resources ---------- */"),
 );
 
@@ -33,13 +33,13 @@ test("Peace of Mind tab sits after Longevity, before Help & Resources", () => {
   assert.ok(src.includes('peace: "Peace of Mind"'), "POINT_TAB_LABEL must name peace");
   assert.ok(src.includes('case "peace":'), "TabIcon must have a case for peace");
   assert.ok(src.includes('<TabIcon id="peace" size={24}'), "Home Peace card must show the tab icon");
-  assert.ok(src.includes('{tab === "peace" && <PeacePage />}'),
+  assert.ok(src.includes('{tab === "peace" && <PeacePage onGoHome={() => setTab("home")} />}'),
     "the app must render PeacePage for the peace tab");
 });
 
 test("Peace page: hook, one breathing exercise, mindfulness central, generic", () => {
   assert.ok(src.includes("function PeaceHook()"), "Peace needs its skippable hook");
-  assert.ok(src.includes("function PeacePage()"), "PeacePage must exist");
+  assert.ok(src.includes("function PeacePage("), "PeacePage must exist");
   const breathing = page.match(/<CalmingBreathing \/>/g) ?? [];
   assert.equal(breathing.length, 1, `expected 1 CalmingBreathing on Peace, got ${breathing.length}`);
   // Mindfulness central, in plain language.

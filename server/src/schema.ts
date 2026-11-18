@@ -4,7 +4,7 @@ export const categories = ["alcohol", "smoking", "gambling", "drugs", "codepende
 
 export const pointTabs = ["home", "alcohol", "smoking", "gambling", "drugs", "codependency", "food", "screens", "wellbeing", "longevity", "peace"] as const;
 
-export const pointActions = ["welcome", "touch", "field", "quitDate", "daySuccess", "relapse", "pause", "plan", "log", "screening", "slotLesson", "phoneFree", "checkin", "screenOff", "dailyCheckin", "quietMoment"] as const;
+export const pointActions = ["welcome", "touch", "field", "quitDate", "daySuccess", "relapse", "pause", "plan", "log", "screening", "slotLesson", "phoneFree", "checkin", "screenOff", "dailyCheckin", "quietMoment", "happyMoment"] as const;
 
 // deviceId: an anonymous UUID generated in the visitor's own browser on
 // first visit and stored in that browser's localStorage only. It is NOT
@@ -43,7 +43,9 @@ export const logs = pgTable("logs", {
 // tab, self-reported "I turned my screen off"), +100 dailyCheckin
 // (Home "Today I..." check-in, once per day, 2026-11-11), +10 quietMoment
 // (Peace of Mind "I took a quiet moment", self-claimed, once per day,
-// 2026-11-12). Older action names
+// 2026-11-12). +10 happyMoment (Home "Happy Button", 2026-11-18):
+// noticing "I'm feeling happy", self-claimed, up to 8 scored pushes
+// per local day (80 max a day) — a full thermometer's worth. Older action names
 // stay in the enum so historical events keep rendering. `day` carries
 // the client's local calendar day (YYYY-MM-DD) for quit-date and daily
 // marks so a quit date or a day can only be awarded once — per device.

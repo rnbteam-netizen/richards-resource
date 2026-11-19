@@ -278,9 +278,32 @@ export async function awardPoints(
       }
     }
   }
-  await db.query(
-    `INSERT INTO points (device_id, tab, action, points, day) VALUES ($1, $2, $3, $4, $5)`,
-    [deviceId, args.tab, args.action, value, day]);
+  // Atomic backstop for the once-a-day awards (001 security fix,
+  // 2026-11-19): the exists() checks above are only a fast path —
+  // two simultaneous calls can both pass them before either
+  // inserts (check-then-insert is not atomic). The partial unique
+  // indexes in drizzle/0001_public.sql (points_once_per_day_uidx
+  // for quitDate/dailyCheckin/quietMoment/daySuccess/relapse, and
+  // points_welcome_uidx for welcome, whose day is NULL) make the
+  // database itself reject the second insert with 23505, and that
+  // loser is reported as already-paid instead of a 500. The
+  // happyMoment 8-a-day cap is count-based, not unique — it has
+  // no index to catch a race, so two calls in the same instant
+  // could both see a count under 8; the overshoot is bounded by
+  // the number of in-flight calls and pays a few points at most,
+  // and a true fix would need an advisory lock or serializable
+  // transaction, which the local pg-mem test database cannot run
+  // — so it is documented here, not pretended away.
+  try {
+    await db.query(
+      `INSERT INTO points (device_id, tab, action, points, day) VALUES ($1, $2, $3, $4, $5)`,
+      [deviceId, args.tab, args.action, value, day]);
+  } catch (err) {
+    if (typeof err === "object" && err !== null && (err as { code?: unknown }).code === "23505") {
+      return { ok: true as const, points: 0, already: true };
+    }
+    throw err;
+  }
   return { ok: true as const, points: value, already: false };
 }
 

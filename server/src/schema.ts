@@ -1,4 +1,5 @@
-import { bigserial, boolean, doublePrecision, index, integer, pgTable, primaryKey, text, timestamp } from "drizzle-orm/pg-core";
+import { bigserial, boolean, doublePrecision, index, integer, pgTable, primaryKey, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 export const categories = ["alcohol", "smoking", "gambling", "drugs", "codependency"] as const;
 
@@ -57,4 +58,17 @@ export const points = pgTable("points", {
   points: integer("points").notNull(),
   day: text("day"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-}, (t) => [index("points_device_tab_idx").on(t.deviceId, t.tab)]);
+  // Atomic once-a-day awards (001 security fix, 2026-11-19):
+  // mirrors the two partial unique indexes in
+  // drizzle/0001_public.sql, which is the authoritative schema
+  // the server actually migrates with. Partial on purpose:
+  // happyMoment repeats up to 8 times a day and touch/field
+  // repeat with day NULL, so a whole-table unique index would
+  // break them; welcome's day is NULL, so it needs its own index.
+}, (t) => [
+  index("points_device_tab_idx").on(t.deviceId, t.tab),
+  uniqueIndex("points_once_per_day_uidx").on(t.deviceId, t.tab, t.action, t.day)
+    .where(sql`day IS NOT NULL AND action IN ('quitDate','dailyCheckin','quietMoment','daySuccess','relapse')`),
+  uniqueIndex("points_welcome_uidx").on(t.deviceId, t.action)
+    .where(sql`action = 'welcome'`),
+]);

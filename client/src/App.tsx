@@ -4,6 +4,7 @@ import { api, type ApiResponse } from "./api";
 import { sounds, type CalmToneKind } from "./sound";
 import { speakText, stopSpeaking } from "./speech";
 import welcomeCottage from "./assets/welcome-cottage.jpg";
+import { shareApp } from "./share";
 
 type Category = "alcohol" | "smoking" | "gambling" | "drugs" | "codependency";
 type Profile = ApiResponse<typeof api, "getState">["profiles"][number];
@@ -4476,6 +4477,60 @@ function HappyButton() {
   );
 }
 
+/* ---------- Share button (Richard, 2026-11-19, Mission Possible) ---------- */
+
+// The Share button — Home only, one button, right after the Happy
+// Button, so the order on Home stays cottage → welcome line → true
+// message → Happy Button → Share → the rest of Home. It does not
+// move or obscure the true message, the Happy Button, or the crisis
+// box (which stays after the tabs, before the points box). Warm and
+// gentle, spring palette like the rest of Home: leaf-green border,
+// soft surface, no shouting.
+//
+// One tap opens the phone's native share sheet with the Mission
+// Possible cottage image + the link + the short text (see share.ts);
+// if the phone has no share sheet, it opens the visitor's own email
+// app with a mailto: already filled in — email apps already contain
+// Forward, so the visitor can send it on from there. Sharing sends
+// nothing about the visitor — no name, no points, nothing saved —
+// and it earns no points. It never gates help.
+function ShareButton() {
+  const [status, setStatus] = useState<"idle" | "shared" | "emailed">("idle");
+  const share = async () => {
+    const result = await shareApp();
+    if (result === "shared") setStatus("shared");
+    else if (result === "emailed") setStatus("emailed");
+  };
+  return (
+    <div className="felt-card mb-5 rounded-[var(--radius)] border-2 border-[var(--leaf)] bg-[var(--surface)] p-5" role="region" aria-label="Share Richard's Resource">
+      <p className="text-center font-display text-xl font-bold text-[var(--text)]">Share it with someone who could use it</p>
+      <p className="mt-2 text-center text-sm leading-relaxed text-[var(--dim)]">
+        Know someone who could use a little help? Share the cottage — free, no account, no fuss. Sharing sends nothing about you: no name, no points, nothing saved.
+      </p>
+      <div className="mt-4 flex justify-center">
+        <button
+          type="button"
+          onClick={share}
+          aria-label="Share Richard's Resource"
+          className="felt-btn min-h-12 cursor-pointer rounded-[var(--radius)] bg-[var(--leaf)] px-6 text-lg font-bold text-white"
+        >
+          Share Richard&apos;s Resource
+        </button>
+      </div>
+      {status === "shared" && (
+        <p className="mt-3 text-center text-sm font-semibold text-[var(--leaf)]" aria-live="polite">
+          Thank you for sharing — that is how the word spreads.
+        </p>
+      )}
+      {status === "emailed" && (
+        <p className="mt-3 text-center text-sm font-semibold text-[var(--leaf)]" aria-live="polite">
+          Your email app is open — send it, or forward it on, whenever you are ready.
+        </p>
+      )}
+    </div>
+  );
+}
+
 function HomePage({ profiles, logs, pointEvents, dayMarks, onGo, onSurf }: {
   profiles: Profile[];
   logs: LogEntry[];
@@ -4508,6 +4563,10 @@ function HomePage({ profiles, logs, pointEvents, dayMarks, onGo, onSurf }: {
           the true-message box, so the order reads cottage → welcome
           line → true message → Happy Button → the rest of Home. */}
       <HappyButton />
+      {/* The Share button (Richard, 2026-11-19): Home only, right
+          after the Happy Button — it does not move the true message,
+          the Happy Button, or the crisis box. */}
+      <ShareButton />
       <WhatsNewBanner />
       <AddToHomeScreenHint />
       {/* Tagline (Richard, 2026-11-12): "Making the world 🌎 a happier

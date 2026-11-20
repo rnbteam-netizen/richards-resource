@@ -1,17 +1,23 @@
 // Richard's Resource — standalone public server.
 // Serves the built client from client/dist/ and exposes:
 //   GET  /health          -> {"status":"ok"}
-//   GET  /counts          -> {"welcomeDevices":N,"devicesSeen":M,"totalPoints":P}
+//   GET  /counts          -> {"welcomeDevices":N,"devicesSeen":M,"totalPoints":P,"usersOver20Points":Q}
 //                            Aggregate counts only, for Richard — how
 //                            many distinct anonymous devices claimed the
 //                            +10 welcome points, how many distinct
 //                            anonymous devices have any points at all,
 //                            and the sum of all points in the points
 //                            table (totalPoints, an engagement measure:
-//                            it rises when people actually use the app).
+//                            it rises when people actually use the app),
+//                            plus how many downloaders passed 20 points
+//                            (usersOver20Points, Richard 2026-11-18:
+//                            the numerator for Usage % in the tracking
+//                            spreadsheet — downloaders whose net points
+//                            total is over 20, so it can never exceed
+//                            welcomeDevices).
 //                            No device ids, no rows, no personal data.
 //                            Anyone who guesses the URL sees just those
-//                            three numbers. Not shown in the app UI.
+//                            four numbers. Not shown in the app UI.
 //   POST /actions         -> {action, deviceId, args} dispatches one of
 //                            the 7 actions in actions.ts, with Zod
 //                            validation. The point values live on the
@@ -96,10 +102,38 @@ app.get("/counts", async (_req: Request, res: Response) => {
     const total = await db.query(
       `SELECT COALESCE(SUM(points), 0) AS n FROM points`,
     );
+    // Users over 20 points (Richard, 2026-11-18): distinct downloaders
+    // — devices that claimed the +10 welcome — whose net points total
+    // is over 20. Restricted to welcome claimants so the count is a
+    // subset of welcomeDevices: Usage % in the tracking spreadsheet
+    // (usersOver20Points ÷ welcomeDevices) can never exceed 100%.
+    // A device with 20 points exactly is not over 20; a device with
+    // points but no welcome claim is not a downloader, so it is not
+    // counted even if its total is over 20. Net sum, so a −100
+    // relapse can drop a device back under 20.
+    // Done in two plain queries with the >20 filter in the handler:
+    // the in-memory Postgres used for local tests has no HAVING
+    // support, and this file keeps one SQL path for both databases.
+    // Device ids are used only here, inside the server, to count —
+    // /counts still returns aggregate numbers only, never any ids.
+    const totals = await db.query(
+      `SELECT device_id, SUM(points) AS total FROM points GROUP BY device_id`,
+    );
+    const welcomed = await db.query(
+      `SELECT DISTINCT device_id FROM points WHERE action = 'welcome'`,
+    );
+    const welcomedSet = new Set(
+      welcomed.rows.map((r) => String(r.device_id)),
+    );
+    const usersOver20Points = totals.rows.filter(
+      (r) =>
+        welcomedSet.has(String(r.device_id)) && Number(r.total) > 20,
+    ).length;
     res.json({
       welcomeDevices: Number(welcome.rows[0]?.n ?? 0),
       devicesSeen: Number(seen.rows[0]?.n ?? 0),
       totalPoints: Number(total.rows[0]?.n ?? 0),
+      usersOver20Points,
     });
   } catch (err) {
     // eslint-disable-next-line no-console

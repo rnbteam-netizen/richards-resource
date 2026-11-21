@@ -3709,8 +3709,9 @@ function LongevityPage() {
       <Section title="Vitamin D — one more free, cheap basics idea">
         <p className="leading-relaxed text-[var(--text)]">
           One more free, cheap basics idea — right up there with food, sleep, and movement. Ask your own
-          doctor about checking your vitamin D — a simple blood test for 25(OH)D, especially in winter up
-          north with little sun. Sunshine is the natural way our bodies make vitamin D — a little daylight
+          doctor about checking your vitamin D — a simple blood test for 25(OH)D. In winter, in many
+          northern climates, it is hard to get enough vitamin D naturally from the sun alone. Sunshine is
+          the natural way our bodies make vitamin D — a little daylight
           outside most days helps, especially morning daylight. Vitamin D helps your immune system work, and
           practically every immune cell has a receptor for it. Your doctor can tell you what your level
           means for you, and whether any supplement is right for you — don&apos;t guess a dose on your own.

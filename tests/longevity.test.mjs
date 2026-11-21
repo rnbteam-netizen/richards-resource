@@ -75,6 +75,8 @@ test("Longevity vitamin D note (Richard, 2026-11-21): gentle, doctor-led, no lev
     "the note must say plainly why vitamin D matters");
   assert.ok(norm.includes("Sunshine is the natural way our bodies make vitamin D"),
     "the note must mention sunshine as the natural way the body makes vitamin D");
+  assert.ok(norm.includes("In winter, in many northern climates, it is hard to get enough vitamin D naturally from the sun alone"),
+    "the note must say plainly that winter sun in northern climates is often not enough");
   assert.ok(norm.includes("a little daylight outside most days helps, especially morning daylight"),
     "the note must keep the sunshine line gentle, with no time-in-sun number");
   // No recommended level and no dose: the app cannot recommend a level.

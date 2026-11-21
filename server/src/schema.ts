@@ -45,7 +45,7 @@ export const logs = pgTable("logs", {
 // (Home "Today I..." check-in, once per day, 2026-11-11), +10 quietMoment
 // (Peace of Mind "I took a quiet moment", self-claimed, once per day,
 // 2026-11-12). +100 myMuse (Home "My Muse", 2026-11-21): once ever
-// per device, for getting your own AI — first tapping "Talk to My
+// per device, for getting your own Personal Muse Assistant — first tapping "Talk to My
 // Muse". +10 happyMoment (Home "Happy Button", 2026-11-18):
 // noticing "I'm feeling happy", self-claimed, up to 8 scored pushes
 // per local day (80 max a day) — a full thermometer's worth. Older action names

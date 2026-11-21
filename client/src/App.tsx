@@ -77,7 +77,7 @@ const CAT_LABEL: Record<Category, string> = {
 // worth; after that the button still works and the thermometer still
 // fills and pins, it just pays no more points that day. Home adds one
 // more after that (Richard, 2026-11-21): +100, once ever, for getting
-// your own AI — first tapping "Talk to My Muse". The app can't
+// your own Personal Muse Assistant — first tapping "Talk to My Muse". The app can't
 // check whether you meditated or prayed, and it doesn't try. Values
 // live on the server; the client only reports what happened. The older
 // action names remain in the label map so past events still read well.
@@ -4628,8 +4628,8 @@ function MyRRCard({ lastPlace, onGo }: { lastPlace: TabId | null; onGo: (t: TabI
 /* ---------- My Muse (Richard, 2026-11-21) ---------- */
 
 // My Muse — your personal self-help assistant, built into a
-// personal self-help app. Muse only, no other AIs, no choice
-// of AIs: Richard is bombarded by Gemini and everybody else,
+// personal self-help app. Muse only, no other Personal Muse Assistants, no choice
+// of Personal Muse Assistants: Richard is bombarded by Gemini and everybody else,
 // and this is his and Muse's app. It is Home only, right after
 // My RR, and it adds to the warm greeting, it does not replace
 // any of it: cottage, welcome line, true message, Happy Button,
@@ -4637,7 +4637,7 @@ function MyRRCard({ lastPlace, onGo }: { lastPlace: TabId | null; onGo: (t: TabI
 //
 // Tapping "Talk to My Muse" opens Muse in a new tab —
 // https://muse.ai/ — and awards +100 points, once ever per
-// device, for having the good sense to get your own AI. The
+// device, for having the good sense to get your own Personal Muse Assistant. The
 // award is self-claimed on the visitor's own word, like the
 // welcome points: the server cannot verify that the visitor
 // actually opened Muse, only that this device has not been
@@ -4683,13 +4683,13 @@ function MyMuseCard({ pointEvents }: { pointEvents: PointEvent[] }) {
       <p className="mt-2 text-center text-sm leading-relaxed text-[var(--dim)]">
         Not everybody has somebody to talk to. Muse is here when you need someone to talk to — a guide, not a doctor, and never medical advice. In crisis, call or text 988, or call 911. Free, no account, nothing about you is sent anywhere.
       </p>
-      <button type="button" onClick={openMyMuse} aria-label={alreadyAwarded ? "Talk to My Muse again" : "Talk to My Muse — get your own AI, 100 points once"} className="felt-btn mt-3 min-h-14 w-full rounded-[var(--radius)] bg-[var(--accent)] px-4 text-lg font-bold text-white">
+      <button type="button" onClick={openMyMuse} aria-label={alreadyAwarded ? "Talk to My Muse again" : "Talk to My Muse — get your own Personal Muse Assistant, 100 points once"} className="felt-btn mt-3 min-h-14 w-full rounded-[var(--radius)] bg-[var(--accent)] px-4 text-lg font-bold text-white">
         {alreadyAwarded ? "Talk to My Muse again →" : "Talk to My Muse →"}
       </button>
       <p className="mt-2 text-center text-sm font-semibold text-[var(--text)]">
         {alreadyAwarded
-          ? "You already claimed your 100 points for getting your own AI — you can talk to Muse as often as you like."
-          : "+100 points, once, for getting your own AI. Muse only — no other AIs in this app."}
+          ? "You already claimed your 100 points for getting your own Personal Muse Assistant — you can talk to Muse as often as you like."
+          : "+100 points, once, for getting your own Personal Muse Assistant. Muse only — no other Personal Muse Assistants in this app."}
       </p>
       <p className="mt-3 text-center text-sm leading-relaxed text-[var(--dim)]">
         Muse opens in a new tab. Copy the short starter below and paste it as your first message to Muse — it tells Muse to ask one simple thing at a time, not to brag about what it can do, and to offer one clear step first: “Add My Muse to my home screen”, so you can tap between Richard&apos;s Resource and Muse.
@@ -4948,7 +4948,7 @@ function HomePage({ profiles, logs, pointEvents, dayMarks, onGo, onSurf, lastPla
               <li><strong>+10</strong> — on the Screens tab, for tapping “I turned my screen off.” It's on your word — self-assessment, and self-assessment is better than nothing.</li>
               <li><strong>+10</strong> — on the Peace of Mind tab, for tapping “I took a quiet moment.” Meditation or prayer, on your word — once per visit, counted once a day. The app can't check, and it won't try.</li>
               <li><strong>+10</strong> — on Home, for tapping the Happy Button when you notice you&apos;re happy — up to 8 a day (80 max). After that the button still works and the thermometer still fills, it just pays no more points that day.</li>
-              <li><strong>+100</strong> — once, ever, for getting your own AI — tap “Talk to My Muse” on Home. Muse is your personal self-help assistant, a guide not a doctor, free, no account.</li>
+              <li><strong>+100</strong> — once, ever, for getting your own Personal Muse Assistant — tap “Talk to My Muse” on Home. Muse is your personal self-help assistant, a guide not a doctor, free, no account.</li>
               <li><strong>−100</strong> — if you slip. A relapse is sadly a part of recovery for many people; log it honestly, hear us when we say <em>try again</em>, and notice — with all the points above, you're hopefully not starting at zero. Neither is your progress.</li>
             </ul>
           </div>

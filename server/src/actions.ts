@@ -55,7 +55,7 @@ export const deviceIdSchema = z.string().uuid();
 // count-based, not existence-based, because the client alone cannot
 // count reliably: getState only returns the last 30 point events.
 // My Muse (Richard, 2026-11-21): +100, ONCE per device, for having
-// the good sense to get your own AI — first tapping "Talk to My Muse"
+// the good sense to get your own Personal Muse Assistant — first tapping "Talk to My Muse"
 // on Home. Self-claimed on the visitor's own word, like welcome:
 // the server cannot (and does not try to) verify that the visitor
 // actually opened Muse, only that this device has not been paid
@@ -246,7 +246,7 @@ export async function awardPoints(
   }
   if (args.action === "myMuse") {
     // Once ever per device (Richard, 2026-11-21): +100 for getting
-    // your own AI. No day — a second tap, any day, pays 0.
+    // your own Personal Muse Assistant. No day — a second tap, any day, pays 0.
     if (await exists(db, `SELECT 1 FROM points WHERE device_id = $1 AND action = 'myMuse' LIMIT 1`, [deviceId])) {
       return { ok: true as const, points: 0, already: true };
     }

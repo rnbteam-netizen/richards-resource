@@ -1,9 +1,9 @@
 // My Muse (Richard, 2026-11-21): your personal self-help
 // assistant, built into a personal self-help app — Muse only,
-// no other AIs. A "My Muse" card on Home, after My RR, labelled
+// no other Personal Muse Assistants. A "My Muse" card on Home, after My RR, labelled
 // "Your personal self-help assistant". Tapping it opens Muse
 // (https://muse.ai/) in a new tab and awards +100 points, once
-// ever per device, for having the good sense to get your own AI.
+// ever per device, for having the good sense to get your own Personal Muse Assistant.
 // Return to My RR is mission critical: the starter carries the
 // link AND the card shows it as a plain link, so the visitor can
 // toggle back even if Muse never offers it. The starter is short
@@ -54,9 +54,9 @@ test("My Muse starter: humble, one thing at a time, guide not doctor, return lin
     "If you would like help with anything else, please don't hesitate to ask. I'm your Muse.",
     "the closing line must be exactly Richard's wording",
   );
-  // No bragging, no other AIs: the starter must not list
-  // capabilities and must not name Gemini or any other AI.
-  assert.ok(!/gemini/i.test(MY_MUSE_STARTER), "the starter must not name Gemini or any other AI");
+  // No bragging, no other Personal Muse Assistants: the starter must not list
+  // capabilities and must not name Gemini or any other Personal Muse Assistant.
+  assert.ok(!/gemini/i.test(MY_MUSE_STARTER), "the starter must not name Gemini or any other Personal Muse Assistant");
   assert.ok(!MY_MUSE_STARTER.includes("I can book") && !MY_MUSE_STARTER.includes("I can send") && !MY_MUSE_STARTER.includes("I can do everything"),
     "the starter must not carry a bragging list of capabilities");
   // Honesty about what the app cannot do: it cannot inject a
@@ -87,7 +87,7 @@ test("My Muse card: Home only, after My RR, Muse only, with the return link and 
   assert.ok(src.includes('href={RETURN_TO_MY_RR_URL}'), "Return to My RR must be a plain tappable link in the card");
   assert.ok(src.includes("Copy my starter message"), "the card must offer to copy the starter message");
   assert.ok(src.includes("Add My Muse to my home screen"), "the card must name the Add My Muse to my home screen step");
-  assert.ok(src.includes("Muse only"), "the card must say Muse only — no other AIs");
+  assert.ok(src.includes("Muse only"), "the card must say Muse only — no other Personal Muse Assistants");
   assert.ok(src.includes("guide, not a doctor"), "the card must say Muse is a guide, not a doctor");
   assert.ok(src.includes("call or text 988"), "the card must keep 988 in view");
   // Adding, not subtracting: the warm greeting is untouched.
@@ -102,10 +102,25 @@ test("My Muse card: Home only, after My RR, Muse only, with the return link and 
   assert.ok(search.includes('"my-muse"'), "search must index My Muse so it can be found");
 });
 
+test("My Muse wording: 'AI' is never shown, 'Personal Muse Assistant' is (Richard, 2026-11-21)", () => {
+  // "AI" is a deterrent for visitors — Richard's research / friends and
+  // family. Visible copy must say "Personal Muse Assistant" instead.
+  // The only "ai" left anywhere must be the muse.ai URL and the "ai"
+  // search keyword (kept so searching "AI" still finds My Muse).
+  const card = src.slice(src.indexOf("function MyMuseCard("), src.indexOf("function MyMuseCard(") + 6000);
+  assert.ok(card.includes("Personal Muse Assistant"), "the My Muse card must say Personal Muse Assistant");
+  assert.ok(!/\bAIs?\b/.test(card.replaceAll("muse.ai", "")), "the My Muse card must show no standalone AI / AIs");
+  const pointsLine = src.slice(src.indexOf("+100</strong> — once, ever"), src.indexOf("+100</strong> — once, ever") + 300);
+  assert.ok(pointsLine.includes("Personal Muse Assistant"), "the points list must say Personal Muse Assistant");
+  assert.ok(!/\bAIs?\b/.test(pointsLine), "the points list must show no standalone AI");
+  const starter = MY_MUSE_STARTER;
+  assert.ok(!/\bAIs?\b/.test(starter), "the starter must show no standalone AI either");
+});
+
 test("My Muse points: +100 once ever, label and server wiring", () => {
   assert.ok(src.includes('myMuse: "Got your own Muse — your personal self-help assistant"'),
     "POINT_ACTION_LABEL must name myMuse");
-  assert.ok(src.includes("once, ever, for getting your own AI"), "the points list must explain +100 once, ever, for getting your own AI");
+  assert.ok(src.includes("once, ever, for getting your own Personal Muse Assistant"), "the points list must explain +100 once, ever, for getting your own Personal Muse Assistant");
   assert.ok(src.includes('award("home", "myMuse")'), "tapping Talk to My Muse must award myMuse on Home");
   const actions = readFileSync(path.join(root, "server", "src", "actions.ts"), "utf8");
   const schema = readFileSync(path.join(root, "server", "src", "schema.ts"), "utf8");

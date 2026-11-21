@@ -9,7 +9,7 @@
 // Button, Share button all stay where they were. No account, no
 // personal data, nothing sent to the server — the last place lives
 // in this browser's localStorage only, like the welcome flag.
-// My Muse and its 100-points-for-AI award landed in the next
+// My Muse and its 100-points-for-Personal-Muse-Assistant award landed in the next
 // piece (2026-11-21, tests/my-muse.test.mjs), not this one.
 import { test } from "node:test";
 import assert from "node:assert/strict";

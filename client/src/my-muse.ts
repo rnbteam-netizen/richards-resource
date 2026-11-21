@@ -1,6 +1,6 @@
 // My Muse (Richard, 2026-11-21): your personal self-help
 // assistant, built into a personal self-help app. Muse only —
-// no other AIs, no choice of AIs. Richard is bombarded by
+// no other Personal Muse Assistants, no choice of Personal Muse Assistants. Richard is bombarded by
 // Gemini and everybody else; this app is his and Muse's, and
 // the button says so plainly: "My Muse — Your personal
 // self-help assistant".
@@ -44,7 +44,7 @@
 //     the starter says Muse is a guide and helper, not a
 //     parent and not a replacement for the people in the
 //     visitor's life. There is absolutely nothing wrong
-//     with AI assisting in their journey, even if it becomes
+//     with a Personal Muse Assistant assisting in their journey, even if it becomes
 //     the best avenue for that individual — and the app
 //     still keeps 988 and the help numbers right there.
 //

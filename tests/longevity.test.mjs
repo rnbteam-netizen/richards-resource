@@ -55,6 +55,43 @@ test("Longevity page: hook, one breathing exercise, no points for check-in ticks
   assert.ok(src.includes("Live longer, live better — start today."), "bigger Home button line must be present");
 });
 
+test("Longevity vitamin D note (Richard, 2026-11-21): gentle, doctor-led, no level or dose", () => {
+  const page = src.slice(
+    src.indexOf("function LongevityPage()"),
+    src.indexOf("/* ---------- peace of mind"),
+  );
+  // JSX wraps the wording across source lines, so match on
+  // whitespace-normalised text, as the visitor will read it.
+  const norm = page.replace(/\s+/g, " ");
+  // Longevity only — no vitamin D note anywhere else in the app.
+  assert.ok(norm.includes("Vitamin D — one more free, cheap basics idea"),
+    "Longevity must have the gentle vitamin D section");
+  assert.ok(norm.includes("Ask your own doctor about checking your vitamin D"),
+    "the note must ask the visitor's own doctor about checking vitamin D");
+  assert.ok(norm.includes("25(OH)D"), "the note must name the 25(OH)D blood test");
+  assert.ok(norm.includes("guess a dose on your own"),
+    "the note must tell the visitor not to guess a dose");
+  assert.ok(norm.includes("Vitamin D helps your immune system work"),
+    "the note must say plainly why vitamin D matters");
+  assert.ok(norm.includes("Sunshine is the natural way our bodies make vitamin D"),
+    "the note must mention sunshine as the natural way the body makes vitamin D");
+  assert.ok(norm.includes("a little daylight outside most days helps, especially morning daylight"),
+    "the note must keep the sunshine line gentle, with no time-in-sun number");
+  // No recommended level and no dose: the app cannot recommend a level.
+  // (25(OH)D is the test name, not a level — so check for units and
+  // target phrasing, not for the digits in the test name.)
+  assert.ok(!page.includes("ng/mL"), "the note must not state a level in ng/mL");
+  assert.ok(!page.includes("mg/mL"), "the note must not state a level in mg/mL");
+  assert.ok(!page.includes("levels should be"), "the note must not recommend a target level");
+  assert.ok(!page.includes("IU"), "the note must not state a dose in IU");
+  assert.ok(!page.includes("prevents"), "the note must not claim vitamin D prevents a disease");
+  // No points, no check-in question for vitamin D.
+  assert.ok(!page.includes('awardFields("longevity"'), "vitamin D must not award points");
+  const home = src.slice(0, src.indexOf("function LongevityPage()"));
+  assert.ok(!home.includes("Ask your own doctor about checking your vitamin D"),
+    "the vitamin D note must not appear on Home or any earlier tab");
+});
+
 test("Server accepts longevity taps: tab enum, schema, and Neon CHECK widened", () => {
   const actions = readFileSync(
     path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "server", "src", "actions.ts"), "utf8");

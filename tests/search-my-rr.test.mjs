@@ -49,6 +49,14 @@ test("Search: finds the thing by its own words — breathing, 988, quit date", (
   assert.equal(slot[0].tab, "gambling", "the slot machine lives on the Gambling tab");
 });
 
+test("Search: vitamin D finds the Longevity note (Richard, 2026-11-21)", () => {
+  const results = searchApp("vitamin d");
+  assert.ok(results.some((r) => r.id === "vitamin-d"), "“vitamin d” must find the vitamin D entry");
+  assert.ok(results.some((r) => r.tab === "longevity"), "the vitamin D entry must jump to Longevity");
+  assert.ok(SEARCH_INDEX.some((e) => e.id === "longevity" && e.keywords.includes("vitamin d")),
+    "the Longevity entry itself must carry the vitamin d keyword");
+});
+
 test("Search: case-insensitive, empty and nonsense queries return nothing", () => {
   assert.deepEqual(searchApp("BREATHING").map((r) => r.id), searchApp("breathing").map((r) => r.id),
     "search must not care about capital letters");

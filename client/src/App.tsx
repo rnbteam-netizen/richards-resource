@@ -5,6 +5,7 @@ import { sounds, type CalmToneKind } from "./sound";
 import { speakText, stopSpeaking } from "./speech";
 import welcomeCottage from "./assets/welcome-cottage.jpg";
 import { shareApp } from "./share";
+import { searchApp, loadLastPlace, saveLastPlace, LAST_PLACE_LABELS } from "./search";
 
 type Category = "alcohol" | "smoking" | "gambling" | "drugs" | "codependency";
 type Profile = ApiResponse<typeof api, "getState">["profiles"][number];
@@ -185,6 +186,11 @@ function safeLocalSet(key: string, value: string): void {
 function safeLocalRemove(key: string): void {
   try { window.localStorage.removeItem(key); } catch { /* nothing to do */ }
 }
+
+// The storage adapter the last-place helpers talk through — the
+// safe localStorage wrappers above, so a blocked or full store can
+// never break the app. Nothing stored through it leaves the phone.
+const LOCAL_STORAGE_ADAPTER = { getItem: safeLocalGet, setItem: safeLocalSet };
 
 /* ---------- what's new: a banner on Home, once per version ---------- */
 
@@ -4531,13 +4537,98 @@ function ShareButton() {
   );
 }
 
-function HomePage({ profiles, logs, pointEvents, dayMarks, onGo, onSurf }: {
+/* ---------- search + My RR (Richard, 2026-11-21) ---------- */
+
+// Search (Richard, 2026-11-21): the app is about 24,000 words and
+// there was no way to find anything in it. One big search box —
+// 🔍 Search the app — that runs entirely on the phone over the
+// small index in search.ts (tab headings, tools, helplines). Tapping
+// a result jumps straight to that tab. Nothing typed here is sent
+// anywhere; the box says so, right under it. It lives in the App
+// root, above the points strip, so it is visible on Home and on
+// every tab, not hidden inside one of them.
+//
+// My RR (Richard, 2026-11-21): your personal place in the app —
+// "My RR" — showing where you left off, with one big button to
+// continue there. It is Home only, right after the Share button,
+// and it adds to the warm greeting, it does not replace any of it:
+// cottage, welcome line, true message, Happy Button, Share button
+// all stay exactly where they were. The last place lives in this
+// browser's localStorage only, like the welcome flag and the Happy
+// Button cork board — never sent to the server, never tied to an
+// account, because there is no account.
+function SearchBox({ onGo }: { onGo: (t: TabId) => void }) {
+  const [query, setQuery] = useState("");
+  const results = searchApp(query);
+  const open = (tab: TabId) => {
+    onGo(tab);
+    setQuery("");
+    if (typeof window !== "undefined") window.scrollTo(0, 0);
+  };
+  return (
+    <div className="felt-card mb-4 rounded-[var(--radius)] border-2 border-[var(--sun)] bg-[var(--surface)] p-4" role="search" aria-label="Search the app">
+      <label htmlFor="app-search" className="flex items-center gap-2 font-display text-lg font-bold text-[var(--text)]">
+        <span aria-hidden>🔍</span> Search the app
+      </label>
+      <input
+        id="app-search"
+        type="search"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Try “quit date”, “breathing”, “988”…"
+        aria-label="Search the app"
+        className="mt-2 min-h-14 w-full rounded-[var(--radius)] border-2 border-[var(--border)] bg-white px-4 text-lg text-[var(--text)]"
+      />
+      <p className="mt-2 text-sm text-[var(--dim)]">Search stays on your phone — nothing you type is sent anywhere.</p>
+      {query.trim() !== "" && results.length === 0 && (
+        <p className="mt-3 text-sm font-semibold text-[var(--text)]">Nothing found for “{query.trim()}” — try another word, like “breathing” or “points”.</p>
+      )}
+      {results.length > 0 && (
+        <ul className="mt-3 space-y-2">
+          {results.map((r) => (
+            <li key={r.id}>
+              <button type="button" onClick={() => open(r.tab)} className="felt-card felt-pressable w-full rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--amber-soft)] p-3 text-left">
+                <span className="block font-bold text-[var(--text)]">{r.title}</span>
+                <span className="mt-0.5 block text-sm leading-relaxed text-[var(--dim)]">{r.snippet}</span>
+                <span className="mt-1 block text-xs font-bold uppercase tracking-widest text-[var(--accent)]">{LAST_PLACE_LABELS[r.tab]} tab →</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function MyRRCard({ lastPlace, onGo }: { lastPlace: TabId | null; onGo: (t: TabId) => void }) {
+  return (
+    <div className="felt-card mb-5 rounded-[var(--radius)] border-2 border-[var(--leaf)] bg-[var(--leaf-soft)] p-5" role="region" aria-label="My RR — your place in the app">
+      <p className="text-center font-display text-2xl font-bold text-[var(--text)]">My RR</p>
+      <p className="mt-2 text-center text-sm leading-relaxed text-[var(--dim)]">
+        Your personal place in the app — the app remembers where you left off, on this phone only, and brings you back. Nothing is sent anywhere.
+      </p>
+      {lastPlace ? (
+        <>
+          <p className="mt-3 text-center font-semibold text-[var(--text)]">Last time, you were on the {LAST_PLACE_LABELS[lastPlace]} tab.</p>
+          <button type="button" onClick={() => onGo(lastPlace)} className="felt-btn mt-3 min-h-14 w-full rounded-[var(--radius)] bg-[var(--leaf)] px-4 text-lg font-bold text-white">
+            Continue where I left off →
+          </button>
+        </>
+      ) : (
+        <p className="mt-3 text-center font-semibold text-[var(--text)]">No place saved yet — pick a tab above, and My RR will remember it for next time.</p>
+      )}
+    </div>
+  );
+}
+
+function HomePage({ profiles, logs, pointEvents, dayMarks, onGo, onSurf, lastPlace }: {
   profiles: Profile[];
   logs: LogEntry[];
   pointEvents: PointEvent[];
   dayMarks: DayMark[];
-  onGo: (t: Category | "resources" | "wellbeing" | "food" | "screens" | "longevity" | "peace") => void;
+  onGo: (t: TabId) => void;
   onSurf: () => void;
+  lastPlace: TabId | null;
 }) {
   const { byTab, total } = usePoints();
   const today = localDay();
@@ -4567,6 +4658,11 @@ function HomePage({ profiles, logs, pointEvents, dayMarks, onGo, onSurf }: {
           after the Happy Button — it does not move the true message,
           the Happy Button, or the crisis box. */}
       <ShareButton />
+      {/* My RR (Richard, 2026-11-21): Home only, right after the
+          Share button — it adds to the warm greeting, it does not
+          move the true message, the Happy Button, or the Share
+          button. */}
+      <MyRRCard lastPlace={lastPlace} onGo={onGo} />
       <WhatsNewBanner />
       <AddToHomeScreenHint />
       {/* Tagline (Richard, 2026-11-12): "Making the world 🌎 a happier
@@ -4852,7 +4948,21 @@ const TAB_TO_POINT_TAB: Record<TabId, PointTab> = {
 };
 
 export function App() {
-  const [tab, setTab] = useState<TabId>("home");
+  // Return to where you left off (Richard, 2026-11-21): the last
+  // tab visited is kept in this browser's localStorage only (see
+  // search.ts — never sent to the server). On return, the app
+  // defaults to that tab, and a "Welcome back" banner under the tab
+  // buttons says where you are and offers Home instead — the tab
+  // buttons themselves are always there too. First-time visitors
+  // have no last place, so they start on Home as before. The
+  // welcome cover still comes first on a first visit.
+  const [tab, setTab] = useState<TabId>(() => loadLastPlace(LOCAL_STORAGE_ADAPTER) ?? "home");
+  const [resumedTab, setResumedTab] = useState<TabId | null>(() => loadLastPlace(LOCAL_STORAGE_ADAPTER));
+  const [lastPlace, setLastPlace] = useState<TabId | null>(() => loadLastPlace(LOCAL_STORAGE_ADAPTER));
+  useEffect(() => {
+    saveLastPlace(LOCAL_STORAGE_ADAPTER, tab);
+    if (tab !== "home") setLastPlace(tab);
+  }, [tab]);
   // Full cover page (Richard, 2026-11-16): on first open the cottage
   // is all you see, until you tap the door or skip. After that the
   // flag is set and returning visitors go straight to Home.
@@ -4865,6 +4975,16 @@ export function App() {
   const [showTerms, setShowTerms] = useState(false);
   const [surfCategory, setSurfCategory] = useState<Category | null>(null);
   const [pendingRide, setPendingRide] = useState<boolean | null>(null);
+  // One tap to a tab, from the search results, My RR, or a Home
+  // card: switch tab, close anything open on top of it, and start
+  // at the top of the new tab.
+  const goToTab = (t: TabId) => {
+    setTab(t);
+    setShowTerms(false);
+    setSurfCategory(null);
+    setPendingRide(null);
+    if (typeof window !== "undefined") window.scrollTo(0, 0);
+  };
   const [lastAward, setLastAward] = useState<PointsApi["lastAward"]>(null);
   const [pendingTouches, setPendingTouches] = useState(0);
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
@@ -5033,6 +5153,25 @@ export function App() {
           })}
         </nav>
 
+        {/* Search (Richard, 2026-11-21): on every tab, right under
+            the tab buttons, so it is there wherever you are. */}
+        <div className="mt-4">
+          <SearchBox onGo={goToTab} />
+        </div>
+
+        {/* Welcome back (Richard, 2026-11-21): shown only when the
+            app defaulted to the tab you left off on. It names the
+            tab, so the default is never a surprise, and offers Home
+            instead — one tap, no hunting. */}
+        {resumedTab && tab === resumedTab && (
+          <div className="felt-soft mt-4 flex flex-wrap items-center justify-between gap-2 rounded-[var(--radius)] border-2 border-[var(--leaf)] bg-[var(--leaf-soft)] px-4 py-3" role="status">
+            <span className="font-semibold text-[var(--text)]">Welcome back — you&apos;re on the {LAST_PLACE_LABELS[resumedTab]} tab, where you left off.</span>
+            <button type="button" onClick={() => { setTab("home"); setResumedTab(null); if (typeof window !== "undefined") window.scrollTo(0, 0); }} className="min-h-11 rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 font-bold text-[var(--text)]">
+              Go to Home instead
+            </button>
+          </div>
+        )}
+
         <div className="felt-soft mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-[var(--radius)] bg-[var(--amber-soft)] px-4 py-2.5" aria-live="polite">
           <span className="font-display text-lg font-bold text-[var(--text)]">★ {displayTotal} points</span>
           {lastAward && Date.now() - lastAward.at < 6000 && lastAward.points > 0 && (
@@ -5080,7 +5219,7 @@ export function App() {
             {state.isPending && <p className="text-[var(--dim)]">Loading your plans and logs…</p>}
             {state.isError && <p className="text-[var(--crisis)]">Couldn't load your saved data. <button type="button" className="underline" onClick={() => state.refetch()}>Try again</button></p>}
             {state.isSuccess && tab === "home" && (
-              <HomePage profiles={profiles} logs={logs} pointEvents={pointEvents} dayMarks={dayMarks} onGo={(t) => setTab(t)} onSurf={() => setSurfCategory(activeSurf ?? "gambling")} />
+              <HomePage profiles={profiles} logs={logs} pointEvents={pointEvents} dayMarks={dayMarks} onGo={goToTab} onSurf={() => setSurfCategory(activeSurf ?? "gambling")} lastPlace={lastPlace} />
             )}
             {state.isSuccess && tab === "resources" && <ResourcesPage profiles={profiles} logs={logs} pointEvents={pointEvents} dayMarks={dayMarks} onTerms={() => setShowTerms(true)} />}
             {tab === "wellbeing" && <WellbeingPage />}

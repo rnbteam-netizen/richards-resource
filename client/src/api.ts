@@ -50,7 +50,7 @@ export type LogEntry = {
 };
 
 export type PointTab = "home" | "alcohol" | "smoking" | "gambling" | "drugs" | "codependency" | "food" | "screens" | "wellbeing" | "longevity" | "peace";
-export type PointAction = "welcome" | "touch" | "field" | "quitDate" | "daySuccess" | "relapse" | "pause" | "plan" | "log" | "screening" | "slotLesson" | "phoneFree" | "checkin" | "screenOff" | "dailyCheckin" | "quietMoment" | "happyMoment";
+export type PointAction = "welcome" | "touch" | "field" | "quitDate" | "daySuccess" | "relapse" | "pause" | "plan" | "log" | "screening" | "slotLesson" | "phoneFree" | "checkin" | "screenOff" | "dailyCheckin" | "quietMoment" | "happyMoment" | "myMuse";
 
 export type PointEvent = { id: number; tab: PointTab; action: PointAction; points: number; day: string | null; createdAt: string };
 export type DayMark = { tab: PointTab; action: "daySuccess" | "relapse"; day: string };

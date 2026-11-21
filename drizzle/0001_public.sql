@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS points (
   id BIGSERIAL PRIMARY KEY,
   device_id TEXT NOT NULL,
   tab TEXT NOT NULL CHECK (tab IN ('home','alcohol','smoking','gambling','drugs','codependency','food','screens','wellbeing','longevity','peace')),
-  action TEXT NOT NULL CHECK (action IN ('welcome','touch','field','quitDate','daySuccess','relapse','pause','plan','log','screening','slotLesson','phoneFree','checkin','screenOff','dailyCheckin','quietMoment','happyMoment')),
+  action TEXT NOT NULL CHECK (action IN ('welcome','touch','field','quitDate','daySuccess','relapse','pause','plan','log','screening','slotLesson','phoneFree','checkin','screenOff','dailyCheckin','quietMoment','happyMoment','myMuse')),
   points INTEGER NOT NULL,
   day TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -59,22 +59,23 @@ CREATE INDEX IF NOT EXISTS logs_device_category_idx ON logs (device_id, category
 -- added, extend the single list below (and pointActions/pointTabs
 -- in server/src/schema.ts, which must match it exactly —
 -- tests/migration-check.test.mjs pins this).
--- Full action list (17): welcome, touch, field, quitDate,
+-- Full action list (18): welcome, touch, field, quitDate,
 -- daySuccess, relapse, pause, plan, log, screening, slotLesson,
 -- phoneFree, checkin, screenOff, dailyCheckin, quietMoment,
--- happyMoment (dailyCheckin 2026-11-11, quietMoment 2026-11-12,
--- happyMoment 2026-11-18, +10, up to 8 scored pushes per local
--- day, 80 max a day). Full tab list (11): home, alcohol, smoking,
--- gambling, drugs, codependency, food, screens, wellbeing,
--- longevity, peace.
+-- happyMoment, myMuse (dailyCheckin 2026-11-11, quietMoment
+-- 2026-11-12, happyMoment 2026-11-18, +10, up to 8 scored pushes
+-- per local day, 80 max a day; myMuse 2026-11-21, +100, once ever
+-- per device, for getting your own AI). Full tab list (11): home,
+-- alcohol, smoking, gambling, drugs, codependency, food, screens,
+-- wellbeing, longevity, peace.
 ALTER TABLE points DROP CONSTRAINT IF EXISTS points_action_check;
-ALTER TABLE points ADD CONSTRAINT points_action_check CHECK (action IN ('welcome','touch','field','quitDate','daySuccess','relapse','pause','plan','log','screening','slotLesson','phoneFree','checkin','screenOff','dailyCheckin','quietMoment','happyMoment'));
+ALTER TABLE points ADD CONSTRAINT points_action_check CHECK (action IN ('welcome','touch','field','quitDate','daySuccess','relapse','pause','plan','log','screening','slotLesson','phoneFree','checkin','screenOff','dailyCheckin','quietMoment','happyMoment','myMuse'));
 ALTER TABLE points DROP CONSTRAINT IF EXISTS points_tab_check;
 ALTER TABLE points ADD CONSTRAINT points_tab_check CHECK (tab IN ('home','alcohol','smoking','gambling','drugs','codependency','food','screens','wellbeing','longevity','peace'));
 -- Atomic once-a-day awards (001 security fix, 2026-11-19): the
 -- server's exists() checks in actions.ts are a fast path only —
 -- two simultaneous calls can both pass them, so the database
--- itself must reject the second award. That is these two partial
+-- itself must reject the second award. That is these three partial
 -- unique indexes, together the unique constraint on
 -- (device_id, action, day) for the once-a-day awards:
 --   * points_once_per_day_uidx: (device_id, tab, action, day)
@@ -85,6 +86,8 @@ ALTER TABLE points ADD CONSTRAINT points_tab_check CHECK (tab IN ('home','alcoho
 --   * points_welcome_uidx: (device_id, action) for welcome,
 --     whose day is NULL — Postgres treats NULLs as distinct in a
 --     unique index, so welcome needs its own index.
+--   * points_my_muse_uidx: (device_id, action) for myMuse,
+--     once ever per device (2026-11-21), day NULL like welcome.
 -- Partial, not whole-table, on purpose: happyMoment legitimately
 -- repeats up to 8 times a day for the same device/tab/day, and
 -- touch/field rows have day NULL and repeat freely — a
@@ -111,5 +114,7 @@ ALTER TABLE points ADD CONSTRAINT points_tab_check CHECK (tab IN ('home','alcoho
 -- Self-cleaning duplicates — start
 DELETE FROM points WHERE id IN (SELECT a.id FROM points a JOIN points b ON b.device_id = a.device_id AND b.tab = a.tab AND b.action = a.action AND b.day = a.day AND b.id < a.id WHERE a.day IS NOT NULL AND a.action IN ('quitDate','dailyCheckin','quietMoment','daySuccess','relapse'));
 DELETE FROM points WHERE id IN (SELECT a.id FROM points a JOIN points b ON b.device_id = a.device_id AND b.action = a.action AND b.id < a.id WHERE a.action = 'welcome');
+DELETE FROM points WHERE id IN (SELECT a.id FROM points a JOIN points b ON b.device_id = a.device_id AND b.action = a.action AND b.id < a.id WHERE a.action = 'myMuse');
 CREATE UNIQUE INDEX IF NOT EXISTS points_once_per_day_uidx ON points (device_id, tab, action, day) WHERE day IS NOT NULL AND action IN ('quitDate','dailyCheckin','quietMoment','daySuccess','relapse');
 CREATE UNIQUE INDEX IF NOT EXISTS points_welcome_uidx ON points (device_id, action) WHERE action = 'welcome';
+CREATE UNIQUE INDEX IF NOT EXISTS points_my_muse_uidx ON points (device_id, action) WHERE action = 'myMuse';

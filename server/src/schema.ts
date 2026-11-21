@@ -5,7 +5,7 @@ export const categories = ["alcohol", "smoking", "gambling", "drugs", "codepende
 
 export const pointTabs = ["home", "alcohol", "smoking", "gambling", "drugs", "codependency", "food", "screens", "wellbeing", "longevity", "peace"] as const;
 
-export const pointActions = ["welcome", "touch", "field", "quitDate", "daySuccess", "relapse", "pause", "plan", "log", "screening", "slotLesson", "phoneFree", "checkin", "screenOff", "dailyCheckin", "quietMoment", "happyMoment"] as const;
+export const pointActions = ["welcome", "touch", "field", "quitDate", "daySuccess", "relapse", "pause", "plan", "log", "screening", "slotLesson", "phoneFree", "checkin", "screenOff", "dailyCheckin", "quietMoment", "happyMoment", "myMuse"] as const;
 
 // deviceId: an anonymous UUID generated in the visitor's own browser on
 // first visit and stored in that browser's localStorage only. It is NOT
@@ -44,7 +44,9 @@ export const logs = pgTable("logs", {
 // tab, self-reported "I turned my screen off"), +100 dailyCheckin
 // (Home "Today I..." check-in, once per day, 2026-11-11), +10 quietMoment
 // (Peace of Mind "I took a quiet moment", self-claimed, once per day,
-// 2026-11-12). +10 happyMoment (Home "Happy Button", 2026-11-18):
+// 2026-11-12). +100 myMuse (Home "My Muse", 2026-11-21): once ever
+// per device, for getting your own AI — first tapping "Talk to My
+// Muse". +10 happyMoment (Home "Happy Button", 2026-11-18):
 // noticing "I'm feeling happy", self-claimed, up to 8 scored pushes
 // per local day (80 max a day) — a full thermometer's worth. Older action names
 // stay in the enum so historical events keep rendering. `day` carries
@@ -59,16 +61,19 @@ export const points = pgTable("points", {
   day: text("day"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   // Atomic once-a-day awards (001 security fix, 2026-11-19):
-  // mirrors the two partial unique indexes in
+  // mirrors the three partial unique indexes in
   // drizzle/0001_public.sql, which is the authoritative schema
   // the server actually migrates with. Partial on purpose:
   // happyMoment repeats up to 8 times a day and touch/field
   // repeat with day NULL, so a whole-table unique index would
-  // break them; welcome's day is NULL, so it needs its own index.
+  // break them; welcome's and myMuse's day is NULL, so each
+  // needs its own index.
 }, (t) => [
   index("points_device_tab_idx").on(t.deviceId, t.tab),
   uniqueIndex("points_once_per_day_uidx").on(t.deviceId, t.tab, t.action, t.day)
     .where(sql`day IS NOT NULL AND action IN ('quitDate','dailyCheckin','quietMoment','daySuccess','relapse')`),
   uniqueIndex("points_welcome_uidx").on(t.deviceId, t.action)
     .where(sql`action = 'welcome'`),
+  uniqueIndex("points_my_muse_uidx").on(t.deviceId, t.action)
+    .where(sql`action = 'myMuse'`),
 ]);

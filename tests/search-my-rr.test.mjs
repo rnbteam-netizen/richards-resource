@@ -9,8 +9,8 @@
 // Button, Share button all stay where they were. No account, no
 // personal data, nothing sent to the server — the last place lives
 // in this browser's localStorage only, like the welcome flag.
-// No My Muse and no 100-points-for-AI award in this build — those
-// are the next piece.
+// My Muse and its 100-points-for-AI award landed in the next
+// piece (2026-11-21, tests/my-muse.test.mjs), not this one.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -154,7 +154,11 @@ test("Return to last place: the app defaults to it, with a clear way back to Hom
   assert.ok(src.includes("setResumedTab(null)"), "going Home instead must dismiss the banner");
   // The welcome cover still comes first on a first visit.
   assert.ok(src.includes("if (!welcomeEntered)"), "the full welcome cover must still gate first entry");
-  // Points are untouched by this build: no new award action.
-  assert.ok(!searchSrc.includes("happyMoment") && !src.includes("myMuse") && !src.includes("My Muse"),
-    "this build must not add a points action or a My Muse button — those are the next piece");
+  // Points are untouched by the search / My RR build: the search
+  // module itself adds no award action. (My Muse and its +100
+  // once-ever myMuse award arrived in the next piece, 2026-11-21,
+  // and are pinned in tests/my-muse.test.mjs — this old guard
+  // used to forbid them, and was updated when that piece landed.)
+  assert.ok(!searchSrc.includes("happyMoment") && !searchSrc.includes("myMuse"),
+    "the search / last-place module must not add a points action");
 });

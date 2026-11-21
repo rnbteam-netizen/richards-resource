@@ -24,7 +24,7 @@ export type Db = PoolLike;
 
 export const categoryEnum = z.enum(["alcohol", "smoking", "gambling", "drugs", "codependency"]);
 export const pointTabEnum = z.enum(["home", "alcohol", "smoking", "gambling", "drugs", "codependency", "food", "screens", "wellbeing", "longevity", "peace"]);
-export const pointActionEnum = z.enum(["welcome", "touch", "field", "quitDate", "daySuccess", "relapse", "pause", "plan", "log", "screening", "slotLesson", "phoneFree", "checkin", "screenOff", "dailyCheckin", "quietMoment", "happyMoment"]);
+export const pointActionEnum = z.enum(["welcome", "touch", "field", "quitDate", "daySuccess", "relapse", "pause", "plan", "log", "screening", "slotLesson", "phoneFree", "checkin", "screenOff", "dailyCheckin", "quietMoment", "happyMoment", "myMuse"]);
 export const dayString = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 export const deviceIdSchema = z.string().uuid();
 
@@ -54,6 +54,13 @@ export const deviceIdSchema = z.string().uuid();
 // day pays 0 but still fills the thermometer on the phone. The cap is
 // count-based, not existence-based, because the client alone cannot
 // count reliably: getState only returns the last 30 point events.
+// My Muse (Richard, 2026-11-21): +100, ONCE per device, for having
+// the good sense to get your own AI — first tapping "Talk to My Muse"
+// on Home. Self-claimed on the visitor's own word, like welcome:
+// the server cannot (and does not try to) verify that the visitor
+// actually opened Muse, only that this device has not been paid
+// for it before. A second tap pays 0. No day is needed — it is
+// once ever, not once a day.
 // The older action values stay only so historical rows keep their meaning.
 export const POINT_VALUES: Record<z.infer<typeof pointActionEnum>, number> = {
   welcome: 10,
@@ -73,6 +80,7 @@ export const POINT_VALUES: Record<z.infer<typeof pointActionEnum>, number> = {
   dailyCheckin: 100,
   quietMoment: 10,
   happyMoment: 10,
+  myMuse: 100,
 };
 
 const profileShape = z.object({
@@ -236,6 +244,13 @@ export async function awardPoints(
       return { ok: true as const, points: 0, already: true };
     }
   }
+  if (args.action === "myMuse") {
+    // Once ever per device (Richard, 2026-11-21): +100 for getting
+    // your own AI. No day — a second tap, any day, pays 0.
+    if (await exists(db, `SELECT 1 FROM points WHERE device_id = $1 AND action = 'myMuse' LIMIT 1`, [deviceId])) {
+      return { ok: true as const, points: 0, already: true };
+    }
+  }
   if (args.action === "quitDate") {
     if (!day) throw new Error("awardPoints: quitDate requires the quit date as `day`");
     if (await exists(db, `SELECT 1 FROM points WHERE device_id = $1 AND tab = $2 AND action = 'quitDate' AND day = $3 LIMIT 1`, [deviceId, args.tab, day])) {
@@ -284,7 +299,8 @@ export async function awardPoints(
   // inserts (check-then-insert is not atomic). The partial unique
   // indexes in drizzle/0001_public.sql (points_once_per_day_uidx
   // for quitDate/dailyCheckin/quietMoment/daySuccess/relapse, and
-  // points_welcome_uidx for welcome, whose day is NULL) make the
+  // points_welcome_uidx for welcome and points_my_muse_uidx for
+  // myMuse, both once-ever with day NULL) make the
   // database itself reject the second insert with 23505, and that
   // loser is reported as already-paid instead of a 500. The
   // happyMoment 8-a-day cap is count-based, not unique — it has

@@ -47,6 +47,7 @@ export const SEARCH_INDEX: SearchEntry[] = [
   { id: "home", tab: "home", title: "Home", snippet: "Your front door — points, the Happy Button, and every tab.", keywords: "start front door home page" },
   { id: "happy-button", tab: "home", title: "Happy Button", snippet: "Tap when you notice you're happy — 8 happy moments fill a thermometer and pin to your cork board.", keywords: "happy happiness thermometer cork board moment feeling happy" },
   { id: "my-rr", tab: "home", title: "My RR", snippet: "Your personal place — continue where you left off in the app.", keywords: "my rr continue return last place where left off personal" },
+  { id: "my-muse", tab: "home", title: "My Muse", snippet: "Your personal self-help assistant — talk to Muse, free, no account, and come back with Return to My RR.", keywords: "my muse assistant talk ai help guide" },
   { id: "share", tab: "home", title: "Share Richard's Resource", snippet: "Share the cottage with someone who could use it — free, no account, no fuss.", keywords: "share send friend cottage tell someone" },
   { id: "points", tab: "home", title: "Points — how points work", snippet: "+10 welcome, +1 per tap, +5 per field, +50 for a quit date, +100 for a good day. No maximum.", keywords: "points score total quit date good day" },
   { id: "daily-checkin", tab: "home", title: "Check in for today", snippet: "Today I… exercised, ate well, slept well, feel better — +100 once a day, not 100 per item.", keywords: "check-in checkin today daily exercised ate slept feel better" },

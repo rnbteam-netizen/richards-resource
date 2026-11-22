@@ -57,6 +57,22 @@ test("Search: vitamin D finds the Longevity note (Richard, 2026-11-21)", () => {
     "the Longevity entry itself must carry the vitamin d keyword");
 });
 
+test("Search: donate finds the Donate entry (Richard, 2026-11-21)", () => {
+  const results = searchApp("donate");
+  assert.ok(results.length > 0, "“donate” must find something");
+  assert.equal(results[0].id, "donate", "“donate” must rank the Donate entry first");
+  assert.equal(results[0].tab, "home", "the Donate entry must jump to Home, where the Donate section is");
+  assert.ok(results[0].snippet.includes("NOT tax deductible"), "the Donate snippet must say donations are NOT tax deductible");
+  for (const q of ["donation", "donations", "support"]) {
+    assert.ok(searchApp(q).some((r) => r.id === "donate"), `“${q}” must find the Donate entry`);
+  }
+  const entry = SEARCH_INDEX.find((e) => e.id === "donate");
+  assert.ok(entry, "the index must have a donate entry");
+  for (const kw of ["donate", "donation", "donations", "support", "give", "gift"]) {
+    assert.ok(entry.keywords.includes(kw), `the Donate entry must carry the keyword ${kw}`);
+  }
+});
+
 test("Search: case-insensitive, empty and nonsense queries return nothing", () => {
   assert.deepEqual(searchApp("BREATHING").map((r) => r.id), searchApp("breathing").map((r) => r.id),
     "search must not care about capital letters");

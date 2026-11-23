@@ -113,6 +113,13 @@ test("7. grammar: 'None of these are new', 'doctors use' kept", () => {
 test("8. Terms: one page, arbitration in Grays Harbor County, errors and omissions, never a locked gate", () => {
   assert.ok(src.includes("function TermsPage("), "a Terms page must exist");
   assert.ok(src.includes("We are here to help."), "Terms must start 'We are here to help.'");
+  // Plain-English note (Richard, 2026-11-23): added verbatim right
+  // after the opening line, at the start of the Terms page.
+  const termsPage = src.slice(src.indexOf("function TermsPage("), src.indexOf("function SaveStatusBar("));
+  const plainNote = "Please don&apos;t sue us for any reason, we are just here to help you. Thank you and we hope this app makes your World 🌍 A Happier Place ✌️❤️.";
+  assert.ok(termsPage.includes(plainNote), "Terms must carry Richard's plain-English 'please don't sue us' note verbatim");
+  assert.ok(termsPage.indexOf(plainNote) > termsPage.indexOf("We are here to help."), "plain-English note must come right after the opening 'We are here to help.' line");
+  assert.ok(termsPage.indexOf(plainNote) < termsPage.indexOf("This is your personal journey... BUT YOU ARE NOT ALONE"), "plain-English note must come before the true-message line");
   assert.ok(src.includes("Arbitration in Grays Harbor County, Washington."), "Terms must include arbitration in Grays Harbor County");
   assert.ok(src.includes("binding arbitration in Grays Harbor County"), "arbitration must be binding, in Grays Harbor County");
   assert.ok(src.includes("errors and omissions") || src.includes("errors or\n            omissions"), "Terms must include errors-and-omissions verbiage");
@@ -124,20 +131,49 @@ test("8. Terms: one page, arbitration in Grays Harbor County, errors and omissio
   assert.ok(footer.includes("Terms of Use"), "footer must link the Terms");
   const resources = src.slice(src.indexOf("function ResourcesPage("), src.indexOf("/* ---------- root ---------- */"));
   assert.ok(resources.includes("Terms of Use"), "Help & Resources must link the Terms");
-  // First-visit notice: short, with a link and a Got it button, never a gate.
-  assert.ok(src.includes("function TermsNotice("), "a first-visit Terms notice must exist");
-  assert.ok(src.includes('aria-label="Dismiss terms notice"'), "notice must have a Got it dismiss");
-  assert.ok(src.includes("Help is never locked behind it"), "notice must say help is never locked behind the Terms");
-  assert.ok(src.includes('const TERMS_KEY = "richards-resource:terms-seen"'), "notice must use its own local flag");
-  // The Terms page itself has a back button, and the App renders it
-  // in place of the tab content — the tabs stay reachable from the nav.
+  // The old first-visit notice (TermsNotice) is gone — replaced
+  // by the agree gate (see the next test). Help is no longer
+  // "never locked behind" the Terms; agreeing is now the way in.
+  assert.ok(!src.includes("function TermsNotice("), "the old non-blocking Terms notice must be gone");
+  assert.ok(!src.includes("Help is never locked behind it"), "the old 'never locked' wording must be gone");
+  assert.ok(!src.includes("<TermsNotice onReadTerms="), "App must no longer render the first-visit notice");
+  // The Terms page itself has a back button (when opened from the
+  // footer after agreeing), and the App renders it in place of the
+  // tab content — the tabs stay reachable from the nav.
   assert.ok(src.includes("Back to the app"), "Terms page must have a way back");
   assert.ok(src.includes("<TermsPage onBack="), "App must render the Terms page");
-  assert.ok(src.includes("<TermsNotice onReadTerms="), "App must render the first-visit notice");
   // All ten sections present.
   for (const heading of ["1. This is support, not medical advice.", "2. In a crisis, get help now.", "3. No guarantees.", "4. Your data.", "5. Your responsibility.", "6. Donations.", "7. The app as it is", "8. Arbitration", "9. Changes.", "10. Contact."]) {
     assert.ok(src.includes(heading), `Terms must include section: ${heading}`);
   }
+});
+
+test("8b. Terms agree gate (Richard, 2026-11-23): agree or can't use the app", () => {
+  // Agreement is recorded in localStorage only, per
+  // device/browser, nothing sent to the server.
+  assert.ok(src.includes('const TERMS_AGREED_KEY = "richards-resource:terms-agreed:v1"'), "gate must use its own localStorage key");
+  assert.ok(src.includes('safeLocalSet(TERMS_AGREED_KEY, "agreed")'), "tapping Agree must record agreement in localStorage");
+  assert.ok(src.includes('safeLocalGet(TERMS_AGREED_KEY) === "agreed"'), "gate must read agreement from localStorage on load");
+  // Gate shown on first visit: only the Terms and the Agree
+  // button, before the welcome cover and the tabbed app, so no
+  // tabs and no help content are shown until they agree.
+  assert.ok(src.includes("if (!termsAgreed)"), "App must gate on agreement");
+  assert.ok(src.includes("<TermsPage onAgree={agreeToTerms}"), "gate must render only the Terms with an Agree button");
+  assert.ok(src.indexOf("if (!termsAgreed)") < src.indexOf("if (!welcomeEntered)"), "gate must come before the welcome cover");
+  assert.ok(src.includes("I agree to these Terms"), "Terms page must have an Agree button");
+  // No Decline button that lets anyone into the app anyway — if
+  // they do not agree, they stay on the Terms screen.
+  assert.ok(!src.includes("Decline"), "there must be no Decline button");
+  // In gate mode the Terms page must not offer a way back into
+  // the app: the back buttons only render when onBack is passed.
+  assert.ok(src.includes("{onBack ? ("), "Terms back buttons must be conditional on being passed an onBack");
+  // No points before agreeing: the welcome award and the
+  // per-touch counting both wait for agreement.
+  assert.ok(src.includes("state.isSuccess && termsAgreed && !welcomeAwarded"), "welcome points must wait for agreement");
+  assert.ok(src.includes("if (!termsAgreedRef.current) return;"), "touch points must wait for agreement");
+  // Once agreed, the gate never shows again on that device: the
+  // agreed flag is the only condition, and agreeing sets it.
+  assert.ok(src.includes('setTermsAgreed(true)'), "agreeing must flip the gate state so it is not shown again");
 });
 
 test("9. true message on Home, with the privacy line said once (rephrased 2026-11-23)", () => {
@@ -164,7 +200,7 @@ test("9. true message on Home, with the privacy line said once (rephrased 2026-1
   assert.ok(src.includes("We don't share your data. This is your personal journey."), "privacy line must be unchanged elsewhere");
   // Also in the Terms, right under "We are here to help." — the two
   // halves sit in separate paragraphs there, so check both.
-  const terms = src.slice(src.indexOf("function TermsPage("), src.indexOf("function TermsNotice("));
+  const terms = src.slice(src.indexOf("function TermsPage("), src.indexOf("function SaveStatusBar("));
   assert.ok(terms.includes("We don&apos;t share your data. This is your personal journey."), "Terms must carry the privacy half of the true message");
   assert.ok(terms.includes("BUT YOU ARE NOT ALONE. Help is at your fingertips."), "Terms must carry the 'not alone' half of the true message");
 });

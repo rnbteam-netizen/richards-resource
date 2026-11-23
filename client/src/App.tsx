@@ -336,23 +336,28 @@ function MedicalDisclaimer() {
 
 // Terms (Richard, 2026-11-13): a one-page Terms of Use for liability,
 // in minimal lawyerese, from his draft of 2026-11-13. It is linked
-// from the footer on every tab and on Help & Resources, and a short
-// first-visit notice (TermsNotice, below) points to it with a "Got
-// it" button. It is NEVER a locked gate: the notice sits above the
-// tabs and can be dismissed, and the crisis box, the breathing, and
-// every tab are always open, whether or not the visitor has read it.
-// By using the app you agree to the Terms — that is the browsewrap
-// trade-off Richard accepted, because blocking help would be worse.
-const TERMS_KEY = "richards-resource:terms-seen";
+// from the footer on every tab and on Help & Resources.
+// Agree gate (Richard, 2026-11-23): "They need to agree or can't
+// use the app." On first visit the app shows only the Terms and an
+// Agree button — no tabs, no help content — until the visitor taps
+// Agree. Agreement is recorded in localStorage only, per
+// device/browser, nothing sent to the server, and never asked again
+// on that device/browser. There is no way in without agreeing.
+const TERMS_AGREED_KEY = "richards-resource:terms-agreed:v1";
 
-function TermsPage({ onBack }: { onBack: () => void }) {
+function TermsPage({ onBack, onAgree }: { onBack?: () => void; onAgree?: () => void }) {
   return (
     <div>
-      <button type="button" onClick={onBack} className="min-h-11 rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 font-semibold text-[var(--text)]">
-        ← Back to the app
-      </button>
+      {onBack ? (
+        <button type="button" onClick={onBack} className="min-h-11 rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 font-semibold text-[var(--text)]">
+          ← Back to the app
+        </button>
+      ) : null}
       <h1 className="font-display mt-5 text-2xl font-bold leading-snug text-[var(--text)]">Terms of Use — Richard&apos;s Resource</h1>
       <p className="mt-3 text-lg font-bold leading-relaxed text-[var(--text)]">We are here to help.</p>
+      <p className="mt-3 leading-relaxed text-[var(--text)]">
+        Please don&apos;t sue us for any reason, we are just here to help you. Thank you and we hope this app makes your World 🌍 A Happier Place ✌️❤️.
+      </p>
       <p className="mt-1 text-lg font-bold leading-relaxed text-[var(--text)]">This is your personal journey... BUT YOU ARE NOT ALONE. Help is at your fingertips.</p>
       <p className="mt-3 leading-relaxed text-[var(--text)]">
         Richard&apos;s Resource is a free self-help app. We built it to help people who want to stop drinking, smoking,
@@ -448,37 +453,15 @@ function TermsPage({ onBack }: { onBack: () => void }) {
       <p className="mt-5 text-sm leading-relaxed text-[var(--dim)]">
         This is plain language, not legal advice. A lawyer should review it before it is relied on for liability.
       </p>
-      <button type="button" onClick={onBack} className="felt-btn mt-4 min-h-12 w-full rounded-[var(--radius)] bg-[var(--accent)] px-4 font-semibold text-white">
-        Back to the app
-      </button>
-    </div>
-  );
-}
-
-// First-visit notice: a short strip, above the tabs, with a link to
-// the full Terms and a "Got it" button. It shows once, until dismissed,
-// and it never blocks anything — the tabs, the crisis box, and the
-// breathing are all open underneath it, whether or not it is dismissed.
-function TermsNotice({ onReadTerms }: { onReadTerms: () => void }) {
-  const [visible, setVisible] = useState(() => safeLocalGet(TERMS_KEY) !== "seen");
-  if (!visible) return null;
-  const dismiss = () => {
-    safeLocalSet(TERMS_KEY, "seen");
-    setVisible(false);
-  };
-  const readTerms = () => {
-    dismiss();
-    onReadTerms();
-  };
-  return (
-    <div className="felt-soft mt-3 rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 py-3" role="region" aria-label="Terms of use notice">
-      <p className="text-sm leading-relaxed text-[var(--text)]">
-        This is support, not medical advice — please read the <button type="button" onClick={readTerms} className="font-semibold text-[var(--accent)] underline">Terms of Use</button>.
-        Help is never locked behind it: the tabs, the breathing, and the crisis numbers below are open right now.
-      </p>
-      <button type="button" onClick={dismiss} aria-label="Dismiss terms notice" className="felt-btn mt-2 min-h-11 rounded-[var(--radius)] bg-[var(--accent)] px-4 text-sm font-semibold text-white">
-        Got it
-      </button>
+      {onAgree ? (
+        <button type="button" onClick={onAgree} aria-label="I agree to these Terms" className="felt-btn mt-4 min-h-12 w-full rounded-[var(--radius)] bg-[var(--accent)] px-4 font-semibold text-white">
+          I agree to these Terms
+        </button>
+      ) : (
+        <button type="button" onClick={onBack} className="felt-btn mt-4 min-h-12 w-full rounded-[var(--radius)] bg-[var(--accent)] px-4 font-semibold text-white">
+          Back to the app
+        </button>
+      )}
     </div>
   );
 }
@@ -5080,6 +5063,14 @@ export function App() {
     if (typeof window !== "undefined") window.scrollTo(0, 0);
   };
   const [showTerms, setShowTerms] = useState(false);
+  // Agree gate state (Richard, 2026-11-23): false on first visit
+  // on this device/browser, true once Agree has been tapped.
+  const [termsAgreed, setTermsAgreed] = useState(() => safeLocalGet(TERMS_AGREED_KEY) === "agreed");
+  const agreeToTerms = () => {
+    safeLocalSet(TERMS_AGREED_KEY, "agreed");
+    setTermsAgreed(true);
+    if (typeof window !== "undefined") window.scrollTo(0, 0);
+  };
   const [surfCategory, setSurfCategory] = useState<Category | null>(null);
   const [pendingRide, setPendingRide] = useState<boolean | null>(null);
   // One tap to a tab, from the search results, My RR, or a Home
@@ -5149,16 +5140,17 @@ export function App() {
   fieldsRef.current = fieldsMutation.mutate;
 
   // +10 welcome points for downloading the app — awarded the first time
-  // the app loads with no welcome on record. The server also enforces
-  // once-only, so this can never pay twice.
+  // the app loads with no welcome on record, and only after the
+  // visitor has agreed to the Terms — no points before agreeing.
+  // The server also enforces once-only, so this can never pay twice.
   const welcomeTriedRef = useRef(false);
   const welcomeAwarded = state.data?.welcomeAwarded ?? false;
   useEffect(() => {
-    if (state.isSuccess && !welcomeAwarded && !welcomeTriedRef.current) {
+    if (state.isSuccess && termsAgreed && !welcomeAwarded && !welcomeTriedRef.current) {
       welcomeTriedRef.current = true;
       awardRef.current({ tab: "home", action: "welcome" });
     }
-  }, [state.isSuccess, welcomeAwarded]);
+  }, [state.isSuccess, termsAgreed, welcomeAwarded]);
 
   // +1 point for every finger touch. Touches are counted optimistically
   // (the total ticks up the moment you tap) and flushed to the server in
@@ -5166,6 +5158,10 @@ export function App() {
   // its touches go back in the pile for the next flush.
   const tabRef = useRef<TabId>(tab);
   tabRef.current = tab;
+  // No points for taps made before agreeing to the Terms — the
+  // gate screen's own taps (including Agree) pay nothing.
+  const termsAgreedRef = useRef(termsAgreed);
+  termsAgreedRef.current = termsAgreed;
   const touchBatchRef = useRef<Map<PointTab, number>>(new Map());
   const touchesMutation = useMutation({
     mutationFn: async (input: { tab: PointTab; count: number }) => await api.awardTouches(input),
@@ -5187,6 +5183,7 @@ export function App() {
   };
   useEffect(() => {
     const onPointerDown = () => {
+      if (!termsAgreedRef.current) return;
       const pt = TAB_TO_POINT_TAB[tabRef.current];
       touchBatchRef.current.set(pt, (touchBatchRef.current.get(pt) ?? 0) + 1);
       setPendingTouches((n) => n + 1);
@@ -5223,6 +5220,21 @@ export function App() {
   });
 
   const activeSurf: Category | null = surfCategory ?? (tab !== "home" && tab !== "resources" && tab !== "wellbeing" && tab !== "food" && tab !== "screens" && tab !== "longevity" && tab !== "peace" ? tab : null);
+
+  // Agree gate (Richard, 2026-11-23): "They need to agree or can't
+  // use the app." Before the welcome cover, before the tabs — on
+  // first visit, only the Terms and the Agree button. No tabs, no
+  // help content, no way in without agreeing. All hooks above have
+  // run, so this early return is safe.
+  if (!termsAgreed) {
+    return (
+      <div className="felt-page min-h-screen bg-[var(--bg)]">
+        <main className="mx-auto w-full max-w-3xl px-4 pb-10 pt-5">
+          <TermsPage onAgree={agreeToTerms} />
+        </main>
+      </div>
+    );
+  }
 
   // Full cover page: before first entry, the cottage is all you
   // see — no tab buttons, no Home content, no footer. Tap the door
@@ -5292,7 +5304,6 @@ export function App() {
 
         <SaveStatusBar isError={state.isError} lastSavedAt={lastSavedAt} pendingCount={pendingTouches} />
         <PrivacyStrip />
-        <TermsNotice onReadTerms={() => setShowTerms(true)} />
 
         {surfCategory && (
           <div className="mt-6">

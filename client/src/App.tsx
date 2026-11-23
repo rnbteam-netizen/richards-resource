@@ -4723,12 +4723,13 @@ function HomePage({ profiles, logs, pointEvents, dayMarks, onGo, onSurf }: {
       <p className="mb-3 text-center font-display text-xl font-bold text-[var(--accent)]">We are so Happy you are here</p>
       <WelcomeIntro />
       {/* The true message (Richard, 2026-11-13, rephrased
-          2026-11-23): after the cottage, with the privacy line
-          said once only — this is your personal journey, your
-          personal cottage, and you are not alone. */}
+          2026-11-23): after the cottage — just the one paragraph.
+          The small privacy paragraph below it was removed
+          2026-11-23 at Richard's word ("the Dept of redundancy
+          department strikes again"): it is already said above
+          the cottage, in the PrivacyStrip. */}
       <div className="felt-soft mb-5 rounded-[var(--radius)] border-2 border-[var(--leaf)] bg-[var(--leaf-soft)] px-4 py-3 text-center" role="note">
         <p className="font-bold leading-relaxed text-[var(--text)]">This is your personal journey, your personal cottage, but you are not alone. This app is your resource guide for help at your fingertips. We even have a button for when you&apos;re feeling happy.</p>
-        <p className="mt-2 leading-relaxed text-[var(--text)]">We don&apos;t ask for it, we don&apos;t collect it. We have no personal information to share with anyone.</p>
       </div>
       {/* The Happy Button (Richard, 2026-11-18, moved one step down
           2026-11-23): after the Share button, so the order reads

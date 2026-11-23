@@ -1,6 +1,11 @@
 // Home simplification (Richard, 2026-11-23): Home had grown
 // into an Ikea box — too much to read on first look. Six changes,
-// in order: (1) true-message box rephrased, privacy said once;
+// in order: (1) true-message box rephrased — then, 2026-11-23
+// follow-up at Richard's word ("the Dept of redundancy
+// department strikes again"), the small privacy paragraph was
+// removed from the box: it is already said above the cottage,
+// in the PrivacyStrip. The box now holds only the one
+// true-message paragraph;
 // (2) "We are so Happy you are here" to the very top of Home;
 // (3) My Muse simplified to one question, Yes / Maybe later,
 // no starter, no instructions; (4) My RR deleted from Home
@@ -32,9 +37,14 @@ const card = src.slice(src.indexOf("function MyMuseCard("), src.indexOf("functio
 test("True message: new wording, privacy said once, in the box after the cottage", () => {
   const TRUE = "This is your personal journey, your personal cottage, but you are not alone. This app is your resource guide for help at your fingertips. We even have a button for when you&apos;re feeling happy.";
   assert.ok(home.includes(TRUE), "Home must carry the new true message in full, verbatim");
-  const PRIVACY = "We don&apos;t ask for it, we don&apos;t collect it. We have no personal information to share with anyone.";
-  assert.ok(home.includes(PRIVACY), "Home must carry the privacy line, once only, in the same box");
-  assert.equal(home.match(/We don&apos;t ask for it/g)?.length, 1, "the privacy line must appear exactly once on Home");
+  // 2026-11-23 follow-up (Richard: "the Dept of redundancy
+  // department strikes again"): the small privacy paragraph
+  // was removed from this box — it is already said above the
+  // cottage, in the PrivacyStrip. The box holds only the one
+  // true-message paragraph now.
+  assert.ok(!home.includes("We don&apos;t ask for it, we don&apos;t collect it. We have no personal information to share with anyone."),
+    "the small privacy paragraph must be gone from the true-message box");
+  assert.equal(home.match(/We don&apos;t ask for it/g)?.length ?? 0, 0, "the removed privacy sentence must not appear anywhere on Home");
   assert.ok(home.indexOf(TRUE) > home.indexOf("<WelcomeIntro />"), "the true-message box must come after the cottage on Home");
   assert.ok(!home.includes("BUT YOU ARE NOT ALONE"), "the old true-message wording must be gone from Home");
   // The PrivacyStrip elsewhere ("We don't share your data...") is untouched.

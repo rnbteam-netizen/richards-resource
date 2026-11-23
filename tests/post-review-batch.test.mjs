@@ -146,6 +146,13 @@ test("8. Terms: one page, arbitration in Grays Harbor County, errors and omissio
   for (const heading of ["1. This is support, not medical advice.", "2. In a crisis, get help now.", "3. No guarantees.", "4. Your data.", "5. Your responsibility.", "6. Donations.", "7. The app as it is", "8. Arbitration", "9. Changes.", "10. Contact."]) {
     assert.ok(src.includes(heading), `Terms must include section: ${heading}`);
   }
+  // Contact block (Richard, 2026-11-23): PO Box and email at the
+  // bottom of the Terms page, after the plain-language note.
+  assert.ok(termsPage.includes("PO Box 31"), "Terms must carry the PO Box 31 contact line");
+  assert.ok(termsPage.includes("Hoquiam, WA 98550"), "Terms must carry Hoquiam, WA 98550");
+  assert.ok(termsPage.includes("richardsresource3@gmail.com"), "Terms must carry the contact email");
+  assert.ok(termsPage.includes("mailto:richardsresource3@gmail.com"), "Terms contact email must be a mailto link");
+  assert.ok(termsPage.indexOf("PO Box 31") > termsPage.indexOf("not legal advice"), "contact block must be at the bottom of Terms, after the plain-language note");
 });
 
 test("8b. Terms agree gate (Richard, 2026-11-23): agree or can't use the app", () => {

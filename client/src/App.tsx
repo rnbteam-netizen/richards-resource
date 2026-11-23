@@ -453,6 +453,16 @@ function TermsPage({ onBack, onAgree }: { onBack?: () => void; onAgree?: () => v
       <p className="mt-5 text-sm leading-relaxed text-[var(--dim)]">
         This is plain language, not legal advice. A lawyer should review it before it is relied on for liability.
       </p>
+      {/* Contact (Richard, 2026-11-23): PO Box and email at the bottom of Terms. */}
+      <address className="mt-5 text-sm not-italic leading-relaxed text-[var(--text)]">
+        Richard&apos;s Resource
+        <br />
+        PO Box 31
+        <br />
+        Hoquiam, WA 98550
+        <br />
+        <a className="font-semibold text-[var(--accent)] underline" href="mailto:richardsresource3@gmail.com">richardsresource3@gmail.com</a>
+      </address>
       {onAgree ? (
         <button type="button" onClick={onAgree} aria-label="I agree to these Terms" className="felt-btn mt-4 min-h-12 w-full rounded-[var(--radius)] bg-[var(--accent)] px-4 font-semibold text-white">
           I agree to these Terms

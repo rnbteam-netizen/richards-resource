@@ -1,9 +1,10 @@
 // Add to Home Screen (Richard, 2026-11-12) — source-level tests.
 // The manifest + icons make the browser offer "Add to Home Screen";
 // the Home hint tells people where to find it. Short name is "RR"
-// (not "Me"), the icon is a sunrise, and there is no app-store
-// claim, no push, no tracking — RR just opens full-screen and
-// updates automatically, like the site itself.
+// (not "Me"), the icon is the welcome cottage (branding consistency,
+// Richard, 2026-11-23 — the cottage, not the sunrise, everywhere),
+// and there is no app-store claim, no push, no tracking — RR just
+// opens full-screen and updates automatically, like the site itself.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, existsSync } from "node:fs";
@@ -26,7 +27,7 @@ test("manifest: name Richard's Resource, short_name RR, standalone, dawn colours
   assert.ok(!manifest.name.includes("Me") && manifest.short_name !== "Me", "short name must never be Me");
 });
 
-test("manifest icons: sunrise PNGs at 192 and 512, plus an SVG", () => {
+test("manifest icons: cottage PNGs at 192 and 512, plus a cottage SVG", () => {
   const bySize = new Map((manifest.icons ?? []).map((i) => [i.sizes, i]));
   assert.ok(bySize.has("192x192"), "manifest must list a 192x192 icon");
   assert.ok(bySize.has("512x512"), "manifest must list a 512x512 icon");
@@ -44,7 +45,15 @@ test("manifest icons: sunrise PNGs at 192 and 512, plus an SVG", () => {
     assert.ok(buf.length > 1000, `${name} must be a real image, not an empty file`);
   }
   const svg = readFileSync(path.join(root, "client", "public", "icons", "icon.svg"), "utf8");
-  assert.ok(svg.includes("<svg") && svg.includes("sunrise"), "SVG icon must be a sunrise");
+  assert.ok(svg.includes("<svg") && svg.toLowerCase().includes("cottage"), "SVG icon must be the cottage");
+  assert.ok(!svg.toLowerCase().includes("sunrise"), "SVG icon must no longer be the sunrise");
+  // The PNGs are crops of the welcome cottage photo (client/src/assets/
+  // welcome-cottage.jpg): same square crop, cottage door near the centre.
+  // They must be real, non-trivial PNGs — a renamed SVG or empty file fails.
+  for (const name of ["icon-192.png", "icon-512.png", "icon-180.png"]) {
+    const buf = readFileSync(path.join(root, "client", "public", "icons", name));
+    assert.ok(buf.length > 20000, `${name} must be a real cottage photo crop, not the small old sunrise PNG`);
+  }
 });
 
 test("index.html links the manifest, the touch icon, and the theme colour", () => {
@@ -52,7 +61,7 @@ test("index.html links the manifest, the touch icon, and the theme colour", () =
   assert.ok(html.includes('<link rel="apple-touch-icon" href="/icons/icon-180.png"'), "page must link the Apple touch icon");
   assert.ok(html.includes('<meta name="theme-color" content="#fdf4e3"'), "page must set the theme colour");
   assert.ok(html.includes('<meta name="apple-mobile-web-app-title" content="RR"'), "iOS home-screen title must be RR");
-  assert.ok(html.includes('<link rel="icon" type="image/svg+xml" href="/icons/icon.svg"'), "favicon must be the sunrise SVG");
+  assert.ok(html.includes('<link rel="icon" type="image/svg+xml" href="/icons/icon.svg"'), "favicon must be the cottage SVG");
   assert.ok(!html.includes("ever created"), "meta description must use the current EVER! banner wording, not the old 'ever created'");
 });
 
@@ -70,7 +79,7 @@ test("Home hint: Add RR to your home screen, full-screen, updates automatically 
   const hint = src.slice(src.indexOf("function AddToHomeScreenHint()"), src.indexOf("function HomePage("));
   assert.ok(!hint.toLowerCase().includes("app store") && !hint.includes("Google Play"),
     "hint must not claim RR is in an app store");
-  assert.ok(hint.includes("/icons/icon-192.png"), "hint must show the sunrise icon");
+  assert.ok(hint.includes("/icons/icon-192.png"), "hint must show the cottage icon");
 });
 
 test("anonymity unchanged: manifest and hint add no tracking, no push, no personal data", () => {

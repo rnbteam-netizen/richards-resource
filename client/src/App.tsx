@@ -4140,7 +4140,7 @@ function DailyCheckin({ pointEvents }: { pointEvents: PointEvent[] }) {
 
 // Add to Home Screen (Richard, 2026-11-12): a short hint on Home so
 // people can put RR on their phone like an app. The manifest
-// (client/public/manifest.webmanifest, short_name "RR", sunrise icon)
+// (client/public/manifest.webmanifest, short_name "RR", cottage icon)
 // makes the browser offer "Add to Home Screen" / "Install"; this hint
 // just tells them where to find it. No app store, no download, no
 // tracking — RR opens full-screen from the home screen and updates

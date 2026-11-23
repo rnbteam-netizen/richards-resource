@@ -6,7 +6,7 @@ import { speakText, stopSpeaking } from "./speech";
 import welcomeCottage from "./assets/welcome-cottage.jpg";
 import { shareApp } from "./share";
 import { searchApp, loadLastPlace, saveLastPlace, LAST_PLACE_LABELS } from "./search";
-import { MY_MUSE_URL, RETURN_TO_MY_RR_URL, MY_MUSE_STARTER, MY_MUSE_CLOSING_LINE, copyMyMuseStarter } from "./my-muse";
+import { MY_MUSE_URL, RETURN_TO_MY_RR_URL } from "./my-muse";
 
 type Category = "alcohol" | "smoking" | "gambling" | "drugs" | "codependency";
 type Profile = ApiResponse<typeof api, "getState">["profiles"][number];
@@ -4239,8 +4239,10 @@ function WelcomeIntro() {
 
 /* ---------- the Happy Button (Richard, 2026-11-18) ---------- */
 
-// The Happy Button — one button only, on Home, just after the true
-// message. No scale, no numbers, no test: a mindfulness moment —
+// The Happy Button — one button only, on Home, one step down
+// from the true message, after the Share button (moved
+// 2026-11-23; button, wording and points all unchanged).
+// No scale, no numbers, no test: a mindfulness moment —
 // you stop, you notice "I'm feeling happy", and you tap it. Each
 // tap raises the thermometer a clear, visible step; 8 happy moments
 // fill one thermometer, it pins itself to your personal cork board
@@ -4564,15 +4566,13 @@ function ShareButton() {
 // root, above the points strip, so it is visible on Home and on
 // every tab, not hidden inside one of them.
 //
-// My RR (Richard, 2026-11-21): your personal place in the app —
-// "My RR" — showing where you left off, with one big button to
-// continue there. It is Home only, right after the Share button,
-// and it adds to the warm greeting, it does not replace any of it:
-// cottage, welcome line, true message, Happy Button, Share button
-// all stay exactly where they were. The last place lives in this
-// browser's localStorage only, like the welcome flag and the Happy
-// Button cork board — never sent to the server, never tied to an
-// account, because there is no account.
+// Returning to where you left off (Richard, 2026-11-21): the
+// app remembers the last tab in this browser's localStorage
+// only, like the welcome flag and the Happy Button cork board —
+// never sent to the server, never tied to an account, because
+// there is no account — and defaults to it on return, with a
+// "Welcome back" banner. The My RR card that used to show this
+// on Home was deleted 2026-11-23; the returning itself stays.
 function SearchBox({ onGo }: { onGo: (t: TabId) => void }) {
   const [query, setQuery] = useState("");
   const results = searchApp(query);
@@ -4616,38 +4616,35 @@ function SearchBox({ onGo }: { onGo: (t: TabId) => void }) {
   );
 }
 
-function MyRRCard({ lastPlace, onGo }: { lastPlace: TabId | null; onGo: (t: TabId) => void }) {
-  return (
-    <div className="felt-card mb-5 rounded-[var(--radius)] border-2 border-[var(--leaf)] bg-[var(--leaf-soft)] p-5" role="region" aria-label="My RR — your place in the app">
-      <p className="text-center font-display text-2xl font-bold text-[var(--text)]">My RR</p>
-      <p className="mt-2 text-center text-sm leading-relaxed text-[var(--dim)]">
-        Your personal place in the app — the app remembers where you left off, on this phone only, and brings you back. Nothing is sent anywhere.
-      </p>
-      {lastPlace ? (
-        <>
-          <p className="mt-3 text-center font-semibold text-[var(--text)]">Last time, you were on the {LAST_PLACE_LABELS[lastPlace]} tab.</p>
-          <button type="button" onClick={() => onGo(lastPlace)} className="felt-btn mt-3 min-h-14 w-full rounded-[var(--radius)] bg-[var(--leaf)] px-4 text-lg font-bold text-white">
-            Continue where I left off →
-          </button>
-        </>
-      ) : (
-        <p className="mt-3 text-center font-semibold text-[var(--text)]">No place saved yet — pick a tab above, and My RR will remember it for next time.</p>
-      )}
-    </div>
-  );
-}
-
 /* ---------- My Muse (Richard, 2026-11-21) ---------- */
+
+// My RR is gone (Richard, 2026-11-23): the card was deleted
+// from Home entirely — no card, no explanation, no Continue
+// button. The automatic return is untouched and lives in the
+// App itself, not in a card: the last tab is still saved to
+// localStorage whenever it changes (saveLastPlace), the app
+// still defaults to that tab on return, with the "Welcome
+// back — you're on the X tab, where you left off" banner and
+// "Go to Home instead". Nothing about saving or returning
+// was deleted, only the Home card.
 
 // My Muse — your personal self-help assistant, built into a
 // personal self-help app. Muse only, no other Personal Muse Assistants, no choice
 // of Personal Muse Assistants: Richard is bombarded by Gemini and everybody else,
 // and this is his and Muse's app. It is Home only, right after
-// My RR, and it adds to the warm greeting, it does not replace
-// any of it: cottage, welcome line, true message, Happy Button,
-// Share button, My RR all stay exactly where they were.
+// the Happy Button, and it adds to the warm greeting, it does not replace
+// any of it.
 //
-// Tapping "Talk to My Muse" opens Muse in a new tab —
+// Simplified (Richard, 2026-11-23): one simple question —
+// "Would you like to chat with Muse?" — with "Yes, chat with
+// Muse" and "Maybe later". No starter message, no copy-starter
+// button, no home-screen or download instructions: guiding the
+// visitor with Muse instructions is too much, and it must not
+// look like a trick to get an AI. It is Self Help, not
+// Muse-help. The app cannot put words into Muse anyway —
+// muse.ai has no public prompt deep-link and no public API.
+//
+// Tapping "Yes, chat with Muse" opens Muse in a new tab —
 // https://muse.ai/ — and awards +100 points, once ever per
 // device, for having the good sense to get your own Personal Muse Assistant. The
 // award is self-claimed on the visitor's own word, like the
@@ -4658,45 +4655,29 @@ function MyRRCard({ lastPlace, onGo }: { lastPlace: TabId | null; onGo: (t: TabI
 // no upsell. Muse is a guide, not a doctor — not medical
 // advice — and in crisis call or text 988, or call 911.
 //
-// The starter: the app cannot put words into Muse —
-// muse.ai has no public prompt deep-link and no public API,
-// so the card shows the visitor a short, humble starter to
-// copy and paste as their first message to Muse. It asks
-// Muse to ask one simple thing at a time, not to brag about
-// what it can do, to offer one clear step first — "Add My
-// Muse to my home screen" — and to offer "Return to My RR"
-// afterwards. Adding Muse to the home screen is the phone
-// and browser's step, not the app's, and the card says so
-// plainly; Muse walks the visitor through it, one step at
-// a time. Return to My RR is mission critical, so the link
-// is in the starter AND as a plain tappable link in this
-// card, so the visitor can toggle back even if Muse never
-// offers it. No imprinting, like a duckling: Muse is a
-// guide and helper, not a parent and not a replacement for
-// the people in the visitor's life.
+// "Maybe later" dismisses the card for this visit only, with
+// no points and no link. Return to My RR is mission critical,
+// so the card keeps it as a plain tappable link, so the
+// visitor can toggle back even if Muse never offers it.
 function MyMuseCard({ pointEvents }: { pointEvents: PointEvent[] }) {
   const { award } = usePoints();
-  const [copied, setCopied] = useState(false);
-  const [starterOpen, setStarterOpen] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
   const alreadyAwarded = pointEvents.some((e) => e.action === "myMuse");
   const openMyMuse = () => {
     award("home", "myMuse");
     if (typeof window !== "undefined") window.open(MY_MUSE_URL, "_blank", "noopener,noreferrer");
   };
-  const copyStarter = async () => {
-    const ok = await copyMyMuseStarter();
-    setCopied(ok);
-    if (ok) window.setTimeout(() => setCopied(false), 4000);
-  };
+  if (dismissed) return null;
   return (
     <div className="felt-card mb-5 rounded-[var(--radius)] border-2 border-[var(--sun)] bg-[var(--surface)] p-5" role="region" aria-label="My Muse — your personal self-help assistant">
       <p className="text-center font-display text-2xl font-bold text-[var(--text)]">My Muse</p>
       <p className="mt-1 text-center font-display text-lg font-bold text-[var(--accent)]">Your personal self-help assistant</p>
-      <p className="mt-2 text-center text-sm leading-relaxed text-[var(--dim)]">
-        Not everybody has somebody to talk to. Muse is here when you need someone to talk to — a guide, not a doctor, and never medical advice. In crisis, call or text 988, or call 911. Free, no account, nothing about you is sent anywhere.
-      </p>
-      <button type="button" onClick={openMyMuse} aria-label={alreadyAwarded ? "Talk to My Muse again" : "Talk to My Muse — get your own Personal Muse Assistant, 100 points once"} className="felt-btn mt-3 min-h-14 w-full rounded-[var(--radius)] bg-[var(--accent)] px-4 text-lg font-bold text-white">
-        {alreadyAwarded ? "Talk to My Muse again →" : "Talk to My Muse →"}
+      <p className="mt-2 text-center text-lg font-bold leading-relaxed text-[var(--text)]">Would you like to chat with Muse?</p>
+      <button type="button" onClick={openMyMuse} aria-label={alreadyAwarded ? "Talk to My Muse again" : "Yes, chat with Muse — get your own Personal Muse Assistant, 100 points once"} className="felt-btn mt-3 min-h-14 w-full rounded-[var(--radius)] bg-[var(--accent)] px-4 text-lg font-bold text-white">
+        {alreadyAwarded ? "Talk to My Muse again →" : "Yes, chat with Muse →"}
+      </button>
+      <button type="button" onClick={() => setDismissed(true)} className="mt-3 min-h-11 w-full rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface-warm)] px-4 font-semibold text-[var(--text)]">
+        Maybe later
       </button>
       <p className="mt-2 text-center text-sm font-semibold text-[var(--text)]">
         {alreadyAwarded
@@ -4704,46 +4685,29 @@ function MyMuseCard({ pointEvents }: { pointEvents: PointEvent[] }) {
           : "+100 points, once, for getting your own Personal Muse Assistant. Muse only — no other Personal Muse Assistants in this app."}
       </p>
       <p className="mt-3 text-center text-sm leading-relaxed text-[var(--dim)]">
-        Muse opens in a new tab. Copy the short starter below and paste it as your first message to Muse — it tells Muse to ask one simple thing at a time, not to brag about what it can do, and to offer one clear step first: “Add My Muse to my home screen”, so you can tap between Richard&apos;s Resource and Muse.
+        Muse is a guide, not a doctor. In crisis, call or text 988, or call 911. Free, no account, nothing about you is sent anywhere.
       </p>
-      <button
-        type="button"
-        onClick={() => setStarterOpen((o) => !o)}
-        aria-expanded={starterOpen}
-        className="mt-3 min-h-11 w-full rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface-warm)] px-4 font-semibold text-[var(--text)]"
-      >
-        My starter message for Muse {starterOpen ? "— tap to close" : "— tap to open"}
-      </button>
-      {starterOpen && (
-        <div className="mt-3 rounded-[var(--radius)] border-2 border-[var(--border)] bg-white p-4">
-          <p className="whitespace-pre-line text-sm leading-relaxed text-[var(--text)]">{MY_MUSE_STARTER}</p>
-          <button type="button" onClick={copyStarter} className="felt-btn mt-3 min-h-11 w-full rounded-[var(--radius)] bg-[var(--leaf)] px-4 font-bold text-white">
-            {copied ? "Copied — paste it as your first message to Muse ✓" : "Copy my starter message"}
-          </button>
-          <p className="mt-2 text-center text-xs leading-relaxed text-[var(--dim)]">Muse closes with: “{MY_MUSE_CLOSING_LINE}”</p>
-        </div>
-      )}
       <p className="mt-3 text-center text-sm leading-relaxed text-[var(--dim)]">
         After you&apos;ve talked, come back any time:{" "}
         <a href={RETURN_TO_MY_RR_URL} className="font-bold text-[var(--accent)] underline">Return to My RR — {RETURN_TO_MY_RR_URL}</a>
-      </p>
-      <p className="mt-1 text-center text-xs leading-relaxed text-[var(--dim)]">
-        Adding Muse to your home screen is your phone&apos;s step, not this app&apos;s — Muse walks you through it, one step at a time.
       </p>
     </div>
   );
 }
 
-function HomePage({ profiles, logs, pointEvents, dayMarks, onGo, onSurf, lastPlace }: {
+function HomePage({ profiles, logs, pointEvents, dayMarks, onGo, onSurf }: {
   profiles: Profile[];
   logs: LogEntry[];
   pointEvents: PointEvent[];
   dayMarks: DayMark[];
   onGo: (t: TabId) => void;
   onSurf: () => void;
-  lastPlace: TabId | null;
 }) {
   const { byTab, total } = usePoints();
+  // How points work (Richard, 2026-11-23): closed by default —
+  // one button that opens a little pop-up with the explanation,
+  // instead of the whole big expanded list on Home.
+  const [pointsOpen, setPointsOpen] = useState(false);
   const today = localDay();
   const summaries = (Object.keys(CAT_LABEL) as Category[]).map((c) => {
     const p = profiles.find((x) => x.category === c);
@@ -4752,34 +4716,35 @@ function HomePage({ profiles, logs, pointEvents, dayMarks, onGo, onSurf, lastPla
   });
   return (
     <div>
-      <WelcomeIntro />
-      {/* "We are so Happy you are here" (Richard, 2026-11-18): the
-          welcome line, at the top of Home, just above the true
-          message — it does not replace it. */}
+      {/* "We are so Happy you are here" (Richard, 2026-11-18, moved
+          to the very top of Home 2026-11-23): the welcome line,
+          right after the tab buttons at the front of Home, before
+          the cottage. The WelcomeCover keeps it too, unchanged. */}
       <p className="mb-3 text-center font-display text-xl font-bold text-[var(--accent)]">We are so Happy you are here</p>
-      {/* The true message (Richard, 2026-11-13): right after the
-          Welcome intro, with the privacy line — this is your
-          personal journey, and you are not alone. */}
+      <WelcomeIntro />
+      {/* The true message (Richard, 2026-11-13, rephrased
+          2026-11-23): after the cottage, with the privacy line
+          said once only — this is your personal journey, your
+          personal cottage, and you are not alone. */}
       <div className="felt-soft mb-5 rounded-[var(--radius)] border-2 border-[var(--leaf)] bg-[var(--leaf-soft)] px-4 py-3 text-center" role="note">
-        <p className="font-bold leading-relaxed text-[var(--text)]">We don&apos;t share your data. This is your personal journey... BUT YOU ARE NOT ALONE. Help is at your fingertips.</p>
+        <p className="font-bold leading-relaxed text-[var(--text)]">This is your personal journey, your personal cottage, but you are not alone. This app is your resource guide for help at your fingertips. We even have a button for when you&apos;re feeling happy.</p>
+        <p className="mt-2 leading-relaxed text-[var(--text)]">We don&apos;t ask for it, we don&apos;t collect it. We have no personal information to share with anyone.</p>
       </div>
-      {/* The Happy Button (Richard, 2026-11-18): immediately after
-          the true-message box, so the order reads cottage → welcome
-          line → true message → Happy Button → the rest of Home. */}
-      <HappyButton />
-      {/* The Share button (Richard, 2026-11-19): Home only, right
-          after the Happy Button — it does not move the true message,
-          the Happy Button, or the crisis box. */}
+      {/* The Happy Button (Richard, 2026-11-18, moved one step down
+          2026-11-23): after the Share button, so the order reads
+          welcome line → cottage → true message → why we made it
+          → Share → Happy Button → the rest of Home. */}
       <ShareButton />
-      {/* My RR (Richard, 2026-11-21): Home only, right after the
-          Share button — it adds to the warm greeting, it does not
-          move the true message, the Happy Button, or the Share
-          button. */}
-      <MyRRCard lastPlace={lastPlace} onGo={onGo} />
+      {/* The Happy Button (Richard, 2026-11-18): Home only, one
+          step down from where it was — right after the Share
+          button, before My Muse. Button, thermometer, cork board,
+          sounds, points and wording all unchanged; only the
+          place moved (Richard, 2026-11-23). */}
+      <HappyButton />
       {/* My Muse (Richard, 2026-11-21): Home only, right after
-          My RR — it adds to the warm greeting, it does not move
-          the true message, the Happy Button, the Share button,
-          or My RR. */}
+          the Happy Button — it adds to the warm greeting, it does
+          not move the true message, the Happy Button, or the
+          Share button. My RR was deleted from Home 2026-11-23. */}
       <MyMuseCard pointEvents={pointEvents} />
       <WhatsNewBanner />
       <AddToHomeScreenHint />
@@ -4949,7 +4914,15 @@ function HomePage({ profiles, logs, pointEvents, dayMarks, onGo, onSurf, lastPla
             </div>
           )}
           <div className="mt-4 border-t border-[var(--border)] pt-3">
-            <p className="font-semibold text-[var(--text)]">How points work</p>
+            <button
+              type="button"
+              onClick={() => setPointsOpen((o) => !o)}
+              aria-expanded={pointsOpen}
+              className="min-h-11 w-full rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface-warm)] px-4 font-semibold text-[var(--text)]"
+            >
+              How points work {pointsOpen ? "— tap to close" : "— tap to open"}
+            </button>
+            {pointsOpen && (
             <ul className="mt-2 space-y-1.5 text-sm leading-relaxed text-[var(--text)]">
               <li><strong>+10</strong> — welcome points, just for downloading the app. You're already on the board.</li>
               <li><strong>+1</strong> — for every tap and touch, anywhere in the app. Showing up counts.</li>
@@ -4960,9 +4933,10 @@ function HomePage({ profiles, logs, pointEvents, dayMarks, onGo, onSurf, lastPla
               <li><strong>+10</strong> — on the Screens tab, for tapping “I turned my screen off.” It's on your word — self-assessment, and self-assessment is better than nothing.</li>
               <li><strong>+10</strong> — on the Peace of Mind tab, for tapping “I took a quiet moment.” Meditation or prayer, on your word — once per visit, counted once a day. The app can't check, and it won't try.</li>
               <li><strong>+10</strong> — on Home, for tapping the Happy Button when you notice you&apos;re happy — up to 8 a day (80 max). After that the button still works and the thermometer still fills, it just pays no more points that day.</li>
-              <li><strong>+100</strong> — once, ever, for getting your own Personal Muse Assistant — tap “Talk to My Muse” on Home. Muse is your personal self-help assistant, a guide not a doctor, free, no account.</li>
+              <li><strong>+100</strong> — once, ever, for getting your own Personal Muse Assistant — tap “Yes, chat with Muse” on Home. Muse is your personal self-help assistant, a guide not a doctor, free, no account.</li>
               <li><strong>−100</strong> — if you slip. A relapse is sadly a part of recovery for many people; log it honestly, hear us when we say <em>try again</em>, and notice — with all the points above, you're hopefully not starting at zero. Neither is your progress.</li>
             </ul>
+            )}
           </div>
         </div>
         {pointEvents.length > 0 && (
@@ -4983,6 +4957,18 @@ function HomePage({ profiles, logs, pointEvents, dayMarks, onGo, onSurf, lastPla
       </Section>
 
       <div className="mt-8"><CrisisStrip /></div>
+
+      {/* Why we made it (Richard, 2026-11-23): one small box at
+          the END of Home, after everything else, with his picked
+          wording, verbatim — spelled out as "Richard's Resource",
+          not "RR", at his update. One flag for Richard, kept as
+          he wrote it, not silently rewritten: it uses the word
+          "AI", which he earlier removed from the app wording in
+          favour of "Personal Muse Assistant" (2026-11-21). */}
+      <div className="felt-soft mt-8 rounded-[var(--radius)] border-2 border-[var(--sun)] bg-[var(--amber-soft)] px-4 py-3 text-center" role="note">
+        <p className="font-bold leading-relaxed text-[var(--text)]">Why we made it</p>
+        <p className="mt-1 leading-relaxed text-[var(--text)]">To prove AI is here to help, Richard&apos;s Resource and Muse created this free app to help everyone.</p>
+      </div>
     </div>
   );
 }
@@ -5077,10 +5063,11 @@ export function App() {
   // welcome cover still comes first on a first visit.
   const [tab, setTab] = useState<TabId>(() => loadLastPlace(LOCAL_STORAGE_ADAPTER) ?? "home");
   const [resumedTab, setResumedTab] = useState<TabId | null>(() => loadLastPlace(LOCAL_STORAGE_ADAPTER));
-  const [lastPlace, setLastPlace] = useState<TabId | null>(() => loadLastPlace(LOCAL_STORAGE_ADAPTER));
+  // The last tab is still saved on every change (the automatic
+  // return depends on it) — only the My RR Home card was
+  // deleted, 2026-11-23, not the saving.
   useEffect(() => {
     saveLastPlace(LOCAL_STORAGE_ADAPTER, tab);
-    if (tab !== "home") setLastPlace(tab);
   }, [tab]);
   // Full cover page (Richard, 2026-11-16): on first open the cottage
   // is all you see, until you tap the door or skip. After that the
@@ -5338,7 +5325,7 @@ export function App() {
             {state.isPending && <p className="text-[var(--dim)]">Loading your plans and logs…</p>}
             {state.isError && <p className="text-[var(--crisis)]">Couldn't load your saved data. <button type="button" className="underline" onClick={() => state.refetch()}>Try again</button></p>}
             {state.isSuccess && tab === "home" && (
-              <HomePage profiles={profiles} logs={logs} pointEvents={pointEvents} dayMarks={dayMarks} onGo={goToTab} onSurf={() => setSurfCategory(activeSurf ?? "gambling")} lastPlace={lastPlace} />
+              <HomePage profiles={profiles} logs={logs} pointEvents={pointEvents} dayMarks={dayMarks} onGo={goToTab} onSurf={() => setSurfCategory(activeSurf ?? "gambling")} />
             )}
             {state.isSuccess && tab === "resources" && <ResourcesPage profiles={profiles} logs={logs} pointEvents={pointEvents} dayMarks={dayMarks} onTerms={() => setShowTerms(true)} />}
             {tab === "wellbeing" && <WellbeingPage />}

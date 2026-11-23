@@ -53,19 +53,22 @@ test("Happy Button: one button, on Home, spring palette, no scoring talk in the 
     "thermometer and cork board must live in localStorage only");
 });
 
-test("Happy Button placement: welcome line, true message, then the button — on Home only", () => {
+test("Happy Button placement: welcome line first, then cottage and true message, then Share, then the button — on Home only", () => {
   const welcomeLine = "We are so Happy you are here";
   // On the Welcome cover, under the cottage.
   const cover = src.slice(src.indexOf("function WelcomeCover("), src.indexOf("function WelcomeIntro()"));
   assert.ok(cover.includes(welcomeLine), "Welcome cover must say “We are so Happy you are here”");
-  // At the top of Home, just above the true message, and the button
-  // immediately after the true-message box.
-  assert.ok(home.includes(welcomeLine), "Home must say “We are so Happy you are here” above the true message");
+  // At the very top of Home, before the cottage, and the button
+  // one step down — after the Share button (Richard, 2026-11-23).
+  assert.ok(home.includes(welcomeLine), "Home must say “We are so Happy you are here” at the top");
   const lineAt = home.indexOf(welcomeLine);
-  const trueAt = home.indexOf("BUT YOU ARE NOT ALONE");
+  const trueAt = home.indexOf("your personal cottage");
   const buttonAt = home.indexOf("<HappyButton />");
-  assert.ok(lineAt > 0 && trueAt > lineAt, "welcome line must come before the true message on Home");
-  assert.ok(buttonAt > trueAt, "Happy Button must come immediately after the true-message box on Home");
+  const shareAt = home.indexOf("<ShareButton />");
+  assert.ok(lineAt > 0 && lineAt < home.indexOf("<WelcomeIntro />"), "welcome line must come before the cottage on Home");
+  assert.ok(trueAt > lineAt, "welcome line must come before the true message on Home");
+  assert.ok(shareAt > trueAt, "the Share button must come after the true message on Home");
+  assert.ok(buttonAt > shareAt, "Happy Button must come after the Share button on Home");
   assert.ok(home.indexOf("Your points") > buttonAt, "the button must sit before the rest of Home, not after it");
   // No second button anywhere else: Peace gets a note, not a button.
   assert.ok(!peace.includes("<HappyButton"), "Peace of Mind must not have its own Happy Button");

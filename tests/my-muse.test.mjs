@@ -1,25 +1,27 @@
-// My Muse (Richard, 2026-11-21): your personal self-help
-// assistant, built into a personal self-help app — Muse only,
-// no other Personal Muse Assistants. A "My Muse" card on Home, after My RR, labelled
-// "Your personal self-help assistant". Tapping it opens Muse
-// (https://muse.ai/) in a new tab and awards +100 points, once
-// ever per device, for having the good sense to get your own Personal Muse Assistant.
-// Return to My RR is mission critical: the starter carries the
-// link AND the card shows it as a plain link, so the visitor can
-// toggle back even if Muse never offers it. The starter is short
-// and humble — no bragging list, one simple thing at a time —
-// and closes with "If you would like help with anything else,
-// please don't hesitate to ask. I'm your Muse."
+// My Muse (Richard, 2026-11-21, simplified 2026-11-23): your
+// personal self-help assistant, built into a personal self-help
+// app — Muse only, no other Personal Muse Assistants. A small
+// "My Muse" card on Home, after the Happy Button, labelled
+// "Your personal self-help assistant". It asks one simple
+// question — "Would you like to chat with Muse?" — with
+// "Yes, chat with Muse" and "Maybe later". Tapping Yes opens
+// Muse (https://muse.ai/) in a new tab and awards +100 points,
+// once ever per device, for having the good sense to get your
+// own Personal Muse Assistant. Maybe later dismisses the card
+// for this visit, no points, no link. Return to My RR is
+// mission critical: the card shows it as a plain link, so the
+// visitor can toggle back even if Muse never offers it.
+// No starter message, no copy-starter button, no home-screen
+// or download instructions — guiding the visitor with Muse
+// instructions is too much, and it must not look like a trick
+// to get an AI. It is Self Help, not Muse-help.
 //
 // Honesty, pinned here: the app cannot put words into Muse.
 // muse.ai has no public prompt deep-link and no public API, so
-// the starter is shown in the card to copy and paste as the
-// first message — it is not injected. Adding Muse to the home
-// screen is the phone/browser's step, not the app's; the card
-// says so plainly. Spawns the built server (dist-server/server.js)
-// with no DATABASE_URL, so it uses the in-memory Postgres
-// fallback — same queries as production, no account, no card,
-// no network.
+// there is no starter to inject. Spawns the built server
+// (dist-server/server.js) with no DATABASE_URL, so it uses the
+// in-memory Postgres fallback — same queries as production, no
+// account, no card, no network.
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -27,94 +29,80 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { MY_MUSE_URL, RETURN_TO_MY_RR_URL, MY_MUSE_STARTER, MY_MUSE_CLOSING_LINE } from "../client/src/my-muse.ts";
+import { MY_MUSE_URL, RETURN_TO_MY_RR_URL } from "../client/src/my-muse.ts";
+import { searchApp } from "../client/src/search.ts";
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const src = readFileSync(path.join(root, "client", "src", "App.tsx"), "utf8");
 const museSrc = readFileSync(path.join(root, "client", "src", "my-muse.ts"), "utf8");
 const home = src.slice(src.indexOf("function HomePage("), src.indexOf("function ResourcesPage("));
+const card = src.slice(src.indexOf("function MyMuseCard("), src.indexOf("function HomePage("));
 
-test("My Muse starter: humble, one thing at a time, guide not doctor, return link, and the closing line", () => {
+test("My Muse: one simple question, Yes links it, Maybe later dismisses it — no starter, no instructions", () => {
   assert.equal(MY_MUSE_URL, "https://muse.ai/", "My Muse must open muse.ai");
   assert.equal(RETURN_TO_MY_RR_URL, "https://richardsresource.com", "Return to My RR must be exactly https://richardsresource.com");
-  assert.ok(MY_MUSE_STARTER.includes("Return to My RR"), "the starter must offer Return to My RR");
-  assert.ok(MY_MUSE_STARTER.includes("https://richardsresource.com"), "the starter must carry the exact return link");
-  assert.ok(MY_MUSE_STARTER.includes("Add My Muse to my home screen"), "the starter must offer one clear step: Add My Muse to my home screen");
-  assert.ok(MY_MUSE_STARTER.includes("guide, not a doctor"),
-    "the starter must say Muse is a guide, not a doctor");
-  assert.ok(MY_MUSE_STARTER.toLowerCase().includes("don't give medical advice"), "the starter must say no medical advice");
-  assert.ok(MY_MUSE_STARTER.includes("988"), "the starter must keep 988 in view for crisis");
-  assert.ok(MY_MUSE_STARTER.includes("911"), "the starter must keep 911 in view for crisis");
-  assert.ok(MY_MUSE_STARTER.includes("one simple thing at a time"), "the starter must ask one simple thing at a time");
-  assert.ok(MY_MUSE_STARTER.includes("don't list everything you can do"), "the starter must tell Muse not to brag about what it can do");
-  assert.ok(MY_MUSE_STARTER.includes("don't try to be my parent"), "the starter must guard against imprinting — no parent, no replacement for people");
-  assert.ok(MY_MUSE_STARTER.includes(MY_MUSE_CLOSING_LINE), "the starter must end by asking Muse to close with the exact closing line");
-  assert.equal(
-    MY_MUSE_CLOSING_LINE,
-    "If you would like help with anything else, please don't hesitate to ask. I'm your Muse.",
-    "the closing line must be exactly Richard's wording",
-  );
-  // No bragging, no other Personal Muse Assistants: the starter must not list
-  // capabilities and must not name Gemini or any other Personal Muse Assistant.
-  assert.ok(!/gemini/i.test(MY_MUSE_STARTER), "the starter must not name Gemini or any other Personal Muse Assistant");
-  assert.ok(!MY_MUSE_STARTER.includes("I can book") && !MY_MUSE_STARTER.includes("I can send") && !MY_MUSE_STARTER.includes("I can do everything"),
-    "the starter must not carry a bragging list of capabilities");
-  // Honesty about what the app cannot do: it cannot inject a
-  // prompt into Muse, and adding to the home screen is the
-  // phone's step, not the app's.
+  assert.ok(card.includes("Would you like to chat with Muse?"), "the card must ask, simply, Would you like to chat with Muse?");
+  assert.ok(card.includes("Yes, chat with Muse"), "the card must offer Yes, chat with Muse");
+  assert.ok(card.includes("Maybe later"), "the card must offer Maybe later instead of a hard No");
+  assert.ok(card.includes('setDismissed(true)'), "Maybe later must dismiss the card for this visit");
+  assert.ok(!card.includes("Copy my starter message") && !card.includes("MY_MUSE_STARTER"),
+    "the card must show no starter message and no copy-starter button");
+  assert.ok(!card.includes("Add My Muse to my home screen") && !card.includes("home screen"),
+    "the card must carry no home-screen / download instructions");
+  assert.ok(!card.includes("starter"), "the card must not mention a starter at all");
+  assert.ok(!museSrc.includes("MY_MUSE_STARTER") && !museSrc.includes("copyMyMuseStarter"),
+    "the starter and its copy helper must be gone from the module too");
+  // Honesty about what the app cannot do.
   assert.ok(museSrc.includes("no public prompt deep-link"), "the module must say plainly there is no public prompt deep-link into Muse");
   assert.ok(museSrc.includes("cannot put words into Muse") || museSrc.includes("CANNOT put words into Muse"),
     "the module must say plainly the app cannot put words into Muse");
-  assert.ok(src.includes("Adding Muse to your home screen is your phone"),
-    "the card must say plainly that adding to the home screen is the phone's step, not the app's");
+  // Safety line, short: guide not doctor, 988 / 911, free, no account.
+  assert.ok(card.includes("guide, not a doctor"), "the card must say Muse is a guide, not a doctor");
+  assert.ok(card.includes("988") && card.includes("911"), "the card must keep 988 and 911 in view for crisis");
+  assert.ok(card.includes("Free, no account"), "the card must say free, no account");
 });
 
-test("My Muse card: Home only, after My RR, Muse only, with the return link and the starter", () => {
+test("My Muse card: Home only, after the Happy Button, Muse only, with the return link", () => {
   assert.ok(src.includes("function MyMuseCard("), "a MyMuseCard component must exist");
   assert.ok(src.includes("My Muse"), "the card must say My Muse");
   assert.ok(src.includes("Your personal self-help assistant"), "the card must say, plainly, Your personal self-help assistant");
-  assert.ok(src.includes("Talk to My Muse"), "the card must offer one big Talk to My Muse button");
   assert.ok(home.includes("<MyMuseCard"), "My Muse must be on Home");
   assert.equal(src.match(/<MyMuseCard /g)?.length, 1, "there must be exactly one My Muse card");
-  const myRrAt = home.indexOf("<MyRRCard");
   const myMuseAt = home.indexOf("<MyMuseCard");
+  const happyAt = home.indexOf("<HappyButton />");
   const whatsNewAt = home.indexOf("<WhatsNewBanner />");
-  assert.ok(myRrAt > 0 && myMuseAt > myRrAt, "My Muse must sit after My RR on Home");
+  assert.ok(myMuseAt > happyAt, "My Muse must sit after the Happy Button on Home");
   assert.ok(whatsNewAt > myMuseAt, "My Muse must sit before the rest of Home");
   assert.ok(src.includes('window.open(MY_MUSE_URL, "_blank", "noopener,noreferrer")'),
-    "tapping must open muse.ai in a new tab");
+    "tapping Yes must open muse.ai in a new tab");
   assert.ok(src.includes("Return to My RR"), "the card must show Return to My RR");
   assert.ok(src.includes('href={RETURN_TO_MY_RR_URL}'), "Return to My RR must be a plain tappable link in the card");
-  assert.ok(src.includes("Copy my starter message"), "the card must offer to copy the starter message");
-  assert.ok(src.includes("Add My Muse to my home screen"), "the card must name the Add My Muse to my home screen step");
   assert.ok(src.includes("Muse only"), "the card must say Muse only — no other Personal Muse Assistants");
-  assert.ok(src.includes("guide, not a doctor"), "the card must say Muse is a guide, not a doctor");
-  assert.ok(src.includes("call or text 988"), "the card must keep 988 in view");
   // Adding, not subtracting: the warm greeting is untouched.
   assert.ok(home.includes("We are so Happy you are here"), "the welcome line must still be on Home");
-  const trueAt = home.indexOf("BUT YOU ARE NOT ALONE");
-  const happyAt = home.indexOf("<HappyButton />");
+  const trueAt = home.indexOf("your personal cottage");
   const shareAt = home.indexOf("<ShareButton />");
-  assert.ok(trueAt > 0 && happyAt > trueAt && shareAt > happyAt && myRrAt > shareAt && myMuseAt > myRrAt,
-    "Home order must still be true message → Happy Button → Share → My RR → My Muse");
+  assert.ok(trueAt > 0 && shareAt > trueAt && happyAt > shareAt && myMuseAt > happyAt,
+    "Home order must be true message → Share → Happy Button → My Muse");
   // Search must find My Muse.
   const search = readFileSync(path.join(root, "client", "src", "search.ts"), "utf8");
   assert.ok(search.includes('"my-muse"'), "search must index My Muse so it can be found");
+  assert.ok(searchApp("ai").some((r) => r.id === "my-muse"), "searching 'ai' must still find My Muse");
 });
 
-test("My Muse wording: 'AI' is never shown, 'Personal Muse Assistant' is (Richard, 2026-11-21)", () => {
+test("My Muse wording: 'AI' is never shown in the card, 'Personal Muse Assistant' is (Richard, 2026-11-21)", () => {
   // "AI" is a deterrent for visitors — Richard's research / friends and
-  // family. Visible copy must say "Personal Muse Assistant" instead.
-  // The only "ai" left anywhere must be the muse.ai URL and the "ai"
-  // search keyword (kept so searching "AI" still finds My Muse).
-  const card = src.slice(src.indexOf("function MyMuseCard("), src.indexOf("function MyMuseCard(") + 6000);
+  // family. Visible copy in the card must say "Personal Muse Assistant" instead.
+  // The only "ai" left in the card must be the muse.ai URL.
+  // (The "Why we made it" box, added 2026-11-23 at Richard's
+  // explicit wording, is the one exception — it says "AI is here
+  // to help" in his words, and is pinned separately in
+  // tests/home-simplification-2026-11-23.test.mjs.)
   assert.ok(card.includes("Personal Muse Assistant"), "the My Muse card must say Personal Muse Assistant");
   assert.ok(!/\bAIs?\b/.test(card.replaceAll("muse.ai", "")), "the My Muse card must show no standalone AI / AIs");
   const pointsLine = src.slice(src.indexOf("+100</strong> — once, ever"), src.indexOf("+100</strong> — once, ever") + 300);
   assert.ok(pointsLine.includes("Personal Muse Assistant"), "the points list must say Personal Muse Assistant");
   assert.ok(!/\bAIs?\b/.test(pointsLine), "the points list must show no standalone AI");
-  const starter = MY_MUSE_STARTER;
-  assert.ok(!/\bAIs?\b/.test(starter), "the starter must show no standalone AI either");
 });
 
 test("My Muse points: +100 once ever, label and server wiring", () => {

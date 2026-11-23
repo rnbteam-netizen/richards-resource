@@ -140,17 +140,23 @@ test("8. Terms: one page, arbitration in Grays Harbor County, errors and omissio
   }
 });
 
-test("9. true message first thing on Home, with the privacy line", () => {
+test("9. true message on Home, with the privacy line said once (rephrased 2026-11-23)", () => {
   // JSX writes the apostrophe as an HTML entity, so the test string does too.
-  const TRUE = "We don&apos;t share your data. This is your personal journey... BUT YOU ARE NOT ALONE. Help is at your fingertips.";
+  const TRUE = "This is your personal journey, your personal cottage, but you are not alone. This app is your resource guide for help at your fingertips. We even have a button for when you&apos;re feeling happy.";
   assert.ok(home.includes(TRUE), "Home must carry the true message in full");
-  // First thing on Home: before the What's new banner, the tagline and the banner.
+  const PRIVACY = "We don&apos;t ask for it, we don&apos;t collect it. We have no personal information to share with anyone.";
+  assert.ok(home.includes(PRIVACY), "Home must carry the privacy line, said once, in the true-message box");
+  // Before the What's new banner, the tagline and the banner.
   const first = home.indexOf(TRUE);
   assert.ok(first !== -1 && first < home.indexOf("<WhatsNewBanner />"), "true message must come before the What's new banner");
   assert.ok(first < home.indexOf("Making the world"), "true message must come before the tagline");
   assert.ok(first < home.indexOf("The best FREE self-help app EVER!"), "true message must come before the banner");
-  // The privacy line itself is unchanged elsewhere.
-  assert.ok(src.includes("We don't share your data. This is your personal journey."), "privacy line must be unchanged");
+  // The old wording is gone from Home, and the privacy line is
+  // said once on Home — no duplicate privacy lines there.
+  assert.ok(!home.includes("BUT YOU ARE NOT ALONE"), "the old true-message wording must not remain on Home");
+  assert.ok(!home.includes("We don&apos;t share your data"), "Home must not repeat the old privacy line");
+  // The privacy line itself is unchanged elsewhere (PrivacyStrip, Terms).
+  assert.ok(src.includes("We don't share your data. This is your personal journey."), "privacy line must be unchanged elsewhere");
   // Also in the Terms, right under "We are here to help." — the two
   // halves sit in separate paragraphs there, so check both.
   const terms = src.slice(src.indexOf("function TermsPage("), src.indexOf("function TermsNotice("));

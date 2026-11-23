@@ -1,14 +1,15 @@
-// Search + My RR (Richard, 2026-11-21): the app is about 24,000
-// words with no way to find anything, and no way back to where you
-// left off. This build adds (1) a 🔍 search box, on every tab, that
-// searches the app's own content on the phone and jumps to the tab,
-// and (2) My RR on Home, which shows where you left off and offers
-// one big button to continue there — plus the app defaults to the
-// last tab on return, with a clear "Go to Home instead". Adding,
-// not subtracting: cottage, welcome line, true message, Happy
-// Button, Share button all stay where they were. No account, no
-// personal data, nothing sent to the server — the last place lives
-// in this browser's localStorage only, like the welcome flag.
+// Search + return to last place (Richard, 2026-11-21): the app is
+// about 24,000 words with no way to find anything, and no way back
+// to where you left off. This build adds (1) a 🔍 search box, on
+// every tab, that searches the app's own content on the phone and
+// jumps to the tab, and (2) the app defaults to the last tab on
+// return, with a clear "Go to Home instead". The My RR card that
+// used to show this on Home was deleted 2026-11-23 — the return
+// itself stays. Adding, not subtracting: cottage, welcome line,
+// true message, Happy Button, Share button all stay where they
+// were. No account, no personal data, nothing sent to the server
+// — the last place lives in this browser's localStorage only,
+// like the welcome flag.
 // My Muse and its 100-points-for-Personal-Muse-Assistant award landed in the next
 // piece (2026-11-21, tests/my-muse.test.mjs), not this one.
 import { test } from "node:test";
@@ -146,23 +147,25 @@ test("Search box: on every tab, under the tab buttons, with the privacy line", (
   assert.ok(src.includes('setQuery("")'), "opening a result must clear the search");
 });
 
-test("My RR: Home only, after the Share button, with the continue button", () => {
-  assert.ok(src.includes("function MyRRCard("), "a MyRRCard component must exist");
-  assert.ok(src.includes("My RR"), "the card must say My RR");
-  assert.ok(src.includes("Continue where I left off"), "the card must offer one big button to continue where you left off");
-  assert.ok(home.includes("<MyRRCard"), "My RR must be on Home");
-  assert.equal(src.match(/<MyRRCard /g)?.length, 1, "there must be exactly one My RR card");
-  const shareAt = home.indexOf("<ShareButton />");
-  const myRrAt = home.indexOf("<MyRRCard");
-  const whatsNewAt = home.indexOf("<WhatsNewBanner />");
-  assert.ok(shareAt > 0 && myRrAt > shareAt, "My RR must sit after the Share button on Home");
-  assert.ok(whatsNewAt > myRrAt, "My RR must sit before the rest of Home");
-  assert.ok(src.includes("on this phone only"), "My RR must say the last place is kept on this phone only");
-  // Adding, not subtracting: the warm greeting is untouched.
+test("My RR: DELETED from Home (Richard, 2026-11-23) — no card, no Continue button, return still automatic", () => {
+  assert.ok(!src.includes("function MyRRCard("), "there must be no MyRRCard component anymore");
+  assert.ok(!home.includes("<MyRRCard"), "My RR must not be on Home");
+  assert.ok(!src.includes("Continue where I left off"), "there must be no Continue button on Home");
+  assert.ok(!home.includes("No place saved yet"), "there must be no 'no place saved yet' line on Home");
+  assert.ok(!home.includes("remembers where you left off"), "Home must not explain that the app remembers where you left off");
+  // The return itself is untouched: the last tab is still saved
+  // whenever it changes, the app still defaults to it, and the
+  // Welcome back banner still names it with a way back to Home.
+  assert.ok(src.includes("saveLastPlace(LOCAL_STORAGE_ADAPTER, tab)"), "the app must still save the tab whenever it changes");
+  assert.ok(src.includes("Welcome back"), "a welcome-back banner must name the return");
+  assert.ok(src.includes("where you left off"), "the banner must say where you left off");
+  assert.ok(src.includes("Go to Home instead"), "the banner must offer a clear way back to Home");
+  // The warm greeting is untouched, in the new order.
   const happyAt = home.indexOf("<HappyButton />");
-  const trueAt = home.indexOf("BUT YOU ARE NOT ALONE");
-  assert.ok(trueAt > 0 && happyAt > trueAt && shareAt > happyAt,
-    "the true message, Happy Button and Share button must still come first on Home, in that order");
+  const shareAt = home.indexOf("<ShareButton />");
+  const trueAt = home.indexOf("your personal cottage");
+  assert.ok(trueAt > 0 && shareAt > trueAt && happyAt > shareAt,
+    "the true message, Share button and Happy Button must still come first on Home, in that order");
   assert.ok(home.includes("We are so Happy you are here"), "the welcome line must still be on Home");
 });
 

@@ -46,7 +46,7 @@ type SearchEntry = SearchResult & { keywords: string };
 export const SEARCH_INDEX: SearchEntry[] = [
   { id: "home", tab: "home", title: "Home", snippet: "Your front door — points, the Happy Button, and every tab.", keywords: "start front door home page" },
   { id: "happy-button", tab: "home", title: "Happy Button", snippet: "Tap when you notice you're happy — 8 happy moments fill a thermometer and pin to your cork board.", keywords: "happy happiness thermometer cork board moment feeling happy" },
-  { id: "my-rr", tab: "home", title: "My RR", snippet: "Your personal place — continue where you left off in the app.", keywords: "my rr continue return last place where left off personal" },
+  { id: "my-rr", tab: "home", title: "Return to where you left off", snippet: "The app remembers the tab you left off on, on this phone only, and brings you back — look for the Welcome back banner.", keywords: "my rr continue return last place where left off personal" },
   { id: "my-muse", tab: "home", title: "My Muse", snippet: "Your personal self-help assistant — talk to Muse, free, no account, and come back with Return to My RR.", keywords: "my muse assistant talk ai personal muse assistant help guide" },
   { id: "share", tab: "home", title: "Share Richard's Resource", snippet: "Share the cottage with someone who could use it — free, no account, no fuss.", keywords: "share send friend cottage tell someone" },
   { id: "donate", tab: "home", title: "Donate — support Richard's Resource", snippet: "An optional personal gift on Stripe's secure page — NOT tax deductible — that helps keep the app free.", keywords: "donate donation donations support give gift" },

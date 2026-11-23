@@ -69,7 +69,7 @@ test("13/21/22/24. Welcome cottage is a FULL COVER PAGE first, tap the door to e
   // 'choose' not 'use'/'select' — via the WelcomeIntro line on Home.
   assert.ok(src.includes("function WelcomeIntro()"), "a WelcomeIntro component must exist on Home");
   assert.ok(home.includes("<WelcomeIntro />"), "Home must render the Welcome intro line");
-  const TRUE = "We don&apos;t share your data. This is your personal journey... BUT YOU ARE NOT ALONE. Help is at your fingertips.";
+  const TRUE = "This is your personal journey, your personal cottage, but you are not alone.";
   assert.ok(home.indexOf("<WelcomeIntro />") < home.indexOf(TRUE), "intro must come before the true message");
   assert.ok(home.indexOf("<WelcomeIntro />") < home.indexOf("<WhatsNewBanner />"), "intro must come before What's New");
   assert.ok(src.includes("please feel free to choose any option, you may choose as many as you like"), "Home must carry the exact choose wording");

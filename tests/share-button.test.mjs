@@ -72,18 +72,18 @@ test("Share button: native share sheet first, mailto fallback, cancelling does n
     "the mailto fallback must trigger when navigator.share is unavailable");
 });
 
-test("Share button: Home only, after the Happy Button, before the rest of Home", () => {
+test("Share button: Home only, after the true message, before the Happy Button, before the rest of Home", () => {
   assert.ok(src.includes("function ShareButton()"), "a ShareButton component must exist");
   assert.ok(src.includes("Share Richard&apos;s Resource"), "the button must say “Share Richard's Resource”");
   assert.ok(home.includes("<ShareButton />"), "the Share button must be on Home");
   assert.equal(src.match(/<ShareButton \/>/g)?.length, 1, "there must be exactly one Share button in the app");
   const happyAt = home.indexOf("<HappyButton />");
   const shareAt = home.indexOf("<ShareButton />");
-  const trueAt = home.indexOf("BUT YOU ARE NOT ALONE");
+  const trueAt = home.indexOf("your personal cottage");
   const crisisAt = home.indexOf("<CrisisStrip />");
-  assert.ok(happyAt > 0 && trueAt > 0 && trueAt < happyAt,
-    "the true message and the Happy Button must still come first on Home");
-  assert.ok(shareAt > happyAt, "the Share button must sit right after the Happy Button on Home");
+  assert.ok(happyAt > 0 && trueAt > 0 && trueAt < shareAt,
+    "the true message must still come before the Share button on Home");
+  assert.ok(shareAt < happyAt, "the Share button must sit before the Happy Button on Home (Happy Button moved one step down, 2026-11-23)");
   assert.ok(crisisAt > shareAt, "the crisis box must still be after the tabs on Home, untouched by the Share button");
   assert.ok(home.indexOf("WhatsNewBanner") > shareAt, "the Share button must sit before the rest of Home, not after it");
   // No second button anywhere else.

@@ -4568,11 +4568,19 @@ function ShareButton() {
 // there is no account — and defaults to it on return, with a
 // "Welcome back" banner. The My RR card that used to show this
 // on Home was deleted 2026-11-23; the returning itself stays.
-function SearchBox({ onGo }: { onGo: (t: TabId) => void }) {
+function SearchBox({ onGo, onOpenSiteMap }: { onGo: (t: TabId) => void; onOpenSiteMap?: () => void }) {
   const [query, setQuery] = useState("");
   const results = searchApp(query);
-  const open = (tab: TabId) => {
-    onGo(tab);
+  const open = (r: { tab: TabId; openSiteMap?: boolean }) => {
+    // The Site Map is not a tab: its result opens the trail map
+    // itself, at the top, instead of jumping to a tab.
+    if (r.openSiteMap && onOpenSiteMap) {
+      onOpenSiteMap();
+      setQuery("");
+      if (typeof window !== "undefined") window.scrollTo(0, 0);
+      return;
+    }
+    onGo(r.tab);
     setQuery("");
     if (typeof window !== "undefined") window.scrollTo(0, 0);
   };
@@ -4598,10 +4606,10 @@ function SearchBox({ onGo }: { onGo: (t: TabId) => void }) {
         <ul className="mt-3 space-y-2">
           {results.map((r) => (
             <li key={r.id}>
-              <button type="button" onClick={() => open(r.tab)} className="felt-card felt-pressable w-full rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--amber-soft)] p-3 text-left">
+              <button type="button" onClick={() => open(r)} className="felt-card felt-pressable w-full rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--amber-soft)] p-3 text-left">
                 <span className="block font-bold text-[var(--text)]">{r.title}</span>
                 <span className="mt-0.5 block text-sm leading-relaxed text-[var(--dim)]">{r.snippet}</span>
-                <span className="mt-1 block text-xs font-bold uppercase tracking-widest text-[var(--accent)]">{LAST_PLACE_LABELS[r.tab]} tab →</span>
+                <span className="mt-1 block text-xs font-bold uppercase tracking-widest text-[var(--accent)]">{r.openSiteMap ? "Trail map →" : `${LAST_PLACE_LABELS[r.tab]} tab →`}</span>
               </button>
             </li>
           ))}
@@ -5020,6 +5028,20 @@ function GardenCompanions({ name, onName, avatar, onAvatar, guide, onGuide }: {
   onGuide: (next: string) => void;
 }) {
   const [draft, setDraft] = useState(name);
+  const [saved, setSaved] = useState(false);
+  // The draft must follow the saved name: after Clear, or after a
+  // save from another view, a stale draft would show the old name.
+  useEffect(() => { setDraft(name); }, [name]);
+  // Save the name (Richard, 2026-11-26): typing "007.5" did not
+  // stick — typing alone saved nothing, and the only button said
+  // "That's me", never "Save", with no Saved confirmation. So the
+  // name now saves on the Save button, on Enter, and when the box
+  // loses focus after a change — and says so, "Saved ✓".
+  const saveName = () => {
+    const clean = draft.trim().slice(0, 40);
+    onName(clean);
+    setSaved(clean.length > 0);
+  };
   const chosenAvatar = GARDEN_AVATARS.find((a) => a.id === avatar) ?? null;
   const chosenGuide = GARDEN_GUIDES.find((g) => g.id === guide) ?? null;
   const displayName = name ? name : "friend";
@@ -5043,18 +5065,20 @@ function GardenCompanions({ name, onName, avatar, onAvatar, guide, onGuide }: {
           maxLength={40}
           placeholder="First name or nickname"
           aria-label="Choose your own name — first name or nickname"
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter") onName(draft.trim().slice(0, 40)); }}
+          onChange={(e) => { setDraft(e.target.value); setSaved(false); }}
+          onKeyDown={(e) => { if (e.key === "Enter") saveName(); }}
+          onBlur={() => { if (draft.trim().slice(0, 40) !== name) saveName(); }}
           className="min-h-14 flex-1 rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 text-lg text-[var(--text)]"
         />
-        <button type="button" onClick={() => onName(draft.trim().slice(0, 40))} className="min-h-14 rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-5 font-bold text-[var(--text)]">
-          That’s me
+        <button type="button" onClick={saveName} className="min-h-14 rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-5 font-bold text-[var(--text)]">
+          Save my name
         </button>
-        <button type="button" onClick={() => { setDraft(""); onName(""); }} className="min-h-14 rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-5 font-bold text-[var(--text)]">
+        <button type="button" onClick={() => { setDraft(""); setSaved(false); onName(""); }} className="min-h-14 rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-5 font-bold text-[var(--text)]">
           Clear
         </button>
       </div>
-      {name && <p className="mt-2 font-bold text-[var(--text)]">Welcome, {name}.</p>}
+      {name && <p className="mt-2 font-bold text-[var(--text)]">{saved ? `Saved ✓ — that’s you, ${name}.` : `Welcome, ${name}.`}</p>}
+      {!name && <p className="mt-2 text-sm leading-relaxed text-[var(--dim)]">Tap Save my name — it stays on this phone, in this browser.</p>}
       <p className="mt-6 font-bold text-[var(--text)]">Pick a figure that stands for you</p>
       <p className="mt-1 leading-relaxed text-[var(--dim)]">Tap one. No names, just a figure.</p>
       <div className="mt-3 grid grid-cols-3 gap-2">
@@ -5250,12 +5274,15 @@ function GardenPathSteps({ quitDay }: { quitDay: string | null }) {
   );
 }
 
-// The pathway in the garden list view: one patch beside the
+// The progress tree in the garden list view: one patch beside the
 // path for every item, in order from the cottage front steps
 // outward, plus the patch right before the cottage itself.
 // A patch turns to flowers when its item is ticked or its
 // trophy is earned. The cottage patch is last and needs
 // regular visits — its weeds grow back if you stay away.
+// This is a progress report, not a map — it must never be
+// called a map. The real map is GardenMapPage, opened from
+// the Site Map button at the top of the app, or "See the Map".
 function GardenPathStrip({ checked, visits }: { checked: string[]; visits: GardenVisits }) {
   const trophies = loadLifeGardenTrophies();
   const cleared = (item: string) => checked.includes(item) || trophies.includes(item);
@@ -5263,7 +5290,7 @@ function GardenPathStrip({ checked, visits }: { checked: string[]; visits: Garde
   const allCleared = flowerCount === LIFE_GARDEN_ITEMS.length;
   const cottageBlooms = gardenCottagePatchBlooms(visits, allCleared);
   return (
-    <Section title="Your pathway, from the cottage steps">
+    <Section title="Your progress tree, from the cottage steps">
       <p className="leading-relaxed text-[var(--text)]">
         Patches of weeds beside the path turn to flowers as you clear them, starting at the cottage front steps and working outward. {flowerCount} of {LIFE_GARDEN_ITEMS.length} patches in flower.
       </p>
@@ -5397,7 +5424,7 @@ function GardenPorchPot({ flowerCount, cottageBlooms }: { flowerCount: number; c
   );
 }
 
-function LifeGardenPage({ onGoHome, onGoTab, profiles, initialView = "list" }: { onGoHome: () => void; onGoTab: (t: TabId) => void; profiles?: Profile[]; initialView?: "list" | "map" | "cozy" }) {
+function LifeGardenPage({ onGoHome, onGoTab, profiles, initialView = "list", backLabel }: { onGoHome: () => void; onGoTab: (t: TabId) => void; profiles?: Profile[]; initialView?: "list" | "map" | "cozy"; backLabel?: string }) {
   const [checked, setChecked] = useState<string[]>(() => loadLifeGardenChecked());
   const [zoomed, setZoomed] = useState(false);
   // Map piece (Richard, 2026-11-26): the garden list, the Map,
@@ -5405,7 +5432,7 @@ function LifeGardenPage({ onGoHome, onGoTab, profiles, initialView = "list" }: {
   // Map and the Cozy Room open from here, and come straight back.
   // initialView matters: the map button from the Cozy Room must
   // land straight on the real Map, not on the garden list — the
-  // list's pathway strip is a progress report, not a map, and
+  // list's progress tree is a progress report, not a map, and
   // landing on it is why the map button seemed not to show a map.
   const [view, setView] = useState<"list" | "map" | "cozy">(initialView);
   // Third piece (Richard, 2026-11-26): your name, your figure and
@@ -5434,13 +5461,13 @@ function LifeGardenPage({ onGoHome, onGoTab, profiles, initialView = "list" }: {
     safeLocalSet(LIFE_GARDEN_GUIDE_KEY, next);
   };
   if (view === "map") {
-    return <GardenMapPage onGoHome={onGoHome} onGoGarden={() => { setChecked(loadLifeGardenChecked()); setView("list"); if (typeof window !== "undefined") window.scrollTo(0, 0); }} onGoTab={onGoTab} onOpenCozy={() => { setView("cozy"); if (typeof window !== "undefined") window.scrollTo(0, 0); }} profiles={profiles} />;
+    return <GardenMapPage onGoHome={onGoHome} onGoGarden={() => { setChecked(loadLifeGardenChecked()); setView("list"); if (typeof window !== "undefined") window.scrollTo(0, 0); }} onGoTab={onGoTab} onOpenCozy={() => { setView("cozy"); if (typeof window !== "undefined") window.scrollTo(0, 0); }} profiles={profiles} gardenName={gardenName} backLabel={backLabel} />;
   }
   if (view === "cozy") {
     // The map button in the Cozy Room must open the real Map
     // (Richard, 2026-11-26) — it used to go back to the garden
     // list, so it did not show a map at all.
-    return <CozyRoomPage onGoHome={onGoHome} onGoMap={() => { setView("map"); if (typeof window !== "undefined") window.scrollTo(0, 0); }} />;
+    return <CozyRoomPage onGoHome={onGoHome} onGoMap={() => { setView("map"); if (typeof window !== "undefined") window.scrollTo(0, 0); }} gardenName={gardenName} backLabel={backLabel} />;
   }
   const toggleItem = (item: string) => {
     setChecked((prev) => {
@@ -5456,7 +5483,7 @@ function LifeGardenPage({ onGoHome, onGoTab, profiles, initialView = "list" }: {
   return (
     <div>
       <button type="button" onClick={onGoHome} className="min-h-11 rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 font-bold text-[var(--text)]">
-        ← Back to Home
+        {backLabel ?? "← Back to Home"}
       </button>
       <p className="mt-4 text-center font-display text-xl font-bold text-[var(--accent)]">Welcome, {gardenName ? gardenName : "friend"}</p>
       <h2 className="mt-4 font-display text-2xl font-semibold leading-snug text-[var(--text)]">My Life Garden Pathway</h2>
@@ -5524,7 +5551,7 @@ function LifeGardenPage({ onGoHome, onGoTab, profiles, initialView = "list" }: {
       </div>
       <div className="mt-6">
         <button type="button" onClick={onGoHome} className="min-h-11 rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 font-bold text-[var(--text)]">
-          ← Back to Home
+          {backLabel ?? "← Back to Home"}
         </button>
       </div>
     </div>
@@ -5538,12 +5565,19 @@ function LifeGardenPage({ onGoHome, onGoTab, profiles, initialView = "list" }: {
 // walls, books on the shorter shelf, the taller shelf sparse with
 // two or three empty frames, one candle on the mantle, beige rugs.
 // Trophies earned from the Map wait in the Cozy Room. Local only.
-function GardenMapPage({ onGoHome, onGoGarden, onGoTab, onOpenCozy, profiles }: {
+function GardenMapPage({ onGoHome, onGoGarden, onGoTab, onOpenCozy, profiles, gardenName = "", backLabel = "← Back to Home" }: {
   onGoHome: () => void;
   onGoGarden: () => void;
   onGoTab: (t: TabId) => void;
   onOpenCozy: () => void;
   profiles?: Profile[];
+  gardenName?: string;
+  // Where "back" goes when the Map was opened on its own — from
+  // the garden it is Home; from the Site Map button it is the tab
+  // the visitor came from, named in the label so the button never
+  // promises Home when it goes elsewhere. The top tab buttons are
+  // always there too, including Home.
+  backLabel?: string;
 }) {
   const [selected, setSelected] = useState<string | null>(null);
   const [trophies, setTrophies] = useState<string[]>(() => loadLifeGardenTrophies());
@@ -5610,9 +5644,14 @@ function GardenMapPage({ onGoHome, onGoGarden, onGoTab, onOpenCozy, profiles }: 
   return (
     <div>
       <button type="button" onClick={onGoHome} className="min-h-11 rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 font-bold text-[var(--text)]">
-        ← Back to Home
+        {backLabel}
       </button>
       <h2 className="mt-4 font-display text-2xl font-semibold leading-snug text-[var(--text)]">Map — My Life Garden Pathway</h2>
+      {/* The saved name follows the visitor here too (Richard,
+          2026-11-26): once the name sticks, "friend" is replaced
+          by it everywhere in the garden — "Welcome, 007.5" — and
+          "friend" stays only when no name is saved. */}
+      <p className="mt-4 text-center font-display text-xl font-bold text-[var(--accent)]">Welcome, {gardenName ? gardenName : "friend"}</p>
       <p className="mt-3 leading-relaxed text-[var(--text)]">
         Warm and cozy from the start. One pathway from the front steps of the cottage, branching — dividing from the path. One branch to the gazebo for quiet time, dead ends for drinking, smoking, gambling, drugs and the rest, and the longevity path going on to infinity.
       </p>
@@ -5819,7 +5858,7 @@ function GardenMapPage({ onGoHome, onGoGarden, onGoTab, onOpenCozy, profiles }: 
       <div className="mt-6 space-y-3">
         <button type="button" onClick={onOpenCozy} className="min-h-11 w-full rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 font-bold text-[var(--text)]">Inside view — my Cozy Room →</button>
         <button type="button" onClick={onGoGarden} className="min-h-11 w-full rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 font-bold text-[var(--text)]">Back to the garden list</button>
-        <button type="button" onClick={onGoHome} className="min-h-11 w-full rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 font-bold text-[var(--text)]">← Back to Home</button>
+        <button type="button" onClick={onGoHome} className="min-h-11 w-full rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 font-bold text-[var(--text)]">{backLabel}</button>
       </div>
     </div>
   );
@@ -6021,7 +6060,7 @@ function CozyRoomVisual({ trophies, books, frames, onAddPhoto, onClearFrame, onE
   );
 }
 
-function CozyRoomPage({ onGoHome, onGoMap }: { onGoHome: () => void; onGoMap: () => void }) {
+function CozyRoomPage({ onGoHome, onGoMap, gardenName = "", backLabel = "← Back to Home" }: { onGoHome: () => void; onGoMap: () => void; gardenName?: string; backLabel?: string }) {
   const [trophies] = useState<string[]>(() => loadLifeGardenTrophies());
   const [zoomed, setZoomed] = useState(false);
   // Fourth piece (Richard, 2026-11-26): your books and your photos.
@@ -6074,9 +6113,14 @@ function CozyRoomPage({ onGoHome, onGoMap }: { onGoHome: () => void; onGoMap: ()
   return (
     <div>
       <button type="button" onClick={onGoHome} className="min-h-11 rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 font-bold text-[var(--text)]">
-        ← Back to Home
+        {backLabel}
       </button>
       <h2 className="mt-4 font-display text-2xl font-semibold leading-snug text-[var(--text)]">Inside view — my Cozy Room</h2>
+      {/* The saved name follows the visitor here too (Richard,
+          2026-11-26): once the name sticks, "friend" is replaced
+          by it everywhere in the garden — "Welcome, 007.5" — and
+          "friend" stays only when no name is saved. */}
+      <p className="mt-4 text-center font-display text-xl font-bold text-[var(--accent)]">Welcome, {gardenName ? gardenName : "friend"}</p>
       <div className="mt-4 overflow-hidden rounded-[var(--radius)] border-2 border-[var(--leaf)]">
         <CozyRoomVisual trophies={trophies} books={books} frames={frames} onAddPhoto={(slot, file) => { void addPhoto(slot, file); }} onClearFrame={clearFrame} onEnlarge={() => setZoomed(true)} />
       </div>
@@ -6205,7 +6249,7 @@ function CozyRoomPage({ onGoHome, onGoMap }: { onGoHome: () => void; onGoMap: ()
             so it did not show a map at all. onGoMap lands
             straight on GardenMapPage, at the top. */}
         <button type="button" onClick={onGoMap} className="min-h-11 w-full rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 font-bold text-[var(--text)]">See the Map →</button>
-        <button type="button" onClick={onGoHome} className="min-h-11 w-full rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 font-bold text-[var(--text)]">← Back to Home</button>
+        <button type="button" onClick={onGoHome} className="min-h-11 w-full rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 font-bold text-[var(--text)]">{backLabel}</button>
       </div>
     </div>
   );
@@ -6247,7 +6291,7 @@ function HomePage({ profiles, logs, pointEvents, dayMarks, onGo, onSurf }: {
     // "See the Map" from the Cozy Room opened from Home must
     // land straight on the real Map, at the top — it used to
     // open the garden list instead, so it did not show a map.
-    return <CozyRoomPage onGoHome={() => { setCozyOpen(false); if (typeof window !== "undefined") window.scrollTo(0, 0); }} onGoMap={() => { setCozyOpen(false); setGardenInitialView("map"); setGardenOpen(true); if (typeof window !== "undefined") window.scrollTo(0, 0); }} />;
+    return <CozyRoomPage onGoHome={() => { setCozyOpen(false); if (typeof window !== "undefined") window.scrollTo(0, 0); }} onGoMap={() => { setCozyOpen(false); setGardenInitialView("map"); setGardenOpen(true); if (typeof window !== "undefined") window.scrollTo(0, 0); }} gardenName={loadLifeGardenName()} />;
   }
   if (gardenOpen) {
     return <LifeGardenPage onGoHome={() => { setGardenOpen(false); if (typeof window !== "undefined") window.scrollTo(0, 0); }} onGoTab={onGo} profiles={profiles} initialView={gardenInitialView} />;
@@ -6662,10 +6706,34 @@ export function App() {
   };
   const [surfCategory, setSurfCategory] = useState<Category | null>(null);
   const [pendingRide, setPendingRide] = useState<boolean | null>(null);
+  // Site Map (Richard, 2026-11-26): a button at the top, next to
+  // Home, that opens the trail map — the real GardenMapPage —
+  // straight away, at the top, from any tab or from Home. It is
+  // not a tab and not buried in the garden: it is App-level view
+  // state, reusing LifeGardenPage landed on its map view, so
+  // there is no second map. The tab the visitor came from is
+  // remembered, so "back" goes back there; Home is always one
+  // tap away on the tab buttons too.
+  const [siteMapOpen, setSiteMapOpen] = useState(false);
+  const [siteMapReturnTab, setSiteMapReturnTab] = useState<TabId>("home");
+  const openSiteMap = () => {
+    setSiteMapReturnTab(tab);
+    setSiteMapOpen(true);
+    setShowTerms(false);
+    setSurfCategory(null);
+    setPendingRide(null);
+    if (typeof window !== "undefined") window.scrollTo(0, 0);
+  };
+  const closeSiteMap = () => {
+    setSiteMapOpen(false);
+    setTab(siteMapReturnTab);
+    if (typeof window !== "undefined") window.scrollTo(0, 0);
+  };
   // One tap to a tab, from the search results, My RR, or a Home
   // card: switch tab, close anything open on top of it, and start
   // at the top of the new tab.
   const goToTab = (t: TabId) => {
+    setSiteMapOpen(false);
     setTab(t);
     setShowTerms(false);
     setSurfCategory(null);
@@ -6841,13 +6909,13 @@ export function App() {
         <nav aria-label="Sections" className="flex flex-wrap gap-2">
           {TABS.map((t) => {
             const pastel = TAB_PASTELS[t.id];
-            const isActive = tab === t.id;
+            const isActive = tab === t.id && !siteMapOpen;
             return (
+              <span key={t.id} className="contents">
               <button
-                key={t.id}
                 type="button"
                 aria-current={isActive ? "page" : undefined}
-                onClick={() => { setTab(t.id); setShowTerms(false); setSurfCategory(null); setPendingRide(null); }}
+                onClick={() => { setSiteMapOpen(false); setTab(t.id); setShowTerms(false); setSurfCategory(null); setPendingRide(null); }}
                 style={{
                   backgroundColor: isActive ? pastel.activeBg : pastel.inactiveBg,
                   borderColor: isActive ? pastel.activeBorder : pastel.border,
@@ -6857,6 +6925,27 @@ export function App() {
                 <TabIcon id={t.id} size={16} />
                 {t.label}
               </button>
+              {/* Site Map — right next to Home, at the top where the
+                  tabs are, always visible, never buried in the
+                  garden. It opens the trail map itself, at the top,
+                  from any tab. */}
+              {t.id === "home" && (
+                <button
+                  type="button"
+                  aria-current={siteMapOpen ? "page" : undefined}
+                  aria-label="Site Map — open the trail map"
+                  onClick={openSiteMap}
+                  style={{
+                    backgroundColor: siteMapOpen ? "#b7e1a8" : "#e2f2da",
+                    borderColor: siteMapOpen ? "#6aa84f" : "#a8d19a",
+                  }}
+                  className={`felt-tab ${siteMapOpen ? "felt-tab-active" : ""} inline-flex min-h-11 items-center gap-1.5 rounded-full border-2 px-3 text-sm font-bold text-[#2e2117]`}
+                >
+                  <span aria-hidden="true">🗺️</span>
+                  Site Map
+                </button>
+              )}
+              </span>
             );
           })}
         </nav>
@@ -6864,7 +6953,7 @@ export function App() {
         {/* Search (Richard, 2026-11-21): on every tab, right under
             the tab buttons, so it is there wherever you are. */}
         <div className="mt-4">
-          <SearchBox onGo={goToTab} />
+          <SearchBox onGo={goToTab} onOpenSiteMap={openSiteMap} />
         </div>
 
         {/* Welcome back (Richard, 2026-11-21): shown only when the
@@ -6919,7 +7008,22 @@ export function App() {
 
         {!surfCategory && (
           <div className="mt-6">
-            {showTerms ? (
+            {siteMapOpen ? (
+              // The Site Map, open on its own from the top button or
+              // from search: the same garden, landed straight on
+              // the real Map, at the top — not a second map. Visit
+              // links go through goToTab, which closes the Map and
+              // lands on that help tab. "Back" goes to the tab the
+              // visitor came from, named on the button; Home is
+              // always one tap away on the tab buttons above.
+              <LifeGardenPage
+                onGoHome={closeSiteMap}
+                onGoTab={goToTab}
+                profiles={profiles}
+                initialView="map"
+                backLabel={siteMapReturnTab === "home" ? "← Back to Home" : `← Back to ${LAST_PLACE_LABELS[siteMapReturnTab]}`}
+              />
+            ) : showTerms ? (
               <TermsPage onBack={() => { setShowTerms(false); if (typeof window !== "undefined") window.scrollTo(0, 0); }} />
             ) : (
               <>

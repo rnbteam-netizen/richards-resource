@@ -57,7 +57,7 @@ test("a single path expands: short without a quit day, milestone stones with one
 });
 
 test("weeds turn to flowers on cleared paths, from the cottage steps outward", () => {
-  assert.ok(strip.includes("Your pathway, from the cottage steps"), "the garden list must show the pathway, from the cottage steps");
+  assert.ok(strip.includes("Your progress tree, from the cottage steps"), "the garden list must show the progress tree, from the cottage steps");
   assert.ok(strip.includes("Patches of weeds beside the path turn to flowers"), "patches must turn to flowers as they are cleared");
   assert.ok(strip.includes("starting at the cottage front steps and working outward"), "clearing must start at the cottage front steps and work outward");
   assert.ok(strip.includes("patches in flower"), "the pathway must count how many patches are in flower");

@@ -135,15 +135,17 @@ test("Search box: on every tab, under the tab buttons, with the privacy line", (
   assert.ok(src.includes('type="search"'), "the box must be a real search input");
   assert.ok(src.includes("nothing you type is sent anywhere"),
     "the box must tell the visitor their search stays on the phone");
-  assert.ok(src.includes("<SearchBox onGo={goToTab} />"), "the search box must be wired to go to a tab");
+  assert.ok(src.includes("<SearchBox onGo={goToTab} onOpenSiteMap={openSiteMap} />"), "the search box must be wired to go to a tab — and to open the Site Map");
   const navEnd = src.indexOf("</nav>", src.indexOf('aria-label="Sections"'));
-  const searchAt = src.indexOf("<SearchBox onGo={goToTab} />");
+  const searchAt = src.indexOf("<SearchBox onGo={goToTab} onOpenSiteMap={openSiteMap} />");
   const pointsAt = src.indexOf("★ {displayTotal} points");
   assert.ok(navEnd > 0 && searchAt > navEnd, "the search box must sit under the tab buttons, so it is on every tab");
   assert.ok(pointsAt > searchAt, "the search box must sit before the points strip");
   assert.equal(src.match(/<SearchBox /g)?.length, 1, "there must be exactly one search box");
   // Results must jump: tapping a result goes to its tab and clears the query.
-  assert.ok(src.includes("onClick={() => open(r.tab)}"), "tapping a search result must open its tab");
+  // The Site Map result is the one exception — it opens the trail map, not a tab.
+  assert.ok(src.includes("onClick={() => open(r)}"), "tapping a search result must open it");
+  assert.ok(src.includes("if (r.openSiteMap && onOpenSiteMap)"), "a Site Map result must open the Site Map, not a tab");
   assert.ok(src.includes('setQuery("")'), "opening a result must clear the search");
 });
 

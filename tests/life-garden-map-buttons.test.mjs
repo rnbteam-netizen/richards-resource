@@ -62,8 +62,8 @@ test("every move to the Map scrolls to the top, so the Map pops up at its headin
   assert.ok(garden.includes("Map — My Life Garden Pathway"), "the Map page must be headed Map — My Life Garden Pathway");
 });
 
-test("the pathway strip is a progress report, never called a map", () => {
-  assert.ok(strip.includes("Your pathway, from the cottage steps"), "the pathway strip must keep its own title");
+test("the progress tree is a progress report, never called a map", () => {
+  assert.ok(strip.includes("Your progress tree, from the cottage steps"), "the progress tree must keep its own title");
   assert.ok(strip.includes("patches in flower"), "the pathway strip must report patches in flower");
   assert.ok(!strip.includes("See the Map"), "the pathway strip must not carry a See the Map button");
   assert.ok(!strip.toLowerCase().includes("this is the map"), "the pathway strip must not be presented as the map");

@@ -39,9 +39,15 @@ const ITEMS = [
 ];
 
 test("map and cozy-room images are local assets, not hotlinks", () => {
-  assert.ok(existsSync(path.join(root, "client", "src", "assets", "my-life-garden-map.webp")), "my-life-garden-map.webp must live in client/src/assets/");
+  // The Map is a diagram now (Richard, 2026-11-26: the old map
+  // photo "just has cottage, gazebo infinity path"). It uses our
+  // real cottage, welcome-cottage.jpg, at the top of the diagram —
+  // the generated my-life-garden-map.webp photo is gone from the
+  // Map, so it is no longer imported here.
+  assert.ok(existsSync(path.join(root, "client", "src", "assets", "welcome-cottage.jpg")), "welcome-cottage.jpg must live in client/src/assets/");
+  assert.ok(map.includes('src={welcomeCottage}'), "the Map must show our real cottage image");
+  assert.ok(!src.includes('import myLifeGardenMap from "./assets/my-life-garden-map.webp"'), "the old generated map photo must no longer be imported");
   assert.ok(existsSync(path.join(root, "client", "src", "assets", "my-life-garden-cozy-room.webp")), "my-life-garden-cozy-room.webp must live in client/src/assets/");
-  assert.ok(src.includes('import myLifeGardenMap from "./assets/my-life-garden-map.webp"'), "the map image must be imported from local assets");
   assert.ok(src.includes('import myLifeGardenCozyRoom from "./assets/my-life-garden-cozy-room.webp"'), "the cozy-room image must be imported from local assets");
   assert.ok(!map.includes("http"), "the map view must not hotlink anything");
 });

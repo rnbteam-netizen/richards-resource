@@ -5,7 +5,6 @@ import { sounds, type CalmToneKind } from "./sound";
 import { speakText, stopSpeaking } from "./speech";
 import welcomeCottage from "./assets/welcome-cottage.jpg";
 import myLifeGarden from "./assets/my-life-garden.webp";
-import myLifeGardenMap from "./assets/my-life-garden-map.webp";
 import myLifeGardenCozyRoom from "./assets/my-life-garden-cozy-room.webp";
 import { shareApp } from "./share";
 import { searchApp, loadLastPlace, saveLastPlace, LAST_PLACE_LABELS } from "./search";
@@ -4772,16 +4771,16 @@ const GARDEN_MAP_KIND_LABEL: Record<GardenMapKind, string> = {
 
 const GARDEN_MAP_STOPS: GardenMapStop[] = [
   { id: "garden", label: "My Life Garden Pathway", tab: null, kind: "pathway", items: [], note: "One pathway from the front steps of the cottage — you have already been invited in. Weed clearing begins from the front steps." },
-  { id: "gazebo", label: "The gazebo — quiet time", tab: "peace", kind: "gazebo", items: ["I take a quiet moment"], note: "A branch off the path, for a quiet moment — meditation, prayer, just sitting a while. Then back to the path. Multiple trophies live in the gazebo." },
+  { id: "gazebo", label: "The gazebo — quiet time", tab: "peace", kind: "gazebo", items: ["I take a quiet moment"], note: "A branch for a quiet moment. Then back to the path. Trophies live in the gazebo." },
   { id: "alcohol", label: "Alcohol", tab: "alcohol", kind: "dead-end", items: ["No drinking problem"], note: "This branch ends when you stop, and stay stopped. A trophy on a wooden stool waits at the end of it." },
   { id: "smoking", label: "Smoking", tab: "smoking", kind: "dead-end", items: ["No smoking problem"], note: "This branch ends when you stop, and stay stopped. A trophy on a wooden stool waits at the end of it." },
   { id: "gambling", label: "Gambling", tab: "gambling", kind: "dead-end", items: ["No gambling problem"], note: "This branch ends when you stop, and stay stopped. A trophy on a wooden stool waits at the end of it." },
   { id: "drugs", label: "Drugs", tab: "drugs", kind: "dead-end", items: ["No drug problem"], note: "This branch ends when you stop, and stay stopped. A trophy on a wooden stool waits at the end of it." },
   { id: "codependency", label: "Codependency", tab: "codependency", kind: "dead-end", items: ["I don't lose myself trying to fix others"], note: "This branch ends when you stop losing yourself trying to fix others. A trophy on a wooden stool waits at the end of it." },
-  { id: "food", label: "Food", tab: "food", kind: "dead-end", items: ["I eat well", "I like my body just the way it is"], note: "This branch is about eating well, and liking your body just the way it is. A trophy on a wooden stool waits at the end of it." },
+  { id: "food", label: "Food", tab: "food", kind: "dead-end", items: ["I eat well", "I like my body just the way it is"], note: "Eating well, and liking your body just the way it is. A trophy on a wooden stool waits at the end." },
   { id: "screens", label: "Screens", tab: "screens", kind: "dead-end", items: ["I turn my screen off"], note: "This branch ends when you turn your screen off. A trophy on a wooden stool waits at the end of it." },
-  { id: "wellbeing", label: "Feeling Unwell?", tab: "wellbeing", kind: "dead-end", items: ["I'm not lonely"], note: "If today is hard, start here. You are not alone, and you are not lonely in this — help is on the tab, and a trophy waits at the end of this branch." },
-  { id: "longevity", label: "Longevity", tab: "longevity", kind: "infinite", items: ["I'm interested in longevity", "I have friends, furry and/or human", "I socialize"], note: "The only path that is infinite — you walk it all your life: sleep, walking, real food, friends, purpose. Trophies wait along the pathway, not just at the end, because there is no end." },
+  { id: "wellbeing", label: "Feeling Unwell?", tab: "wellbeing", kind: "dead-end", items: ["I'm not lonely"], note: "If today is hard, start here. You are not alone — a trophy waits at the end." },
+  { id: "longevity", label: "Longevity", tab: "longevity", kind: "infinite", items: ["I'm interested in longevity", "I have friends, furry and/or human", "I socialize"], note: "The only infinite path — sleep, walking, real food, friends, purpose. Trophies along the way, no end." },
   { id: "cozy", label: "My Cozy Room", tab: null, kind: "room", items: [], note: "Inside the cottage — your trophy room. First view: no trophies yet, and a few empty picture frames on the walls. Room for 100+ trophies." },
 ];
 
@@ -5034,7 +5033,7 @@ function GardenCompanions({ name, onName, avatar, onAvatar, guide, onGuide }: {
   return (
     <Section title="Your name, your avatar & your spirit guide">
       <p className="leading-relaxed text-[var(--text)]">
-        This part is optional — you can leave it blank and stay “friend”. Your name, your figure and your guide stay on this phone only, nothing is sent anywhere.
+        Optional — leave it blank and stay “friend”. Your name, your figure and your guide stay on this phone only, nothing is sent anywhere.
       </p>
       <p className="mt-4 font-bold text-[var(--text)]">Choose your own name</p>
       <div className="mt-2 flex flex-col gap-2 sm:flex-row">
@@ -5057,7 +5056,7 @@ function GardenCompanions({ name, onName, avatar, onAvatar, guide, onGuide }: {
       </div>
       {name && <p className="mt-2 font-bold text-[var(--text)]">Welcome, {name}.</p>}
       <p className="mt-6 font-bold text-[var(--text)]">Pick a figure that stands for you</p>
-      <p className="mt-1 leading-relaxed text-[var(--dim)]">A representation of yourself — tap one. No names, just a figure.</p>
+      <p className="mt-1 leading-relaxed text-[var(--dim)]">Tap one. No names, just a figure.</p>
       <div className="mt-3 grid grid-cols-3 gap-2">
         {GARDEN_AVATARS.map((a) => (
           <button
@@ -5074,7 +5073,7 @@ function GardenCompanions({ name, onName, avatar, onAvatar, guide, onGuide }: {
         ))}
       </div>
       <p className="mt-6 font-bold text-[var(--text)]">Pick a spirit guide</p>
-      <p className="mt-1 leading-relaxed text-[var(--dim)]">A friend to walk beside you on the path — tap one.</p>
+      <p className="mt-1 leading-relaxed text-[var(--dim)]">Tap one.</p>
       <div className="mt-3 grid grid-cols-2 gap-2">
         {GARDEN_GUIDES.map((g) => (
           <button
@@ -5213,7 +5212,7 @@ function GardenPathSteps({ quitDay }: { quitDay: string | null }) {
     return (
       <div>
         <p className="leading-relaxed text-[var(--text)]">
-          No quit day yet for this path, so it is short — three stepping stones. Pick a quit day and this path stretches out with steps to walk. It gets longer, one step at a time, not a dead end right away.
+          No quit day yet — three stepping stones. Pick a quit day and this path stretches out, not a dead end right away.
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-2" aria-label="A short path of three stepping stones">
           {[1, 2, 3].map((n) => (
@@ -5355,7 +5354,7 @@ function GardenPorchPot({ flowerCount, cottageBlooms }: { flowerCount: number; c
   return (
     <Section title="Flower pots on the big wrap-around porch">
       <p className="leading-relaxed text-[var(--text)]">
-        As you progress, nice flower pots with flowers appear on the cottage&apos;s big wrap-around porch — one pot at a time, each time a milestone is hit, and no two pots are alike. {flowerCount} of {LIFE_GARDEN_ITEMS.length} patches in flower.
+        Flower pots appear on the big wrap-around porch — one pot at a time, each time a milestone is hit, and no two pots are alike. {flowerCount} of {LIFE_GARDEN_ITEMS.length} patches in flower.
       </p>
       <div className="felt-card mt-3 rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 py-3">
         <svg viewBox="0 0 360 170" className="mx-auto w-full" role="img" aria-label={earned === 0 ? "The cottage's big wrap-around porch, with no flower pots yet" : `${earned} of ${GARDEN_PORCH_POTS.length} flower pots earned on the cottage's big wrap-around porch`}>
@@ -5509,11 +5508,11 @@ function LifeGardenPage({ onGoHome, onGoTab, profiles }: { onGoHome: () => void;
       <div className="mt-6 space-y-3">
         <button type="button" onClick={() => { setView("map"); if (typeof window !== "undefined") window.scrollTo(0, 0); }} style={{ backgroundColor: "#fdeeda", borderColor: "#d99a4e" }} className="felt-card felt-pressable w-full rounded-[var(--radius)] border-2 p-4 text-left">
           <p className="font-display text-xl font-black text-[#2e2117]">See the Map →</p>
-          <p className="mt-1 leading-relaxed text-[#6f5a44]">One pathway from the cottage, branching to the gazebo, dead ends with a trophy at the end of each, and the longevity path going on to infinity.</p>
+          <p className="mt-1 leading-relaxed text-[#6f5a44]">One path, branching to the gazebo, dead ends, and Longevity to infinity.</p>
         </button>
         <button type="button" onClick={() => { setView("cozy"); if (typeof window !== "undefined") window.scrollTo(0, 0); }} style={{ backgroundColor: "#fbe3ee", borderColor: "#c95a8a" }} className="felt-card felt-pressable w-full rounded-[var(--radius)] border-2 p-4 text-left">
           <p className="font-display text-xl font-black text-[#2e2117]">Inside view — my Cozy Room →</p>
-          <p className="mt-1 leading-relaxed text-[#6f5a44]">Your cozy room inside the cottage — first view, no trophies yet, a few empty picture frames waiting for your photos.</p>
+          <p className="mt-1 leading-relaxed text-[#6f5a44]">Your room inside the cottage — trophies, books and photos on the walls and shelves.</p>
         </button>
       </div>
       <div className="mt-6">
@@ -5545,7 +5544,6 @@ function GardenMapPage({ onGoHome, onGoGarden, onGoTab, onOpenCozy, profiles }: 
   const [quitDays, setQuitDays] = useState<GardenQuitDays>(() => loadLifeGardenQuitDays());
   const [quitDraft, setQuitDraft] = useState("");
   const [message, setMessage] = useState<string | null>(null);
-  const [zoomed, setZoomed] = useState(false);
   // Sixth piece (Richard, 2026-11-26): the flower pot on the
   // big wrap-around porch pots, shown on the Map near the cottage, are
   // with the patches already cleared.
@@ -5596,35 +5594,71 @@ function GardenMapPage({ onGoHome, onGoGarden, onGoTab, onOpenCozy, profiles }: 
       <p className="mt-3 leading-relaxed text-[var(--text)]">
         Warm and cozy from the start. One pathway from the front steps of the cottage, branching — dividing from the path. One branch to the gazebo for quiet time, dead ends for drinking, smoking, gambling, drugs and the rest, and the longevity path going on to infinity.
       </p>
-      <button type="button" onClick={() => setZoomed(true)} aria-label="Garden map — tap to see the whole photo bigger" className="mt-4 block w-full overflow-hidden rounded-[var(--radius)] border-2 border-[var(--leaf)]">
-        <img src={myLifeGardenMap} alt="My Life Garden Pathway map — one pathway from the cottage front steps, branching to the gazebo, with dead ends for the other paths" className="w-full" />
-      </button>
-      <p className="mt-2 text-center text-sm text-[var(--dim)]">Tap the photo to see it bigger.</p>
-      {zoomed && (
-        <div role="dialog" aria-label="Garden map, enlarged" className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" onClick={() => setZoomed(false)}>
-          <button type="button" onClick={() => setZoomed(false)} aria-label="Close the enlarged photo" className="max-h-full max-w-full">
-            <img src={myLifeGardenMap} alt="My Life Garden Pathway map — enlarged" className="max-h-[85vh] w-auto max-w-full rounded-[var(--radius)]" />
-            <span className="mt-2 block text-center font-semibold text-white">Tap anywhere to close</span>
-          </button>
-        </div>
-      )}
-      <div className="felt-soft mt-4 rounded-[var(--radius)] border-2 border-[var(--leaf)] bg-[var(--leaf-soft)] px-4 py-3" role="img" aria-label="Map diagram: one pathway from the cottage front steps, branching to the gazebo, dead ends, and the longevity path going on to infinity">
-        <svg viewBox="0 0 360 250" className="w-full" aria-hidden="true">
-          <rect x="150" y="8" width="60" height="30" rx="6" fill="#e2f2da" stroke="#6aa84f" strokeWidth="2" />
-          <text x="180" y="28" textAnchor="middle" fontSize="13" fontWeight="bold" fill="#2e2117">Cottage</text>
-          <path d="M180 38 V78" stroke="#6aa84f" strokeWidth="6" strokeLinecap="round" />
-          <path d="M180 78 L118 118" stroke="#6aa84f" strokeWidth="5" strokeLinecap="round" />
-          <path d="M180 78 L242 118" stroke="#6aa84f" strokeWidth="5" strokeLinecap="round" />
-          <path d="M180 78 V208" stroke="#6aa84f" strokeWidth="5" strokeLinecap="round" />
-          <circle cx="108" cy="128" r="22" fill="#f3e2f0" stroke="#9a5a90" strokeWidth="2" />
-          <text x="108" y="132" textAnchor="middle" fontSize="11" fontWeight="bold" fill="#2e2117">Gazebo</text>
-          <text x="108" y="168" textAnchor="middle" fontSize="11" fill="#6f5a44">quiet time</text>
-          <rect x="228" y="112" width="30" height="30" rx="6" fill="#fdeeda" stroke="#d99a4e" strokeWidth="2" />
-          <text x="243" y="131" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#2e2117">🏆</text>
-          <text x="243" y="168" textAnchor="middle" fontSize="11" fill="#6f5a44">dead end</text>
-          <text x="180" y="232" textAnchor="middle" fontSize="13" fontWeight="bold" fill="#2e2117">Longevity → ∞</text>
+      {/* The Map IS the diagram (Richard, 2026-11-26): he saw the
+          old map photo and said it was not a diagram — "Just has
+          cottage, gazebo infinity path". So the map photo is gone.
+          The map is now our real cottage, with the caption Richard
+          liked, and a drawn branching diagram below it that shows
+          every branch in the diagram itself: the gazebo branch,
+          all eight dead ends, each with a trophy on a wooden
+          stool, and the longevity path going on to infinity with
+          trophies along it. The tap-to-open links below it are
+          unchanged. */}
+      <figure className="mt-4 overflow-hidden rounded-[var(--radius)] border-2 border-[var(--leaf)]">
+        <img src={welcomeCottage} alt="Our cottage — a wooden cottage with a grey slate roof, green shutters, a big wrap-around porch, a WELCOME mat and an open please come in sign" className="w-full" />
+        <figcaption className="bg-[var(--surface)] px-4 py-3 text-center font-bold leading-relaxed text-[var(--text)]">Our cottage — where every path begins, warm and cozy from the get-go.</figcaption>
+      </figure>
+      <div className="felt-soft mt-4 rounded-[var(--radius)] border-2 border-[var(--leaf)] bg-[var(--leaf-soft)] px-4 py-3" role="img" aria-label="Map diagram: one pathway from the cottage front steps, branching to the gazebo for quiet time, eight dead ends — Alcohol, Smoking, Gambling, Drugs, Codependency, Food, Screens, Feeling Unwell — each with a trophy on a wooden stool at the end, and the Longevity path going on to infinity with trophies along it">
+        <svg viewBox="0 0 360 660" className="w-full" aria-hidden="true">
+          {/* One pathway from the front steps of the cottage, straight down the middle. */}
+          <path d="M180 0 V640" stroke="#6aa84f" strokeWidth="6" strokeLinecap="round" />
+          {/* Gazebo branch — dividing off to the left, for quiet time. */}
+          <path d="M180 70 L138 118" stroke="#6aa84f" strokeWidth="5" strokeLinecap="round" />
+          <rect x="28" y="88" width="110" height="66" rx="8" fill="#f3e2f0" stroke="#9a5a90" strokeWidth="2" />
+          <text x="83" y="112" textAnchor="middle" fontSize="13" fontWeight="bold" fill="#2e2117">Gazebo</text>
+          <text x="83" y="130" textAnchor="middle" fontSize="11" fill="#6f5a44">quiet time</text>
+          <text x="83" y="148" textAnchor="middle" fontSize="13" fill="#2e2117">🏆 🏆 🏆</text>
+          {/* Eight dead ends, in pairs off the pathway — a trophy on a wooden stool at the end of each. */}
+          <path d="M180 200 H124" stroke="#6aa84f" strokeWidth="5" strokeLinecap="round" />
+          <path d="M180 200 H236" stroke="#6aa84f" strokeWidth="5" strokeLinecap="round" />
+          <rect x="6" y="172" width="118" height="56" rx="8" fill="#fdeeda" stroke="#d99a4e" strokeWidth="2" />
+          <text x="65" y="194" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#2e2117">Alcohol</text>
+          <text x="65" y="214" textAnchor="middle" fontSize="11" fill="#6f5a44">🏆 on a stool</text>
+          <rect x="236" y="172" width="118" height="56" rx="8" fill="#fdeeda" stroke="#d99a4e" strokeWidth="2" />
+          <text x="295" y="194" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#2e2117">Smoking</text>
+          <text x="295" y="214" textAnchor="middle" fontSize="11" fill="#6f5a44">🏆 on a stool</text>
+          <path d="M180 300 H124" stroke="#6aa84f" strokeWidth="5" strokeLinecap="round" />
+          <path d="M180 300 H236" stroke="#6aa84f" strokeWidth="5" strokeLinecap="round" />
+          <rect x="6" y="272" width="118" height="56" rx="8" fill="#fdeeda" stroke="#d99a4e" strokeWidth="2" />
+          <text x="65" y="294" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#2e2117">Gambling</text>
+          <text x="65" y="314" textAnchor="middle" fontSize="11" fill="#6f5a44">🏆 on a stool</text>
+          <rect x="236" y="272" width="118" height="56" rx="8" fill="#fdeeda" stroke="#d99a4e" strokeWidth="2" />
+          <text x="295" y="294" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#2e2117">Drugs</text>
+          <text x="295" y="314" textAnchor="middle" fontSize="11" fill="#6f5a44">🏆 on a stool</text>
+          <path d="M180 400 H124" stroke="#6aa84f" strokeWidth="5" strokeLinecap="round" />
+          <path d="M180 400 H236" stroke="#6aa84f" strokeWidth="5" strokeLinecap="round" />
+          <rect x="6" y="372" width="118" height="56" rx="8" fill="#fdeeda" stroke="#d99a4e" strokeWidth="2" />
+          <text x="65" y="394" textAnchor="middle" fontSize="10" fontWeight="bold" fill="#2e2117">Codependency</text>
+          <text x="65" y="414" textAnchor="middle" fontSize="11" fill="#6f5a44">🏆 on a stool</text>
+          <rect x="236" y="372" width="118" height="56" rx="8" fill="#fdeeda" stroke="#d99a4e" strokeWidth="2" />
+          <text x="295" y="394" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#2e2117">Food</text>
+          <text x="295" y="414" textAnchor="middle" fontSize="11" fill="#6f5a44">🏆 on a stool</text>
+          <path d="M180 500 H124" stroke="#6aa84f" strokeWidth="5" strokeLinecap="round" />
+          <path d="M180 500 H236" stroke="#6aa84f" strokeWidth="5" strokeLinecap="round" />
+          <rect x="6" y="472" width="118" height="56" rx="8" fill="#fdeeda" stroke="#d99a4e" strokeWidth="2" />
+          <text x="65" y="494" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#2e2117">Screens</text>
+          <text x="65" y="514" textAnchor="middle" fontSize="11" fill="#6f5a44">🏆 on a stool</text>
+          <rect x="236" y="472" width="118" height="56" rx="8" fill="#fdeeda" stroke="#d99a4e" strokeWidth="2" />
+          <text x="295" y="492" textAnchor="middle" fontSize="11" fontWeight="bold" fill="#2e2117">Feeling</text>
+          <text x="295" y="506" textAnchor="middle" fontSize="11" fontWeight="bold" fill="#2e2117">Unwell?</text>
+          <text x="295" y="522" textAnchor="middle" fontSize="11" fill="#6f5a44">🏆 on a stool</text>
+          {/* Longevity — the only infinite path, with trophies along it, not just at the end. */}
+          <text x="146" y="566" textAnchor="middle" fontSize="15" fill="#2e2117">🏆</text>
+          <text x="214" y="592" textAnchor="middle" fontSize="15" fill="#2e2117">🏆</text>
+          <text x="146" y="618" textAnchor="middle" fontSize="15" fill="#2e2117">🏆</text>
+          <text x="180" y="648" textAnchor="middle" fontSize="14" fontWeight="bold" fill="#2e2117">Longevity → ∞</text>
         </svg>
-        <p className="text-center text-sm leading-relaxed text-[var(--dim)]">Cottage at the top, gazebo branch for quiet time, dead ends with a trophy on a wooden stool, longevity going on to infinity.</p>
+        <p className="text-center text-sm leading-relaxed text-[var(--dim)]">Cottage at the top, gazebo branch for quiet time, eight dead ends each with a trophy on a wooden stool, and Longevity going on to infinity.</p>
       </div>
       <GardenPorchPot flowerCount={porchFlowerCount} cottageBlooms={porchCottageBlooms} />
       {message && (
@@ -5818,6 +5852,85 @@ function downscaleGardenPhoto(file: File): Promise<string | null> {
   });
 }
 
+/* ---------- My Life Garden Pathway — the Cozy Room, seen, not listed ---------- */
+// Seventh piece (Richard, 2026-11-26): make it more intuitive,
+// less reading — trophies and personal photos should actually
+// APPEAR in the room itself, on the walls and the bookshelf,
+// not just as a text list below the picture. So the room photo
+// is now a living picture: earned trophies sit on a wooden shelf
+// in the room, chosen photos sit in the frames on the walls,
+// and added books stand as spines on the bookshelf at the foot
+// of the picture. First view is still sparse: an empty trophy
+// shelf, empty frames, an empty bookshelf. As they earn, add
+// and choose, those things appear in the room. Tap a frame in
+// the picture to pick a photo for it. Local only, nothing sent
+// anywhere, no account, no new points.
+const GARDEN_ROOM_FRAME_POSITIONS = [
+  "left-[4%] top-[5%]",
+  "right-[4%] top-[5%]",
+  "left-[4%] top-[29%]",
+  "right-[4%] top-[29%]",
+];
+
+function CozyRoomVisual({ trophies, books, frames, onAddPhoto, onClearFrame }: {
+  trophies: string[];
+  books: GardenBook[];
+  frames: (string | null)[];
+  onAddPhoto: (slot: number, file: File | undefined) => void;
+  onClearFrame: (slot: number) => void;
+}) {
+  const shownTrophies = trophies.slice(0, 12);
+  const extraTrophies = trophies.length - shownTrophies.length;
+  return (
+    <div className="relative overflow-hidden rounded-[var(--radius)]">
+      <img src={myLifeGardenCozyRoom} alt="My Cozy Room — a cozy warm fireplace-lit sitting room with one candle on the mantle, beige rugs, books on the shorter shelf, a taller shelf sparse with two or three empty frames, and a few empty picture frames on the walls" className="w-full" />
+      {/* Photos in the frames on the walls — tap a frame to pick one. */}
+      {frames.map((photo, slot) => (
+        <div key={slot} className={`absolute w-[24%] ${GARDEN_ROOM_FRAME_POSITIONS[slot] ?? "left-[4%] top-[5%]"}`}>
+          <label htmlFor={`garden-room-frame-${slot}`} className={`relative block aspect-[4/3] cursor-pointer overflow-hidden rounded-sm border-4 ${photo ? "border-[#8a6b4f]" : "border-dashed border-[#8a6b4f] bg-black/20"}`}>
+            {photo ? (
+              <img src={photo} alt={`Your photo in frame ${slot + 1}, on the wall of your Cozy Room`} className="h-full w-full object-contain bg-black/10" />
+            ) : (
+              <span className="flex h-full w-full items-center justify-center text-2xl font-bold text-white/90" aria-hidden="true">＋</span>
+            )}
+            <span className="sr-only">Empty frame {slot + 1} — tap to add a photo from your photo library</span>
+            <input
+              id={`garden-room-frame-${slot}`}
+              type="file"
+              accept="image/*"
+              aria-label={`Choose a photo from your photo library for frame ${slot + 1} on the wall`}
+              className="hidden"
+              onChange={(e) => { onAddPhoto(slot, e.target.files?.[0]); e.target.value = ""; }}
+            />
+          </label>
+          {photo && (
+            <button type="button" onClick={() => onClearFrame(slot)} aria-label={`Remove the photo from frame ${slot + 1} on the wall`} className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full border border-[var(--border)] bg-white text-sm font-bold text-[var(--text)]">✕</button>
+          )}
+        </div>
+      ))}
+      {/* Trophies on a wooden shelf in the room. */}
+      <div className="absolute inset-x-[6%] bottom-[16%]" role="img" aria-label={trophies.length === 0 ? "An empty wooden shelf in your Cozy Room, waiting for your first trophy" : `${trophies.length} ${trophies.length === 1 ? "trophy" : "trophies"} on the shelf in your Cozy Room`}>
+        <div className="flex min-h-9 items-end justify-center gap-1">
+          {shownTrophies.map((trophy) => (
+            <span key={trophy} title={trophy} className="text-2xl leading-none drop-shadow" aria-hidden="true">🏆</span>
+          ))}
+          {extraTrophies > 0 && <span className="rounded-full bg-white/90 px-2 py-0.5 text-xs font-bold text-[var(--text)]">+{extraTrophies} more</span>}
+        </div>
+        <div className="mt-1 h-2 rounded bg-[#8a6b4f]" aria-hidden="true" />
+      </div>
+      {/* Books as spines on the bookshelf at the foot of the room. */}
+      <div className="absolute inset-x-[6%] bottom-[2%]" role="img" aria-label={books.length === 0 ? "An empty bookshelf in your Cozy Room, waiting for your first book" : `${books.length} ${books.length === 1 ? "book" : "books"} on the bookshelf in your Cozy Room`}>
+        <div className="flex h-10 items-end justify-center gap-[3px] px-2">
+          {books.map((book) => (
+            <span key={book.id} title={book.title} style={{ backgroundColor: gardenBookColour(book) }} className="h-9 w-2.5 rounded-t-sm border border-black/20" aria-hidden="true" />
+          ))}
+        </div>
+        <div className="h-2 rounded bg-[#6b4a2f]" aria-hidden="true" />
+      </div>
+    </div>
+  );
+}
+
 function CozyRoomPage({ onGoHome, onGoGarden }: { onGoHome: () => void; onGoGarden: () => void }) {
   const [trophies] = useState<string[]>(() => loadLifeGardenTrophies());
   const [zoomed, setZoomed] = useState(false);
@@ -5874,35 +5987,33 @@ function CozyRoomPage({ onGoHome, onGoGarden }: { onGoHome: () => void; onGoGard
         ← Back to Home
       </button>
       <h2 className="mt-4 font-display text-2xl font-semibold leading-snug text-[var(--text)]">Inside view — my Cozy Room</h2>
-      <button type="button" onClick={() => setZoomed(true)} aria-label="My Cozy Room — tap to see the whole photo bigger" className="mt-4 block w-full overflow-hidden rounded-[var(--radius)] border-2 border-[var(--leaf)]">
-        <img src={myLifeGardenCozyRoom} alt="My Cozy Room, first view — a cozy warm fireplace-lit sitting room with one candle on the mantle, beige rugs, books on the shorter shelf, a taller shelf sparse with two or three empty frames, and a few empty picture frames on the walls, no trophies yet" className="w-full" />
+      <div className="mt-4 overflow-hidden rounded-[var(--radius)] border-2 border-[var(--leaf)]">
+        <CozyRoomVisual trophies={trophies} books={books} frames={frames} onAddPhoto={(slot, file) => { void addPhoto(slot, file); }} onClearFrame={clearFrame} />
+      </div>
+      <button type="button" onClick={() => setZoomed(true)} className="mt-2 min-h-11 w-full rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 font-bold text-[var(--text)]">
+        Tap the photo to see it bigger.
       </button>
-      <p className="mt-2 text-center text-sm text-[var(--dim)]">Tap the photo to see it bigger.</p>
       {zoomed && (
-        <div role="dialog" aria-label="My Cozy Room, enlarged" className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" onClick={() => setZoomed(false)}>
-          <button type="button" onClick={() => setZoomed(false)} aria-label="Close the enlarged photo" className="max-h-full max-w-full">
-            <img src={myLifeGardenCozyRoom} alt="My Cozy Room — enlarged" className="max-h-[85vh] w-auto max-w-full rounded-[var(--radius)]" />
-            <span className="mt-2 block text-center font-semibold text-white">Tap anywhere to close</span>
-          </button>
+        <div role="dialog" aria-label="My Cozy Room, enlarged" className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/80 p-4" onClick={() => setZoomed(false)}>
+          <div className="w-full max-w-2xl" onClick={(e) => e.stopPropagation()}>
+            <CozyRoomVisual trophies={trophies} books={books} frames={frames} onAddPhoto={(slot, file) => { void addPhoto(slot, file); }} onClearFrame={clearFrame} />
+            <button type="button" onClick={() => setZoomed(false)} className="mt-2 min-h-11 w-full rounded-[var(--radius)] border-2 border-white/60 bg-white/90 px-4 font-bold text-[var(--text)]">Tap anywhere to close</button>
+          </div>
         </div>
       )}
       <p className="mt-4 leading-relaxed text-[var(--text)]">
-        Your Cozy Room — first view: no trophies yet, and a few empty picture frames on the walls. Books on the shorter shelf, the taller shelf sparse with two or three empty frames, one candle on the mantle, beige rugs. Warm and cozy from the start — your personal cozy space.
+        Your Cozy Room — first view: no trophies yet, and a few empty picture frames on the walls. Books on the shorter shelf, the taller shelf sparse with two or three empty frames, one candle on the mantle, beige rugs, room for 100+ trophies.
       </p>
       <Section title="Trophies in your Cozy Room">
-        {trophies.length === 0 ? (
-          <p className="leading-relaxed text-[var(--text)]">No trophies in your Cozy Room yet — earn your first one from the Map. There is room for 100+ trophies here.</p>
-        ) : (
-          <ul className="space-y-2">
-            {trophies.map((trophy) => (
-              <li key={trophy} className="felt-card rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 py-3 font-bold text-[var(--text)]">🏆 {trophy}</li>
-            ))}
-          </ul>
-        )}
+        <p className="leading-relaxed text-[var(--text)]">
+          {trophies.length === 0
+            ? "No trophies yet — earn your first one from the Map, and it will sit on the shelf in the picture above."
+            : `${trophies.length} ${trophies.length === 1 ? "trophy" : "trophies"} — see ${trophies.length === 1 ? "it" : "them"} on the shelf in the picture above.`}
+        </p>
       </Section>
       <Section title="Your bookshelf">
         <p className="leading-relaxed text-[var(--text)]">
-          Your favourite books, and books you would like to read. Type a title, tap Add a book, and a reasonable facsimile joins your bookshelf — a book spine with the title, in its own colours. Nothing is an exact cover copy.
+          Tap Add a book — a book spine joins the shelf. Nothing is an exact cover copy.
         </p>
         <div className="mt-3 flex flex-col gap-2">
           <input
@@ -5930,7 +6041,7 @@ function CozyRoomPage({ onGoHome, onGoGarden }: { onGoHome: () => void; onGoGard
         </div>
         {bookNote && <p role="status" className="mt-2 font-bold text-[var(--text)]">{bookNote}</p>}
         {books.length === 0 ? (
-          <p className="mt-3 leading-relaxed text-[var(--text)]">Your bookshelf is waiting — the shorter shelf in the picture has books, and this shelf is yours to fill, one book at a time.</p>
+          <p className="mt-3 leading-relaxed text-[var(--text)]">Your bookshelf is waiting — add your first book.</p>
         ) : (
           <>
             <p className="mt-3 font-bold text-[var(--text)]">{books.length} {books.length === 1 ? "book" : "books"} on your bookshelf</p>
@@ -5959,7 +6070,7 @@ function CozyRoomPage({ onGoHome, onGoGarden }: { onGoHome: () => void; onGoGard
       </Section>
       <Section title="Your picture frames">
         <p className="leading-relaxed text-[var(--text)]">
-          A few empty frames on the walls — tap a frame, pick a photo from your own photo library, and it takes that frame&apos;s place. Your fond memory photos, in your Cozy Room.
+          Tap a frame, pick a photo from your own photo library — in the picture above, or below.
         </p>
         <div className="mt-3 grid grid-cols-2 gap-3">
           {frames.map((photo, slot) => (
@@ -5988,7 +6099,7 @@ function CozyRoomPage({ onGoHome, onGoGarden }: { onGoHome: () => void; onGoGard
           ))}
         </div>
         {frameNote && <p role="status" className="mt-2 font-bold text-[var(--text)]">{frameNote}</p>}
-        <p className="mt-2 text-sm leading-relaxed text-[var(--dim)]">Your photos stay on this phone only — nothing is sent anywhere. A photo is shrunk to a small size before it is kept, so it cannot fill your phone.</p>
+        <p className="mt-2 text-sm leading-relaxed text-[var(--dim)]">Your photos stay on this phone only — nothing is sent anywhere. A photo is shrunk before it is kept.</p>
       </Section>
       <p className="mt-2 text-sm leading-relaxed text-[var(--dim)]">
         What is in your Cozy Room stays on this phone, in this browser only — nothing is sent anywhere.
@@ -6050,6 +6161,35 @@ function HomePage({ profiles, logs, pointEvents, dayMarks, onGo, onSurf }: {
           the cottage, in the PrivacyStrip. */}
       <div className="felt-soft mb-5 rounded-[var(--radius)] border-2 border-[var(--leaf)] bg-[var(--leaf-soft)] px-4 py-3 text-center" role="note">
         <p className="font-bold leading-relaxed text-[var(--text)]">This is your personal journey, your personal cottage, but you are not alone. This app is your resource guide for help at your fingertips. We even have a button for when you&apos;re feeling happy.</p>
+      </div>
+      {/* My Life Garden Pathway (Richard, 2026-11-26, moved to the
+          TOP of Home): Richard could not find it at the very end
+          of Home — he thought it would come right after agreeing
+          to Terms, or tapping on the door. So it sits here, right
+          after the cottage and the true message, so it is found
+          immediately. The Inside view button sits right after it.
+          Nothing else above moved; Happy Button, Share and My Muse
+          keep their places, below. */}
+      <div className="mb-5">
+        <button type="button" onClick={() => { setGardenOpen(true); if (typeof window !== "undefined") window.scrollTo(0, 0); }} style={{ backgroundColor: "#e2f2da", borderColor: "#6aa84f" }} className="felt-card felt-pressable w-full rounded-[var(--radius)] border-4 p-6 text-left">
+          <p className="flex items-center gap-3 font-display text-2xl font-black text-[#2e2117] sm:text-3xl">
+            <FlowerIcon color="var(--bloom)" size={40} />
+            My Life Garden Pathway
+          </p>
+          <p className="mt-2 text-lg font-bold leading-snug text-[#2e2117]">Your pathway, your garden — clear the weeds, one step at a time.</p>
+          <p className="mt-1 leading-relaxed text-[#6f5a44]">See your pathway from the front steps of the cottage, and tell us what is already true for you. Gentle, no counting, no judging.</p>
+          <p className="mt-3 text-sm font-bold uppercase tracking-widest text-[#6aa84f]">Tap to open My Life Garden Pathway →</p>
+        </button>
+      </div>
+      <div className="mb-5">
+        <button type="button" onClick={() => { setCozyOpen(true); if (typeof window !== "undefined") window.scrollTo(0, 0); }} style={{ backgroundColor: "#fbe3ee", borderColor: "#c95a8a" }} className="felt-card felt-pressable w-full rounded-[var(--radius)] border-4 p-6 text-left">
+          <p className="flex items-center gap-3 font-display text-2xl font-black text-[#2e2117] sm:text-3xl">
+            Inside view — my Cozy Room
+          </p>
+          <p className="mt-2 text-lg font-bold leading-snug text-[#2e2117]">Your cozy room inside the cottage — warm and cozy from the start.</p>
+          <p className="mt-1 leading-relaxed text-[#6f5a44]">First view: no trophies yet, a few empty picture frames on the walls, waiting for the trophies you earn and the photos you choose.</p>
+          <p className="mt-3 text-sm font-bold uppercase tracking-widest text-[#c95a8a]">Tap to open Inside view →</p>
+        </button>
       </div>
       {/* The Happy Button (Richard, 2026-11-18, moved one step down
           2026-11-23): after the Share button, so the order reads
@@ -6291,35 +6431,10 @@ function HomePage({ profiles, logs, pointEvents, dayMarks, onGo, onSurf }: {
         <p className="mt-1 leading-relaxed text-[var(--text)]">To prove AI is here to help, Richard&apos;s Resource and Muse created this free app to help everyone.</p>
       </div>
 
-      {/* My Life Garden Pathway (Richard, 2026-11-25/26): first
-          piece only — a Home button after the existing Home
-          content, in the same style as the other Home cards.
-          Nothing above it moved. */}
-      <div className="mt-8">
-        <button type="button" onClick={() => { setGardenOpen(true); if (typeof window !== "undefined") window.scrollTo(0, 0); }} style={{ backgroundColor: "#e2f2da", borderColor: "#6aa84f" }} className="felt-card felt-pressable w-full rounded-[var(--radius)] border-4 p-6 text-left">
-          <p className="flex items-center gap-3 font-display text-2xl font-black text-[#2e2117] sm:text-3xl">
-            <FlowerIcon color="var(--bloom)" size={40} />
-            My Life Garden Pathway
-          </p>
-          <p className="mt-2 text-lg font-bold leading-snug text-[#2e2117]">Your pathway, your garden — clear the weeds, one step at a time.</p>
-          <p className="mt-1 leading-relaxed text-[#6f5a44]">See your pathway from the front steps of the cottage, and tell us what is already true for you. Gentle, no counting, no judging.</p>
-          <p className="mt-3 text-sm font-bold uppercase tracking-widest text-[#6aa84f]">Tap to open My Life Garden Pathway →</p>
-        </button>
-      </div>
-
-      {/* Inside view (Richard, 2026-11-26): an addition to the
-          Home screen, right after the garden button — it opens
-          the Cozy Room first inside view. Nothing above it moved. */}
-      <div className="mt-4">
-        <button type="button" onClick={() => { setCozyOpen(true); if (typeof window !== "undefined") window.scrollTo(0, 0); }} style={{ backgroundColor: "#fbe3ee", borderColor: "#c95a8a" }} className="felt-card felt-pressable w-full rounded-[var(--radius)] border-4 p-6 text-left">
-          <p className="flex items-center gap-3 font-display text-2xl font-black text-[#2e2117] sm:text-3xl">
-            Inside view — my Cozy Room
-          </p>
-          <p className="mt-2 text-lg font-bold leading-snug text-[#2e2117]">Your cozy room inside the cottage — warm and cozy from the start.</p>
-          <p className="mt-1 leading-relaxed text-[#6f5a44]">First view: no trophies yet, a few empty picture frames on the walls, waiting for the trophies you earn and the photos you choose.</p>
-          <p className="mt-3 text-sm font-bold uppercase tracking-widest text-[#c95a8a]">Tap to open Inside view →</p>
-        </button>
-      </div>
+      {/* Why we made it box above is the end of Home — the garden
+          and Inside view buttons used to sit here, at the very
+          end; they moved to the top of Home (2026-11-26) so
+          Richard could find them right after the cottage. */}
     </div>
   );
 }

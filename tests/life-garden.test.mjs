@@ -1,6 +1,8 @@
 // My Life Garden Pathway (Richard, 2026-11-25/26) — first piece
 // only, source-level tests. A Home button labelled exactly
-// "My Life Garden Pathway", after the existing Home content, opens
+// "My Life Garden Pathway", at the TOP of Home after the cottage
+// and true message (moved there 2026-11-26, Richard could not
+// find it at the end of Home), opens
 // a garden view with the final one-gazebo image, Richard's exact
 // brief explanation, and the 13 items as a checklist saved in
 // localStorage only. No points, no badges, no trophy room, no
@@ -39,11 +41,24 @@ test("garden image is a local asset, not a hotlink", () => {
   assert.ok(!garden.includes("http"), "the garden view must not hotlink anything");
 });
 
-test("Home button is labelled exactly My Life Garden Pathway and sits after Why we made it", () => {
+test("Home button is labelled exactly My Life Garden Pathway and sits at the TOP of Home, after the cottage and true message", () => {
   assert.ok(home.includes("My Life Garden Pathway"), "Home must carry the My Life Garden Pathway button");
+  // Richard (2026-11-26) could not find it at the very end of
+  // Home — he thought it would come right after agreeing to
+  // Terms, or tapping on the door. So it sits right after the
+  // cottage and the true message, before Share and the Happy
+  // Button, with Inside view right after it — and only once.
+  const trueMessage = home.indexOf("This is your personal journey, your personal cottage");
+  const gardenLabel = home.indexOf("Tap to open My Life Garden Pathway →");
+  const insideLabel = home.indexOf("Tap to open Inside view →");
+  const share = home.indexOf("<ShareButton />");
   const why = home.indexOf("Why we made it");
-  const button = home.lastIndexOf("My Life Garden Pathway");
-  assert.ok(why !== -1 && button !== -1 && button > why, "the garden button must come after the existing Home content");
+  assert.ok(trueMessage !== -1 && gardenLabel > trueMessage, "the garden button must come after the true message");
+  assert.ok(insideLabel > gardenLabel, "the Inside view button must come right after the garden button");
+  assert.ok(share > insideLabel, "both buttons must come before the Share button, at the top of Home");
+  assert.ok(why > gardenLabel, "the garden button must no longer sit after Why we made it, at the end of Home");
+  assert.equal((home.match(/Tap to open My Life Garden Pathway →/g) ?? []).length, 1, "there must be exactly one garden button on Home, no duplicate at the bottom");
+  assert.equal((home.match(/Tap to open Inside view →/g) ?? []).length, 1, "there must be exactly one Inside view button on Home, no duplicate at the bottom");
 });
 
 test("garden view has the exact explanation, the 13 items, and local-only saving", () => {

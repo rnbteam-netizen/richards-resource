@@ -5475,7 +5475,7 @@ function LifeGardenPage({ onGoHome, onGoTab, profiles }: { onGoHome: () => void;
         </div>
       )}
       <p className="mt-4 leading-relaxed text-[var(--text)]">
-        Hello (name if we know it) Weeds grow naturally and life&apos;s pathway can be full of them. I suspect you have already cleared plenty. Please select from the items below, so we may update your path. Thanks.
+        Hello {gardenName ? gardenName : "friend"}. Weeds grow naturally and life&apos;s pathway can be full of them. I suspect you have already cleared plenty. Please select from the items below, so we may update your path. Thanks.
       </p>
       <Section title="What is already true for you">
         <ul className="space-y-2">

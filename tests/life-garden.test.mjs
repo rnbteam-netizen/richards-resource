@@ -62,7 +62,13 @@ test("Home button is labelled exactly My Life Garden Pathway and sits at the TOP
 });
 
 test("garden view has the exact explanation, the 13 items, and local-only saving", () => {
-  assert.ok(garden.includes("Hello (name if we know it) Weeds grow naturally"), "Richard's exact brief explanation must be in the garden view");
+  // Richard (2026-11-26): "(name if we know it)" was a placeholder
+  // instruction, NOT words to show the visitor — it must never
+  // appear verbatim. The greeting uses the chosen name, or
+  // "friend" when none is chosen, matching the garden welcome.
+  assert.ok(!garden.includes("name if we know it"), "the placeholder '(name if we know it)' must never appear in the garden view");
+  assert.ok(gardenView.includes('Hello {gardenName ? gardenName : "friend"}. Weeds grow naturally'), "the explanation must greet the visitor by their chosen name, or 'friend'");
+  assert.ok(garden.includes("Weeds grow naturally and life&apos;s pathway can be full of them. I suspect you have already cleared plenty. Please select from the items below, so we may update your path. Thanks."), "the rest of Richard's brief explanation must be unchanged");
   for (const item of ITEMS) assert.ok(garden.includes(`"${item}"`), `garden list must include "${item}"`);
   assert.equal(ITEMS.length, 13, "the list must have exactly 13 items");
   assert.ok(garden.includes("richards-resource:life-garden:v1"), "checklist state must be saved under a localStorage key");

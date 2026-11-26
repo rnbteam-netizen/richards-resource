@@ -5397,13 +5397,17 @@ function GardenPorchPot({ flowerCount, cottageBlooms }: { flowerCount: number; c
   );
 }
 
-function LifeGardenPage({ onGoHome, onGoTab, profiles }: { onGoHome: () => void; onGoTab: (t: TabId) => void; profiles?: Profile[] }) {
+function LifeGardenPage({ onGoHome, onGoTab, profiles, initialView = "list" }: { onGoHome: () => void; onGoTab: (t: TabId) => void; profiles?: Profile[]; initialView?: "list" | "map" | "cozy" }) {
   const [checked, setChecked] = useState<string[]>(() => loadLifeGardenChecked());
   const [zoomed, setZoomed] = useState(false);
   // Map piece (Richard, 2026-11-26): the garden list, the Map,
   // and the Cozy Room are three views of the same place — the
   // Map and the Cozy Room open from here, and come straight back.
-  const [view, setView] = useState<"list" | "map" | "cozy">("list");
+  // initialView matters: the map button from the Cozy Room must
+  // land straight on the real Map, not on the garden list — the
+  // list's pathway strip is a progress report, not a map, and
+  // landing on it is why the map button seemed not to show a map.
+  const [view, setView] = useState<"list" | "map" | "cozy">(initialView);
   // Third piece (Richard, 2026-11-26): your name, your figure and
   // your spirit guide — optional, local only, nothing sent anywhere.
   const [gardenName, setGardenName] = useState<string>(() => loadLifeGardenName());
@@ -5430,10 +5434,13 @@ function LifeGardenPage({ onGoHome, onGoTab, profiles }: { onGoHome: () => void;
     safeLocalSet(LIFE_GARDEN_GUIDE_KEY, next);
   };
   if (view === "map") {
-    return <GardenMapPage onGoHome={onGoHome} onGoGarden={() => { setChecked(loadLifeGardenChecked()); setView("list"); }} onGoTab={onGoTab} onOpenCozy={() => setView("cozy")} profiles={profiles} />;
+    return <GardenMapPage onGoHome={onGoHome} onGoGarden={() => { setChecked(loadLifeGardenChecked()); setView("list"); if (typeof window !== "undefined") window.scrollTo(0, 0); }} onGoTab={onGoTab} onOpenCozy={() => { setView("cozy"); if (typeof window !== "undefined") window.scrollTo(0, 0); }} profiles={profiles} />;
   }
   if (view === "cozy") {
-    return <CozyRoomPage onGoHome={onGoHome} onGoGarden={() => { setChecked(loadLifeGardenChecked()); setView("list"); }} />;
+    // The map button in the Cozy Room must open the real Map
+    // (Richard, 2026-11-26) — it used to go back to the garden
+    // list, so it did not show a map at all.
+    return <CozyRoomPage onGoHome={onGoHome} onGoMap={() => { setView("map"); if (typeof window !== "undefined") window.scrollTo(0, 0); }} />;
   }
   const toggleItem = (item: string) => {
     setChecked((prev) => {
@@ -5625,8 +5632,13 @@ function GardenMapPage({ onGoHome, onGoGarden, onGoTab, onOpenCozy, profiles }: 
       </figure>
       <div className="felt-soft mt-4 rounded-[var(--radius)] border-2 border-[var(--leaf)] bg-[var(--leaf-soft)] px-4 py-3" role="img" aria-label="Map diagram: one pathway from the cottage front steps, branching to the gazebo for quiet time, eight dead ends — Alcohol, Smoking, Gambling, Drugs, Codependency, Food, Screens, Feeling Unwell — each with a trophy on a wooden stool at the end, and the Longevity path going on to infinity with trophies along it">
         <svg viewBox="0 0 360 660" className="w-full" role="group" aria-label="Map diagram — tap a branch to open it">
-          {/* One pathway from the front steps of the cottage, straight down the middle. */}
-          <path d="M180 0 V640" stroke="#6aa84f" strokeWidth="6" strokeLinecap="round" />
+          {/* The cottage is the start of the map — it sits at the
+              top of the diagram, so the diagram reads as a map
+              from the cottage, not as a tree. The pathway runs
+              down from its front steps, straight down the middle. */}
+          <rect x="105" y="4" width="150" height="36" rx="8" fill="#fdeeda" stroke="#d99a4e" strokeWidth="2" />
+          <text x="180" y="28" textAnchor="middle" fontSize="14" fontWeight="bold" fill="#2e2117">🏠 Cottage — start here</text>
+          <path d="M180 40 V640" stroke="#6aa84f" strokeWidth="6" strokeLinecap="round" />
           {/* Gazebo branch — dividing off to the left, for quiet time. */}
           <path d="M180 70 L138 118" stroke="#6aa84f" strokeWidth="5" strokeLinecap="round" />
           <g role="button" tabIndex={0} aria-label="Tap to open the Gazebo — quiet time" onClick={() => openStop("gazebo")} onKeyDown={(e) => diagramKey(e, "gazebo")} style={{ cursor: "pointer" }}>
@@ -5695,7 +5707,7 @@ function GardenMapPage({ onGoHome, onGoGarden, onGoTab, onOpenCozy, profiles }: 
           </g>
         </svg>
         <p className="text-center text-base font-bold leading-relaxed text-[var(--text)]">Tap a branch on the map — it opens.</p>
-        <p className="text-center text-sm leading-relaxed text-[var(--dim)]">Cottage at the top, gazebo branch for quiet time, eight dead ends each with a trophy on a wooden stool, and Longevity going on to infinity.</p>
+        <p className="text-center text-sm leading-relaxed text-[var(--dim)]">Cottage at the top, gazebo branch for quiet time, eight dead ends each with a trophy on a wooden stool, and Longevity going on to infinity. Tap a branch to open it, then tap Visit to go to that help.</p>
       </div>
       <GardenPorchPot flowerCount={porchFlowerCount} cottageBlooms={porchCottageBlooms} />
       {message && (
@@ -5734,6 +5746,17 @@ function GardenMapPage({ onGoHome, onGoGarden, onGoTab, onOpenCozy, profiles }: 
                 </button>
                 {open && (
                   <div className="mt-2 rounded-[var(--radius)] border-2 border-[var(--leaf)] bg-[var(--leaf-soft)] px-4 py-3">
+                    {/* Active link to the help tab (Richard,
+                        2026-11-26): "if I hit gambling, will it
+                        take me to the gambling help portion?" Yes
+                        — and it must be the first thing in the
+                        panel, not buried below the quit-day block.
+                        Tapping the branch opens this panel; tapping
+                        Visit takes you straight to that tab's help.
+                        The branch tap itself must not jump away,
+                        or there would be no way to earn the trophy
+                        for this stop. */}
+                    {stop.tab && <button type="button" onClick={() => onGoTab(stop.tab!)} className="min-h-14 w-full rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-left font-bold text-[var(--text)]">Visit {tabLabel} →</button>}
                     {stop.items.length > 0 ? (
                       <>
                         <p className="font-bold leading-relaxed text-[var(--text)]">What is already true for you?</p>
@@ -5780,7 +5803,6 @@ function GardenMapPage({ onGoHome, onGoGarden, onGoTab, onOpenCozy, profiles }: 
                       </div>
                     )}
                     <div className="mt-3 space-y-2">
-                      {stop.tab && <button type="button" onClick={() => onGoTab(stop.tab!)} className="min-h-11 w-full rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 font-bold text-[var(--text)]">Visit {tabLabel} →</button>}
                       {stop.id === "cozy" && <button type="button" onClick={onOpenCozy} className="min-h-11 w-full rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 font-bold text-[var(--text)]">Open my Cozy Room →</button>}
                       {stop.id === "garden" && <button type="button" onClick={onGoGarden} className="min-h-11 w-full rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 font-bold text-[var(--text)]">Back to the garden list →</button>}
                     </div>
@@ -5909,39 +5931,70 @@ const GARDEN_ROOM_FRAME_POSITIONS = [
   "right-[4%] top-[29%]",
 ];
 
-function CozyRoomVisual({ trophies, books, frames, onAddPhoto, onClearFrame }: {
+function CozyRoomVisual({ trophies, books, frames, onAddPhoto, onClearFrame, onEnlarge, interactive = true }: {
   trophies: string[];
   books: GardenBook[];
   frames: (string | null)[];
   onAddPhoto: (slot: number, file: File | undefined) => void;
   onClearFrame: (slot: number) => void;
+  // Tap-to-enlarge (Richard, 2026-11-26): tapping the Cozy Room
+  // picture itself did NOT enlarge it — the picture was a plain
+  // div, and only the separate button below it opened the
+  // enlarged view. So the picture itself is now the tap target:
+  // tapping anywhere on it except a frame (pick a photo) or a
+  // frame ✕ (remove a photo) opens the enlarged view. In the
+  // enlarged view the room is shown non-interactive
+  // (interactive={false}), so tapping it closes it instead of
+  // opening the photo library.
+  onEnlarge?: () => void;
+  interactive?: boolean;
 }) {
   const shownTrophies = trophies.slice(0, 12);
   const extraTrophies = trophies.length - shownTrophies.length;
   return (
-    <div className="relative overflow-hidden rounded-[var(--radius)]">
+    <div
+      className="relative overflow-hidden rounded-[var(--radius)]"
+      {...(onEnlarge ? {
+        role: "button",
+        tabIndex: 0,
+        "aria-label": "My Cozy Room — tap to see it bigger",
+        style: { cursor: "pointer" },
+        onClick: () => onEnlarge(),
+        onKeyDown: (e: React.KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onEnlarge(); } },
+      } : {})}
+    >
       <img src={myLifeGardenCozyRoom} alt="My Cozy Room — a cozy warm fireplace-lit sitting room with one candle on the mantle, beige rugs, books on the shorter shelf, a taller shelf sparse with two or three empty frames, and a few empty picture frames on the walls" className="w-full" />
       {/* Photos in the frames on the walls — tap a frame to pick one. */}
       {frames.map((photo, slot) => (
-        <div key={slot} className={`absolute w-[24%] ${GARDEN_ROOM_FRAME_POSITIONS[slot] ?? "left-[4%] top-[5%]"}`}>
-          <label htmlFor={`garden-room-frame-${slot}`} className={`relative block aspect-[4/3] cursor-pointer overflow-hidden rounded-sm border-4 ${photo ? "border-[#8a6b4f]" : "border-dashed border-[#8a6b4f] bg-black/20"}`}>
-            {photo ? (
-              <img src={photo} alt={`Your photo in frame ${slot + 1}, on the wall of your Cozy Room`} className="h-full w-full object-contain bg-black/10" />
-            ) : (
-              <span className="flex h-full w-full items-center justify-center text-2xl font-bold text-white/90" aria-hidden="true">＋</span>
-            )}
-            <span className="sr-only">Empty frame {slot + 1} — tap to add a photo from your photo library</span>
-            <input
-              id={`garden-room-frame-${slot}`}
-              type="file"
-              accept="image/*"
-              aria-label={`Choose a photo from your photo library for frame ${slot + 1} on the wall`}
-              className="hidden"
-              onChange={(e) => { onAddPhoto(slot, e.target.files?.[0]); e.target.value = ""; }}
-            />
-          </label>
-          {photo && (
-            <button type="button" onClick={() => onClearFrame(slot)} aria-label={`Remove the photo from frame ${slot + 1} on the wall`} className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full border border-[var(--border)] bg-white text-sm font-bold text-[var(--text)]">✕</button>
+        <div key={slot} onClick={(e) => e.stopPropagation()} className={`absolute w-[24%] ${GARDEN_ROOM_FRAME_POSITIONS[slot] ?? "left-[4%] top-[5%]"}`}>
+          {interactive ? (
+            <label htmlFor={`garden-room-frame-${slot}`} className={`relative block aspect-[4/3] cursor-pointer overflow-hidden rounded-sm border-4 ${photo ? "border-[#8a6b4f]" : "border-dashed border-[#8a6b4f] bg-black/20"}`}>
+              {photo ? (
+                <img src={photo} alt={`Your photo in frame ${slot + 1}, on the wall of your Cozy Room`} className="h-full w-full object-contain bg-black/10" />
+              ) : (
+                <span className="flex h-full w-full items-center justify-center text-2xl font-bold text-white/90" aria-hidden="true">＋</span>
+              )}
+              <span className="sr-only">Empty frame {slot + 1} — tap to add a photo from your photo library</span>
+              <input
+                id={`garden-room-frame-${slot}`}
+                type="file"
+                accept="image/*"
+                aria-label={`Choose a photo from your photo library for frame ${slot + 1} on the wall`}
+                className="hidden"
+                onChange={(e) => { onAddPhoto(slot, e.target.files?.[0]); e.target.value = ""; }}
+              />
+            </label>
+          ) : (
+            <div className={`relative block aspect-[4/3] overflow-hidden rounded-sm border-4 ${photo ? "border-[#8a6b4f]" : "border-dashed border-[#8a6b4f] bg-black/20"}`}>
+              {photo ? (
+                <img src={photo} alt={`Your photo in frame ${slot + 1}, on the wall of your Cozy Room`} className="h-full w-full object-contain bg-black/10" />
+              ) : (
+                <span className="flex h-full w-full items-center justify-center text-2xl font-bold text-white/90" aria-hidden="true">＋</span>
+              )}
+            </div>
+          )}
+          {interactive && photo && (
+            <button type="button" onClick={(e) => { e.stopPropagation(); onClearFrame(slot); }} aria-label={`Remove the photo from frame ${slot + 1} on the wall`} className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full border border-[var(--border)] bg-white text-sm font-bold text-[var(--text)]">✕</button>
           )}
         </div>
       ))}
@@ -5968,7 +6021,7 @@ function CozyRoomVisual({ trophies, books, frames, onAddPhoto, onClearFrame }: {
   );
 }
 
-function CozyRoomPage({ onGoHome, onGoGarden }: { onGoHome: () => void; onGoGarden: () => void }) {
+function CozyRoomPage({ onGoHome, onGoMap }: { onGoHome: () => void; onGoMap: () => void }) {
   const [trophies] = useState<string[]>(() => loadLifeGardenTrophies());
   const [zoomed, setZoomed] = useState(false);
   // Fourth piece (Richard, 2026-11-26): your books and your photos.
@@ -6025,15 +6078,20 @@ function CozyRoomPage({ onGoHome, onGoGarden }: { onGoHome: () => void; onGoGard
       </button>
       <h2 className="mt-4 font-display text-2xl font-semibold leading-snug text-[var(--text)]">Inside view — my Cozy Room</h2>
       <div className="mt-4 overflow-hidden rounded-[var(--radius)] border-2 border-[var(--leaf)]">
-        <CozyRoomVisual trophies={trophies} books={books} frames={frames} onAddPhoto={(slot, file) => { void addPhoto(slot, file); }} onClearFrame={clearFrame} />
+        <CozyRoomVisual trophies={trophies} books={books} frames={frames} onAddPhoto={(slot, file) => { void addPhoto(slot, file); }} onClearFrame={clearFrame} onEnlarge={() => setZoomed(true)} />
       </div>
       <button type="button" onClick={() => setZoomed(true)} className="mt-2 min-h-11 w-full rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 font-bold text-[var(--text)]">
         Tap the photo to see it bigger.
       </button>
       {zoomed && (
         <div role="dialog" aria-label="My Cozy Room, enlarged" className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/80 p-4" onClick={() => setZoomed(false)}>
-          <div className="w-full max-w-2xl" onClick={(e) => e.stopPropagation()}>
-            <CozyRoomVisual trophies={trophies} books={books} frames={frames} onAddPhoto={(slot, file) => { void addPhoto(slot, file); }} onClearFrame={clearFrame} />
+          <div className="w-full max-w-2xl">
+            {/* Enlarged view is not interactive: tapping the room
+                itself must close it ("Tap anywhere to close"),
+                not open the photo library. The old inner div
+                stopped the tap from reaching the dialog, so
+                tapping the enlarged photo did nothing. */}
+            <CozyRoomVisual trophies={trophies} books={books} frames={frames} onAddPhoto={(slot, file) => { void addPhoto(slot, file); }} onClearFrame={clearFrame} interactive={false} />
             <button type="button" onClick={() => setZoomed(false)} className="mt-2 min-h-11 w-full rounded-[var(--radius)] border-2 border-white/60 bg-white/90 px-4 font-bold text-[var(--text)]">Tap anywhere to close</button>
           </div>
         </div>
@@ -6142,7 +6200,11 @@ function CozyRoomPage({ onGoHome, onGoGarden }: { onGoHome: () => void; onGoGard
         What is in your Cozy Room stays on this phone, in this browser only — nothing is sent anywhere.
       </p>
       <div className="mt-6 space-y-3">
-        <button type="button" onClick={onGoGarden} className="min-h-11 w-full rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 font-bold text-[var(--text)]">See the Map →</button>
+        {/* "See the Map" must open the real Map (Richard,
+            2026-11-26) — it used to go back to the garden list,
+            so it did not show a map at all. onGoMap lands
+            straight on GardenMapPage, at the top. */}
+        <button type="button" onClick={onGoMap} className="min-h-11 w-full rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 font-bold text-[var(--text)]">See the Map →</button>
         <button type="button" onClick={onGoHome} className="min-h-11 w-full rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 font-bold text-[var(--text)]">← Back to Home</button>
       </div>
     </div>
@@ -6166,6 +6228,11 @@ function HomePage({ profiles, logs, pointEvents, dayMarks, onGo, onSurf }: {
   // view, not a new top tab — the garden opens from its Home
   // button below and comes straight back to Home.
   const [gardenOpen, setGardenOpen] = useState(false);
+  // Which garden view to land on when the garden opens from
+  // Home (Richard, 2026-11-26): normally the list — but "See
+  // the Map" from the Cozy Room must land straight on the real
+  // Map, so the garden needs an initial view, not just "list".
+  const [gardenInitialView, setGardenInitialView] = useState<"list" | "map" | "cozy">("list");
   // Inside view (Richard, 2026-11-26): an "Inside view" option
   // button as an addition to the Home screen, opening the Cozy
   // Room first inside view — no trophies yet, empty frames.
@@ -6177,10 +6244,13 @@ function HomePage({ profiles, logs, pointEvents, dayMarks, onGo, onSurf }: {
     return { c, days, saved: days != null && p?.dailyCost != null ? p.dailyCost * days : null };
   });
   if (cozyOpen) {
-    return <CozyRoomPage onGoHome={() => { setCozyOpen(false); if (typeof window !== "undefined") window.scrollTo(0, 0); }} onGoGarden={() => { setCozyOpen(false); setGardenOpen(true); if (typeof window !== "undefined") window.scrollTo(0, 0); }} />;
+    // "See the Map" from the Cozy Room opened from Home must
+    // land straight on the real Map, at the top — it used to
+    // open the garden list instead, so it did not show a map.
+    return <CozyRoomPage onGoHome={() => { setCozyOpen(false); if (typeof window !== "undefined") window.scrollTo(0, 0); }} onGoMap={() => { setCozyOpen(false); setGardenInitialView("map"); setGardenOpen(true); if (typeof window !== "undefined") window.scrollTo(0, 0); }} />;
   }
   if (gardenOpen) {
-    return <LifeGardenPage onGoHome={() => { setGardenOpen(false); if (typeof window !== "undefined") window.scrollTo(0, 0); }} onGoTab={onGo} profiles={profiles} />;
+    return <LifeGardenPage onGoHome={() => { setGardenOpen(false); if (typeof window !== "undefined") window.scrollTo(0, 0); }} onGoTab={onGo} profiles={profiles} initialView={gardenInitialView} />;
   }
   return (
     <div>
@@ -6208,7 +6278,7 @@ function HomePage({ profiles, logs, pointEvents, dayMarks, onGo, onSurf }: {
           Nothing else above moved; Happy Button, Share and My Muse
           keep their places, below. */}
       <div className="mb-5">
-        <button type="button" onClick={() => { setGardenOpen(true); if (typeof window !== "undefined") window.scrollTo(0, 0); }} style={{ backgroundColor: "#e2f2da", borderColor: "#6aa84f" }} className="felt-card felt-pressable w-full rounded-[var(--radius)] border-4 p-6 text-left">
+        <button type="button" onClick={() => { setGardenInitialView("list"); setGardenOpen(true); if (typeof window !== "undefined") window.scrollTo(0, 0); }} style={{ backgroundColor: "#e2f2da", borderColor: "#6aa84f" }} className="felt-card felt-pressable w-full rounded-[var(--radius)] border-4 p-6 text-left">
           <p className="flex items-center gap-3 font-display text-2xl font-black text-[#2e2117] sm:text-3xl">
             <FlowerIcon color="var(--bloom)" size={40} />
             My Life Garden Pathway

@@ -5585,6 +5585,21 @@ function GardenMapPage({ onGoHome, onGoGarden, onGoTab, onOpenCozy, profiles }: 
     setQuitDraft("");
     setMessage(`Your quit day for ${stop.label} is cleared — the path is short again, until you pick another day.`);
   };
+  // Map interactivity (Richard, 2026-11-26): "I thought the map
+  // was interactive but didn't seem to be." The diagram itself
+  // was a dead picture — only the list below it was tappable.
+  // So every branch in the diagram is now a big tappable button
+  // that opens its stop below, with its option(s) and trophy.
+  const openStop = (id: string) => {
+    setSelected(id);
+    setQuitDraft(quitDays[id] ?? "");
+    if (typeof document !== "undefined") {
+      document.getElementById(`garden-map-stop-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+  const diagramKey = (e: React.KeyboardEvent, id: string) => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openStop(id); }
+  };
   return (
     <div>
       <button type="button" onClick={onGoHome} className="min-h-11 rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 font-bold text-[var(--text)]">
@@ -5609,55 +5624,77 @@ function GardenMapPage({ onGoHome, onGoGarden, onGoTab, onOpenCozy, profiles }: 
         <figcaption className="bg-[var(--surface)] px-4 py-3 text-center font-bold leading-relaxed text-[var(--text)]">Our cottage — where every path begins, warm and cozy from the get-go.</figcaption>
       </figure>
       <div className="felt-soft mt-4 rounded-[var(--radius)] border-2 border-[var(--leaf)] bg-[var(--leaf-soft)] px-4 py-3" role="img" aria-label="Map diagram: one pathway from the cottage front steps, branching to the gazebo for quiet time, eight dead ends — Alcohol, Smoking, Gambling, Drugs, Codependency, Food, Screens, Feeling Unwell — each with a trophy on a wooden stool at the end, and the Longevity path going on to infinity with trophies along it">
-        <svg viewBox="0 0 360 660" className="w-full" aria-hidden="true">
+        <svg viewBox="0 0 360 660" className="w-full" role="group" aria-label="Map diagram — tap a branch to open it">
           {/* One pathway from the front steps of the cottage, straight down the middle. */}
           <path d="M180 0 V640" stroke="#6aa84f" strokeWidth="6" strokeLinecap="round" />
           {/* Gazebo branch — dividing off to the left, for quiet time. */}
           <path d="M180 70 L138 118" stroke="#6aa84f" strokeWidth="5" strokeLinecap="round" />
-          <rect x="28" y="88" width="110" height="66" rx="8" fill="#f3e2f0" stroke="#9a5a90" strokeWidth="2" />
+          <g role="button" tabIndex={0} aria-label="Tap to open the Gazebo — quiet time" onClick={() => openStop("gazebo")} onKeyDown={(e) => diagramKey(e, "gazebo")} style={{ cursor: "pointer" }}>
+          <rect x="28" y="88" width="110" height="66" rx="8" fill="#f3e2f0" stroke="#9a5a90" strokeWidth={selected === "gazebo" ? 4 : 2} />
           <text x="83" y="112" textAnchor="middle" fontSize="13" fontWeight="bold" fill="#2e2117">Gazebo</text>
           <text x="83" y="130" textAnchor="middle" fontSize="11" fill="#6f5a44">quiet time</text>
           <text x="83" y="148" textAnchor="middle" fontSize="13" fill="#2e2117">🏆 🏆 🏆</text>
+          </g>
           {/* Eight dead ends, in pairs off the pathway — a trophy on a wooden stool at the end of each. */}
           <path d="M180 200 H124" stroke="#6aa84f" strokeWidth="5" strokeLinecap="round" />
           <path d="M180 200 H236" stroke="#6aa84f" strokeWidth="5" strokeLinecap="round" />
-          <rect x="6" y="172" width="118" height="56" rx="8" fill="#fdeeda" stroke="#d99a4e" strokeWidth="2" />
+          <g role="button" tabIndex={0} aria-label="Tap to open Alcohol" onClick={() => openStop("alcohol")} onKeyDown={(e) => diagramKey(e, "alcohol")} style={{ cursor: "pointer" }}>
+          <rect x="6" y="172" width="118" height="56" rx="8" fill="#fdeeda" stroke="#d99a4e" strokeWidth={selected === "alcohol" ? 4 : 2} />
           <text x="65" y="194" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#2e2117">Alcohol</text>
           <text x="65" y="214" textAnchor="middle" fontSize="11" fill="#6f5a44">🏆 on a stool</text>
-          <rect x="236" y="172" width="118" height="56" rx="8" fill="#fdeeda" stroke="#d99a4e" strokeWidth="2" />
+          </g>
+          <g role="button" tabIndex={0} aria-label="Tap to open Smoking" onClick={() => openStop("smoking")} onKeyDown={(e) => diagramKey(e, "smoking")} style={{ cursor: "pointer" }}>
+          <rect x="236" y="172" width="118" height="56" rx="8" fill="#fdeeda" stroke="#d99a4e" strokeWidth={selected === "smoking" ? 4 : 2} />
           <text x="295" y="194" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#2e2117">Smoking</text>
           <text x="295" y="214" textAnchor="middle" fontSize="11" fill="#6f5a44">🏆 on a stool</text>
+          </g>
           <path d="M180 300 H124" stroke="#6aa84f" strokeWidth="5" strokeLinecap="round" />
           <path d="M180 300 H236" stroke="#6aa84f" strokeWidth="5" strokeLinecap="round" />
-          <rect x="6" y="272" width="118" height="56" rx="8" fill="#fdeeda" stroke="#d99a4e" strokeWidth="2" />
+          <g role="button" tabIndex={0} aria-label="Tap to open Gambling" onClick={() => openStop("gambling")} onKeyDown={(e) => diagramKey(e, "gambling")} style={{ cursor: "pointer" }}>
+          <rect x="6" y="272" width="118" height="56" rx="8" fill="#fdeeda" stroke="#d99a4e" strokeWidth={selected === "gambling" ? 4 : 2} />
           <text x="65" y="294" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#2e2117">Gambling</text>
           <text x="65" y="314" textAnchor="middle" fontSize="11" fill="#6f5a44">🏆 on a stool</text>
-          <rect x="236" y="272" width="118" height="56" rx="8" fill="#fdeeda" stroke="#d99a4e" strokeWidth="2" />
+          </g>
+          <g role="button" tabIndex={0} aria-label="Tap to open Drugs" onClick={() => openStop("drugs")} onKeyDown={(e) => diagramKey(e, "drugs")} style={{ cursor: "pointer" }}>
+          <rect x="236" y="272" width="118" height="56" rx="8" fill="#fdeeda" stroke="#d99a4e" strokeWidth={selected === "drugs" ? 4 : 2} />
           <text x="295" y="294" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#2e2117">Drugs</text>
           <text x="295" y="314" textAnchor="middle" fontSize="11" fill="#6f5a44">🏆 on a stool</text>
+          </g>
           <path d="M180 400 H124" stroke="#6aa84f" strokeWidth="5" strokeLinecap="round" />
           <path d="M180 400 H236" stroke="#6aa84f" strokeWidth="5" strokeLinecap="round" />
-          <rect x="6" y="372" width="118" height="56" rx="8" fill="#fdeeda" stroke="#d99a4e" strokeWidth="2" />
+          <g role="button" tabIndex={0} aria-label="Tap to open Codependency" onClick={() => openStop("codependency")} onKeyDown={(e) => diagramKey(e, "codependency")} style={{ cursor: "pointer" }}>
+          <rect x="6" y="372" width="118" height="56" rx="8" fill="#fdeeda" stroke="#d99a4e" strokeWidth={selected === "codependency" ? 4 : 2} />
           <text x="65" y="394" textAnchor="middle" fontSize="10" fontWeight="bold" fill="#2e2117">Codependency</text>
           <text x="65" y="414" textAnchor="middle" fontSize="11" fill="#6f5a44">🏆 on a stool</text>
-          <rect x="236" y="372" width="118" height="56" rx="8" fill="#fdeeda" stroke="#d99a4e" strokeWidth="2" />
+          </g>
+          <g role="button" tabIndex={0} aria-label="Tap to open Food" onClick={() => openStop("food")} onKeyDown={(e) => diagramKey(e, "food")} style={{ cursor: "pointer" }}>
+          <rect x="236" y="372" width="118" height="56" rx="8" fill="#fdeeda" stroke="#d99a4e" strokeWidth={selected === "food" ? 4 : 2} />
           <text x="295" y="394" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#2e2117">Food</text>
           <text x="295" y="414" textAnchor="middle" fontSize="11" fill="#6f5a44">🏆 on a stool</text>
+          </g>
           <path d="M180 500 H124" stroke="#6aa84f" strokeWidth="5" strokeLinecap="round" />
           <path d="M180 500 H236" stroke="#6aa84f" strokeWidth="5" strokeLinecap="round" />
-          <rect x="6" y="472" width="118" height="56" rx="8" fill="#fdeeda" stroke="#d99a4e" strokeWidth="2" />
+          <g role="button" tabIndex={0} aria-label="Tap to open Screens" onClick={() => openStop("screens")} onKeyDown={(e) => diagramKey(e, "screens")} style={{ cursor: "pointer" }}>
+          <rect x="6" y="472" width="118" height="56" rx="8" fill="#fdeeda" stroke="#d99a4e" strokeWidth={selected === "screens" ? 4 : 2} />
           <text x="65" y="494" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#2e2117">Screens</text>
           <text x="65" y="514" textAnchor="middle" fontSize="11" fill="#6f5a44">🏆 on a stool</text>
-          <rect x="236" y="472" width="118" height="56" rx="8" fill="#fdeeda" stroke="#d99a4e" strokeWidth="2" />
+          </g>
+          <g role="button" tabIndex={0} aria-label="Tap to open Feeling Unwell" onClick={() => openStop("wellbeing")} onKeyDown={(e) => diagramKey(e, "wellbeing")} style={{ cursor: "pointer" }}>
+          <rect x="236" y="472" width="118" height="56" rx="8" fill="#fdeeda" stroke="#d99a4e" strokeWidth={selected === "wellbeing" ? 4 : 2} />
           <text x="295" y="492" textAnchor="middle" fontSize="11" fontWeight="bold" fill="#2e2117">Feeling</text>
           <text x="295" y="506" textAnchor="middle" fontSize="11" fontWeight="bold" fill="#2e2117">Unwell?</text>
           <text x="295" y="522" textAnchor="middle" fontSize="11" fill="#6f5a44">🏆 on a stool</text>
+          </g>
           {/* Longevity — the only infinite path, with trophies along it, not just at the end. */}
+          <g role="button" tabIndex={0} aria-label="Tap to open Longevity — the path that goes on to infinity" onClick={() => openStop("longevity")} onKeyDown={(e) => diagramKey(e, "longevity")} style={{ cursor: "pointer" }}>
+          <rect x="40" y="540" width="280" height="112" rx="8" fill="#e2f2da" stroke="#6aa84f" strokeWidth={selected === "longevity" ? 4 : 2} />
           <text x="146" y="566" textAnchor="middle" fontSize="15" fill="#2e2117">🏆</text>
           <text x="214" y="592" textAnchor="middle" fontSize="15" fill="#2e2117">🏆</text>
           <text x="146" y="618" textAnchor="middle" fontSize="15" fill="#2e2117">🏆</text>
           <text x="180" y="648" textAnchor="middle" fontSize="14" fontWeight="bold" fill="#2e2117">Longevity → ∞</text>
+          </g>
         </svg>
+        <p className="text-center text-base font-bold leading-relaxed text-[var(--text)]">Tap a branch on the map — it opens.</p>
         <p className="text-center text-sm leading-relaxed text-[var(--dim)]">Cottage at the top, gazebo branch for quiet time, eight dead ends each with a trophy on a wooden stool, and Longevity going on to infinity.</p>
       </div>
       <GardenPorchPot flowerCount={porchFlowerCount} cottageBlooms={porchCottageBlooms} />
@@ -5685,8 +5722,8 @@ function GardenMapPage({ onGoHome, onGoGarden, onGoTab, onOpenCozy, profiles }: 
             const effectiveQuitDay = tabQuitDay ?? gardenQuitDay;
             const flowerCount = stop.items.filter((item) => checked.includes(item) || trophies.includes(item)).length;
             return (
-              <li key={stop.id}>
-                <button type="button" onClick={() => { const next = open ? null : stop.id; setSelected(next); if (next) setQuitDraft(quitDays[next] ?? ""); }} aria-expanded={open} className="felt-card w-full rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] p-4 text-left">
+              <li key={stop.id} id={`garden-map-stop-${stop.id}`}>
+                <button type="button" onClick={() => { if (open) { setSelected(null); } else { openStop(stop.id); } }} aria-expanded={open} className="felt-card w-full rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] p-4 text-left">
                   <p className="font-display text-lg font-black text-[var(--text)]">{stop.label}</p>
                   <p className="mt-1 text-sm font-bold uppercase tracking-widest text-[#6aa84f]">{GARDEN_MAP_KIND_LABEL[stop.kind]}</p>
                   <p className="mt-1 leading-relaxed text-[var(--dim)]">{stop.note}</p>

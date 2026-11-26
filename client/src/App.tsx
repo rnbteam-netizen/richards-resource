@@ -4,6 +4,9 @@ import { api, type ApiResponse } from "./api";
 import { sounds, type CalmToneKind } from "./sound";
 import { speakText, stopSpeaking } from "./speech";
 import welcomeCottage from "./assets/welcome-cottage.jpg";
+import myLifeGarden from "./assets/my-life-garden.webp";
+import myLifeGardenMap from "./assets/my-life-garden-map.webp";
+import myLifeGardenCozyRoom from "./assets/my-life-garden-cozy-room.webp";
 import { shareApp } from "./share";
 import { searchApp, loadLastPlace, saveLastPlace, LAST_PLACE_LABELS } from "./search";
 import { MY_MUSE_URL, RETURN_TO_MY_RR_URL } from "./my-muse";
@@ -4688,6 +4691,1316 @@ function MyMuseCard({ pointEvents }: { pointEvents: PointEvent[] }) {
   );
 }
 
+/* ---------- My Life Garden Pathway (Richard, 2026-11-25/26) ---------- */
+// First piece only (Richard, 2026-11-26: "Life garden please") —
+// a Home button, the garden view with the final one-gazebo image,
+// Richard's exact brief explanation, and the 13 items as a checklist
+// saved in this browser's localStorage only. No points yet, no
+// badges, no trophy room, no Check my progress, no flowers
+// replacing weeds — those are later pieces, for Richard's verdict
+// after this one. Weed clearing begins from the front steps of
+// the cottage — they have already been invited in.
+const LIFE_GARDEN_ITEMS = [
+  "No drinking problem",
+  "No smoking problem",
+  "No gambling problem",
+  "No drug problem",
+  "I eat well",
+  "I like my body just the way it is",
+  "I take a quiet moment",
+  "I'm interested in longevity",
+  "I turn my screen off",
+  "I have friends, furry and/or human",
+  "I socialize",
+  "I'm not lonely",
+  "I don't lose myself trying to fix others",
+] as const;
+const LIFE_GARDEN_KEY = "richards-resource:life-garden:v1";
+
+function loadLifeGardenChecked(): string[] {
+  try {
+    const parsed: unknown = JSON.parse(safeLocalGet(LIFE_GARDEN_KEY) ?? "[]");
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((x): x is string => typeof x === "string" && (LIFE_GARDEN_ITEMS as readonly string[]).includes(x));
+  } catch { return []; }
+}
+
+/* ---------- My Life Garden Pathway — the Map (Richard, 2026-11-26) ---------- */
+// Second piece: a Map with navigation links, warm and cozy from the
+// get-go. One pathway from the cottage front steps, branching —
+// branching means dividing from the path. One branch to the gazebo
+// for quiet time, dead-end branches for drinking, smoking, gambling,
+// drugs and the rest (a trophy on a wooden stool at the end of each
+// dead end), and the longevity path going on to infinity. The map
+// matches all the buttons/tabs. Tapping a map link shows the option
+// for that issue (for example "No drinking problem"); choosing it
+// earns a trophy for the Cozy Room. Trophies live in this browser's
+// localStorage only — no server, no points scored yet, no account.
+// The third piece (2026-11-26) adds name / avatar / spirit-guide
+// choice, also local only. The fourth piece adds favourite books
+// and your own photos for the frames, in the Cozy Room below.
+// The fifth piece (2026-11-26) adds path expansion / quit day
+// and weeds turning to flowers, also local only. Held for later
+// pieces, NOT built here: badges, points for weeds, a weed pile.
+const LIFE_GARDEN_TROPHY_KEY = "richards-resource:life-garden:trophies:v1";
+
+function loadLifeGardenTrophies(): string[] {
+  try {
+    const parsed: unknown = JSON.parse(safeLocalGet(LIFE_GARDEN_TROPHY_KEY) ?? "[]");
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((x): x is string => typeof x === "string" && (LIFE_GARDEN_ITEMS as readonly string[]).includes(x));
+  } catch { return []; }
+}
+
+type GardenMapKind = "pathway" | "gazebo" | "dead-end" | "infinite" | "room";
+type GardenMapStop = {
+  id: string;
+  label: string;
+  tab: TabId | null;
+  kind: GardenMapKind;
+  items: string[];
+  note: string;
+};
+
+const GARDEN_MAP_KIND_LABEL: Record<GardenMapKind, string> = {
+  pathway: "The pathway",
+  gazebo: "Branch — quiet time",
+  "dead-end": "Dead end — a trophy on a wooden stool at the end",
+  infinite: "The path that goes on — to infinity",
+  room: "Inside the cottage",
+};
+
+const GARDEN_MAP_STOPS: GardenMapStop[] = [
+  { id: "garden", label: "My Life Garden Pathway", tab: null, kind: "pathway", items: [], note: "One pathway from the front steps of the cottage — you have already been invited in. Weed clearing begins from the front steps." },
+  { id: "gazebo", label: "The gazebo — quiet time", tab: "peace", kind: "gazebo", items: ["I take a quiet moment"], note: "A branch off the path, for a quiet moment — meditation, prayer, just sitting a while. Then back to the path. Multiple trophies live in the gazebo." },
+  { id: "alcohol", label: "Alcohol", tab: "alcohol", kind: "dead-end", items: ["No drinking problem"], note: "This branch ends when you stop, and stay stopped. A trophy on a wooden stool waits at the end of it." },
+  { id: "smoking", label: "Smoking", tab: "smoking", kind: "dead-end", items: ["No smoking problem"], note: "This branch ends when you stop, and stay stopped. A trophy on a wooden stool waits at the end of it." },
+  { id: "gambling", label: "Gambling", tab: "gambling", kind: "dead-end", items: ["No gambling problem"], note: "This branch ends when you stop, and stay stopped. A trophy on a wooden stool waits at the end of it." },
+  { id: "drugs", label: "Drugs", tab: "drugs", kind: "dead-end", items: ["No drug problem"], note: "This branch ends when you stop, and stay stopped. A trophy on a wooden stool waits at the end of it." },
+  { id: "codependency", label: "Codependency", tab: "codependency", kind: "dead-end", items: ["I don't lose myself trying to fix others"], note: "This branch ends when you stop losing yourself trying to fix others. A trophy on a wooden stool waits at the end of it." },
+  { id: "food", label: "Food", tab: "food", kind: "dead-end", items: ["I eat well", "I like my body just the way it is"], note: "This branch is about eating well, and liking your body just the way it is. A trophy on a wooden stool waits at the end of it." },
+  { id: "screens", label: "Screens", tab: "screens", kind: "dead-end", items: ["I turn my screen off"], note: "This branch ends when you turn your screen off. A trophy on a wooden stool waits at the end of it." },
+  { id: "wellbeing", label: "Feeling Unwell?", tab: "wellbeing", kind: "dead-end", items: ["I'm not lonely"], note: "If today is hard, start here. You are not alone, and you are not lonely in this — help is on the tab, and a trophy waits at the end of this branch." },
+  { id: "longevity", label: "Longevity", tab: "longevity", kind: "infinite", items: ["I'm interested in longevity", "I have friends, furry and/or human", "I socialize"], note: "The only path that is infinite — you walk it all your life: sleep, walking, real food, friends, purpose. Trophies wait along the pathway, not just at the end, because there is no end." },
+  { id: "cozy", label: "My Cozy Room", tab: null, kind: "room", items: [], note: "Inside the cottage — your trophy room. First view: no trophies yet, and a few empty picture frames on the walls. Room for 100+ trophies." },
+];
+
+/* ---------- My Life Garden Pathway — your name, avatar & spirit guide ---------- */
+// Third piece (Richard, 2026-11-26): choose your own name, pick a
+// figure that stands for you, and pick a spirit guide to walk
+// beside you. All three are optional, and all three stay on this
+// phone only, in this browser's localStorage — nothing is sent
+// anywhere, no account. The figures have no preset names and no
+// name labels — the figure stands for the visitor under whatever
+// name they chose for themselves. The guides are drawn as
+// naturalistic, lifelike profiles, not cartoons, and keep their
+// animal labels, because those name the animal, not a person.
+// Held for later pieces, NOT built here: badges, points for
+// weeds. Path expansion / quit day and weeds turning to flowers
+// are built in the fifth piece (2026-11-26), below. Favourite
+// books and your own photos for the frames are built in the
+// Cozy Room below (fourth piece, Richard, 2026-11-26).
+const LIFE_GARDEN_NAME_KEY = "richards-resource:life-garden:name:v1";
+const LIFE_GARDEN_AVATAR_KEY = "richards-resource:life-garden:avatar:v1";
+const LIFE_GARDEN_GUIDE_KEY = "richards-resource:life-garden:guide:v1";
+
+function loadLifeGardenName(): string {
+  try {
+    const raw = safeLocalGet(LIFE_GARDEN_NAME_KEY);
+    if (!raw) return "";
+    return raw.trim().slice(0, 40);
+  } catch { return ""; }
+}
+
+type GardenAvatarHair = "long" | "afro" | "short" | "bun" | "bob" | "bald";
+type GardenAvatarFeature = "none" | "beard" | "glasses" | "freckles" | "earrings" | "moustache";
+type GardenAvatar = {
+  id: string;
+  desc: string;
+  skin: string;
+  hair: GardenAvatarHair;
+  hairColor: string;
+  top: string;
+  feature: GardenAvatarFeature;
+};
+
+// Six figures, each drawn differently — different skin tone,
+// hair, features and clothes — so they do not all look alike.
+// No preset names, no name labels under the figures.
+const GARDEN_AVATARS: GardenAvatar[] = [
+  { id: "a1", desc: "long wavy brown hair, warm brown skin, a green top", skin: "#8d5524", hair: "long", hairColor: "#3b2314", top: "#4a7a4f", feature: "none" },
+  { id: "a2", desc: "a black afro and a beard, deep brown skin, a blue shirt", skin: "#5c3a21", hair: "afro", hairColor: "#1a1210", top: "#3f6fb5", feature: "beard" },
+  { id: "a3", desc: "short blond hair, glasses and freckles, light skin, a yellow top", skin: "#f1c9a5", hair: "short", hairColor: "#d9b45b", top: "#d9a441", feature: "glasses" },
+  { id: "a4", desc: "dark hair in a bun with gold earrings, tan skin, a purple top", skin: "#c68642", hair: "bun", hairColor: "#241a12", top: "#7a5a9e", feature: "earrings" },
+  { id: "a5", desc: "a silver-grey bob, light skin, a teal top", skin: "#e8b98d", hair: "bob", hairColor: "#b8b8c0", top: "#3f8a8a", feature: "freckles" },
+  { id: "a6", desc: "a bald head and a moustache, medium brown skin, a red shirt", skin: "#a06a3f", hair: "bald", hairColor: "#2a1c12", top: "#a84a3f", feature: "moustache" },
+];
+
+function loadLifeGardenAvatar(): string | null {
+  try {
+    const raw = safeLocalGet(LIFE_GARDEN_AVATAR_KEY);
+    return raw && GARDEN_AVATARS.some((a) => a.id === raw) ? raw : null;
+  } catch { return null; }
+}
+
+type GardenGuide = { id: string; label: string; line: string };
+const GARDEN_GUIDES: GardenGuide[] = [
+  { id: "owl", label: "Owl", line: "Quiet and watchful, beside you in the still moments." },
+  { id: "robin", label: "Robin", line: "A small bright friend, here at the start of the day." },
+  { id: "turtle", label: "Turtle", line: "Slow and steady, in no hurry at all." },
+  { id: "butterfly", label: "Butterfly", line: "Light and gentle — a reminder that change can be beautiful." },
+  { id: "deer", label: "Deer", line: "Gentle and alert, walking softly beside you." },
+  { id: "bear", label: "Bear", line: "Strong and warm, a steady friend to lean on." },
+  { id: "dog", label: "Dog", line: "Loyal, joyful, and always glad you're here." },
+  { id: "cat", label: "Cat", line: "Quiet, independent, and knows when to curl up close." },
+];
+
+function loadLifeGardenGuide(): string | null {
+  try {
+    const raw = safeLocalGet(LIFE_GARDEN_GUIDE_KEY);
+    return raw && GARDEN_GUIDES.some((g) => g.id === raw) ? raw : null;
+  } catch { return null; }
+}
+
+function GardenAvatarFigure({ avatar }: { avatar: GardenAvatar }) {
+  return (
+    <svg viewBox="0 0 120 120" className="h-20 w-20" role="img" aria-label={`A figure with ${avatar.desc}`}>
+      {avatar.hair === "long" && <rect x="30" y="18" width="60" height="100" rx="28" fill={avatar.hairColor} />}
+      {avatar.hair === "afro" && <circle cx="60" cy="38" r="34" fill={avatar.hairColor} />}
+      {avatar.hair === "bob" && <rect x="32" y="18" width="56" height="64" rx="24" fill={avatar.hairColor} />}
+      <path d="M18 118 Q20 88 60 88 Q100 88 102 118 Z" fill={avatar.top} />
+      <rect x="52" y="70" width="16" height="22" fill={avatar.skin} />
+      <circle cx="60" cy="52" r="26" fill={avatar.skin} />
+      {avatar.hair === "short" && <path d="M34 52 Q34 24 60 24 Q86 24 86 52 L86 56 L34 56 Z" fill={avatar.hairColor} />}
+      {avatar.hair === "bun" && (
+        <>
+          <path d="M34 52 Q34 24 60 24 Q86 24 86 52 L86 56 L34 56 Z" fill={avatar.hairColor} />
+          <circle cx="60" cy="20" r="11" fill={avatar.hairColor} />
+        </>
+      )}
+      <circle cx="49" cy="50" r="2.5" fill="#2e2117" />
+      <circle cx="71" cy="50" r="2.5" fill="#2e2117" />
+      {avatar.feature === "glasses" && (
+        <>
+          <circle cx="49" cy="50" r="9" fill="none" stroke="#2e2117" strokeWidth="2" />
+          <circle cx="71" cy="50" r="9" fill="none" stroke="#2e2117" strokeWidth="2" />
+          <path d="M58 50 L62 50" stroke="#2e2117" strokeWidth="2" />
+        </>
+      )}
+      {avatar.feature === "freckles" && (
+        <>
+          <circle cx="46" cy="60" r="1.6" fill="#8a5a3b" />
+          <circle cx="53" cy="62" r="1.6" fill="#8a5a3b" />
+          <circle cx="67" cy="62" r="1.6" fill="#8a5a3b" />
+          <circle cx="74" cy="60" r="1.6" fill="#8a5a3b" />
+        </>
+      )}
+      {avatar.feature === "earrings" && (
+        <>
+          <circle cx="35" cy="58" r="3" fill="#d9a441" />
+          <circle cx="85" cy="58" r="3" fill="#d9a441" />
+        </>
+      )}
+      {avatar.feature === "moustache" && <path d="M50 64 Q55 60 60 64 Q65 60 70 64 Q65 69 60 69 Q55 69 50 64 Z" fill={avatar.hairColor} />}
+      {avatar.feature === "beard" ? (
+        <path d="M44 64 Q60 84 76 64 Q74 78 60 78 Q46 78 44 64 Z" fill={avatar.hairColor} />
+      ) : (
+        <path d="M52 66 Q60 72 68 66" stroke="#2e2117" strokeWidth="2" fill="none" strokeLinecap="round" />
+      )}
+    </svg>
+  );
+}
+
+// Naturalistic, lifelike animal profiles — side and three-quarter
+// views in muted natural colours, with feather, fur, shell and
+// wing detail and small realistic eyes. No cartoon front faces,
+// no big smiles.
+function GardenGuideFigure({ guideId }: { guideId: string }) {
+  return (
+    <svg viewBox="0 0 120 90" className="h-16 w-24" role="img" aria-label={`A ${guideId} in profile`}>
+      <ellipse cx="60" cy="82" rx="42" ry="5" fill="#d9c9a8" />
+      {guideId === "owl" && (
+        <g>
+          <ellipse cx="62" cy="52" rx="24" ry="28" fill="#8a6b4f" />
+          <circle cx="56" cy="26" r="16" fill="#8a6b4f" />
+          <path d="M44 14 L40 4 L50 12 Z" fill="#6f5138" />
+          <path d="M66 12 L72 4 L70 16 Z" fill="#6f5138" />
+          <path d="M42 28 L34 32 L42 35 Z" fill="#d99a4e" />
+          <circle cx="50" cy="24" r="2.5" fill="#2e2117" />
+          <path d="M70 42 Q84 54 70 72 Q78 54 70 42" fill="#6f5138" />
+          <path d="M58 44 L58 68 M66 44 L66 68" stroke="#6f5138" strokeWidth="1.5" />
+        </g>
+      )}
+      {guideId === "robin" && (
+        <g>
+          <ellipse cx="62" cy="54" rx="26" ry="20" fill="#7a6a5a" />
+          <ellipse cx="46" cy="60" rx="12" ry="14" fill="#c96a3f" />
+          <circle cx="42" cy="32" r="13" fill="#7a6a5a" />
+          <path d="M30 32 L20 35 L30 38 Z" fill="#d99a4e" />
+          <circle cx="38" cy="30" r="2.5" fill="#2e2117" />
+          <path d="M84 48 L100 40 L96 54 Z" fill="#5e4a3a" />
+          <path d="M56 72 L54 80 M68 72 L70 80" stroke="#5e4a3a" strokeWidth="2" />
+        </g>
+      )}
+      {guideId === "turtle" && (
+        <g>
+          <path d="M26 74 A36 32 0 0 1 98 74 Z" fill="#5e7a4a" />
+          <path d="M44 74 A20 18 0 0 1 80 74" fill="none" stroke="#3f5a33" strokeWidth="2" />
+          <path d="M62 44 L62 70 M46 52 L46 70 M78 52 L78 70" stroke="#3f5a33" strokeWidth="1.5" />
+          <circle cx="102" cy="62" r="9" fill="#7a8a5a" />
+          <circle cx="105" cy="60" r="2" fill="#2e2117" />
+          <rect x="34" y="72" width="10" height="8" rx="3" fill="#7a8a5a" />
+          <rect x="80" y="72" width="10" height="8" rx="3" fill="#7a8a5a" />
+        </g>
+      )}
+      {guideId === "butterfly" && (
+        <g>
+          <path d="M58 46 Q30 14 34 40 Q36 58 58 52 Z" fill="#c98a4e" />
+          <path d="M58 52 Q32 62 40 74 Q52 70 58 56 Z" fill="#a86a3f" />
+          <path d="M62 46 Q90 14 86 40 Q84 58 62 52 Z" fill="#c98a4e" />
+          <path d="M62 52 Q88 62 80 74 Q68 70 62 56 Z" fill="#a86a3f" />
+          <path d="M46 44 L56 50 M46 62 L56 54 M74 44 L64 50 M74 62 L64 54" stroke="#7a4a2a" strokeWidth="1" />
+          <ellipse cx="60" cy="54" rx="4" ry="14" fill="#5e3a22" />
+          <path d="M58 40 Q54 30 48 28 M62 40 Q66 30 72 28" fill="none" stroke="#5e3a22" strokeWidth="1.5" />
+        </g>
+      )}
+      {guideId === "deer" && (
+        <g>
+          <path d="M52 80 L54 52 Q54 40 62 36 L76 30" fill="none" stroke="#8a6b4f" strokeWidth="10" strokeLinecap="round" />
+          <ellipse cx="80" cy="30" rx="14" ry="10" fill="#8a6b4f" transform="rotate(-20 80 30)" />
+          <path d="M92 24 L100 26 L94 32 Z" fill="#6f5138" />
+          <circle cx="86" cy="28" r="2.5" fill="#2e2117" />
+          <path d="M70 18 Q66 6 58 4 M70 18 Q72 6 80 2 M76 16 Q82 6 90 4" fill="none" stroke="#6f5138" strokeWidth="2" strokeLinecap="round" />
+          <path d="M72 20 L66 10 L76 14 Z" fill="#8a6b4f" />
+        </g>
+      )}
+      {guideId === "bear" && (
+        <g>
+          <circle cx="60" cy="46" r="26" fill="#6b4a2f" />
+          <circle cx="42" cy="26" r="8" fill="#6b4a2f" />
+          <circle cx="42" cy="26" r="4" fill="#8a6b4f" />
+          <ellipse cx="46" cy="58" rx="14" ry="10" fill="#a8835f" />
+          <circle cx="38" cy="56" r="4" fill="#2e2117" />
+          <circle cx="58" cy="40" r="2.5" fill="#2e2117" />
+          <path d="M72 52 Q80 60 74 68" fill="none" stroke="#5a3a24" strokeWidth="2" />
+        </g>
+      )}
+      {guideId === "dog" && (
+        <g>
+          <circle cx="62" cy="44" r="24" fill="#a05a2c" />
+          <path d="M78 28 Q92 34 88 52 Q84 60 76 56 Q82 40 78 28 Z" fill="#7a421e" />
+          <ellipse cx="44" cy="56" rx="14" ry="10" fill="#d9b48a" />
+          <circle cx="36" cy="54" r="4.5" fill="#2e2117" />
+          <circle cx="56" cy="38" r="2.5" fill="#2e2117" />
+          <path d="M52 66 Q60 70 68 64" fill="none" stroke="#5e3a22" strokeWidth="2" strokeLinecap="round" />
+        </g>
+      )}
+      {guideId === "cat" && (
+        <g>
+          <circle cx="60" cy="48" r="24" fill="#5e7a8a" />
+          <path d="M42 30 L38 12 L54 24 Z" fill="#5e7a8a" />
+          <path d="M44 28 L42 16 L52 24 Z" fill="#e8a0a8" />
+          <path d="M78 30 L82 12 L66 24 Z" fill="#5e7a8a" />
+          <path d="M76 28 L78 16 L68 24 Z" fill="#e8a0a8" />
+          <circle cx="50" cy="46" r="2.5" fill="#2e2117" />
+          <circle cx="70" cy="46" r="2.5" fill="#2e2117" />
+          <path d="M60 56 L56 60 L64 60 Z" fill="#e8a0a8" />
+          <path d="M40 56 L24 52 M40 62 L26 64 M80 56 L96 52 M80 62 L94 64" stroke="#3f5a66" strokeWidth="1.5" />
+        </g>
+      )}
+    </svg>
+  );
+}
+
+function GardenCompanions({ name, onName, avatar, onAvatar, guide, onGuide }: {
+  name: string;
+  onName: (next: string) => void;
+  avatar: string | null;
+  onAvatar: (next: string) => void;
+  guide: string | null;
+  onGuide: (next: string) => void;
+}) {
+  const [draft, setDraft] = useState(name);
+  const chosenAvatar = GARDEN_AVATARS.find((a) => a.id === avatar) ?? null;
+  const chosenGuide = GARDEN_GUIDES.find((g) => g.id === guide) ?? null;
+  const displayName = name ? name : "friend";
+  const summary = chosenAvatar && chosenGuide
+    ? `${displayName}, that figure is you, with the ${chosenGuide.label} beside you.`
+    : chosenAvatar
+      ? `${displayName}, that figure is you.`
+      : chosenGuide
+        ? `The ${chosenGuide.label} walks beside you, ${displayName}.`
+        : null;
+  return (
+    <Section title="Your name, your avatar & your spirit guide">
+      <p className="leading-relaxed text-[var(--text)]">
+        This part is optional — you can leave it blank and stay “friend”. Your name, your figure and your guide stay on this phone only, nothing is sent anywhere.
+      </p>
+      <p className="mt-4 font-bold text-[var(--text)]">Choose your own name</p>
+      <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+        <input
+          type="text"
+          value={draft}
+          maxLength={40}
+          placeholder="First name or nickname"
+          aria-label="Choose your own name — first name or nickname"
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") onName(draft.trim().slice(0, 40)); }}
+          className="min-h-14 flex-1 rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 text-lg text-[var(--text)]"
+        />
+        <button type="button" onClick={() => onName(draft.trim().slice(0, 40))} className="min-h-14 rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-5 font-bold text-[var(--text)]">
+          That’s me
+        </button>
+        <button type="button" onClick={() => { setDraft(""); onName(""); }} className="min-h-14 rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-5 font-bold text-[var(--text)]">
+          Clear
+        </button>
+      </div>
+      {name && <p className="mt-2 font-bold text-[var(--text)]">Welcome, {name}.</p>}
+      <p className="mt-6 font-bold text-[var(--text)]">Pick a figure that stands for you</p>
+      <p className="mt-1 leading-relaxed text-[var(--dim)]">A representation of yourself — tap one. No names, just a figure.</p>
+      <div className="mt-3 grid grid-cols-3 gap-2">
+        {GARDEN_AVATARS.map((a) => (
+          <button
+            key={a.id}
+            type="button"
+            onClick={() => onAvatar(a.id)}
+            aria-pressed={avatar === a.id}
+            aria-label={`Choose this figure: ${a.desc}`}
+            className={`flex min-h-28 flex-col items-center justify-center rounded-[var(--radius)] border-2 bg-[var(--surface)] p-2 ${avatar === a.id ? "border-[var(--accent)] bg-[var(--amber-soft)]" : "border-[var(--border)]"}`}
+          >
+            <GardenAvatarFigure avatar={a} />
+            {avatar === a.id && <span className="mt-1 text-sm font-bold text-[var(--text)]">That’s you ✓</span>}
+          </button>
+        ))}
+      </div>
+      <p className="mt-6 font-bold text-[var(--text)]">Pick a spirit guide</p>
+      <p className="mt-1 leading-relaxed text-[var(--dim)]">A friend to walk beside you on the path — tap one.</p>
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        {GARDEN_GUIDES.map((g) => (
+          <button
+            key={g.id}
+            type="button"
+            onClick={() => onGuide(g.id)}
+            aria-pressed={guide === g.id}
+            aria-label={`Choose the ${g.label} as your spirit guide`}
+            className={`flex min-h-28 flex-col items-center justify-center rounded-[var(--radius)] border-2 bg-[var(--surface)] p-3 text-center ${guide === g.id ? "border-[var(--accent)] bg-[var(--amber-soft)]" : "border-[var(--border)]"}`}
+          >
+            <GardenGuideFigure guideId={g.id} />
+            <span className="mt-1 text-lg font-bold text-[var(--text)]">{g.label}</span>
+            <span className="text-sm leading-relaxed text-[var(--dim)]">{g.line}</span>
+            {guide === g.id && <span className="mt-1 text-sm font-bold text-[var(--text)]">Walking beside you ✓</span>}
+          </button>
+        ))}
+      </div>
+      {summary && (
+        <p role="status" className="mt-4 rounded-[var(--radius)] border-2 border-[var(--sun)] bg-[var(--amber-soft)] px-4 py-3 text-center font-bold leading-relaxed text-[var(--text)]">
+          {summary}
+        </p>
+      )}
+    </Section>
+  );
+}
+
+/* ---------- My Life Garden Pathway — path expansion & weeds to flowers ---------- */
+// Fifth piece (Richard, 2026-11-26): a single path can expand.
+// A quit day — set on the relevant tab, or picked here in the
+// garden — stretches a path out with steps and milestones, so it
+// is longer for someone struggling, not a dead end right away. A
+// quit day in the past still counts: if you already stopped, you
+// are already in recovery, staying stopped. And as weeds are
+// cleared — by ticking what is already true, and by earning
+// trophies — the weed patch beside that path turns to flowers,
+// starting at the cottage front steps and working outward. Even
+// after every box is ticked, weeds stay right before the cottage:
+// they clear only when you keep using the app, and they grow back
+// if you stay away for a while. That is maintenance, not
+// punishment — come back, and the flowers return. All local only,
+// nothing sent anywhere, no account, no new points. Held for
+// later pieces, NOT built here: badges, points for weeds.
+const LIFE_GARDEN_QUIT_DAYS_KEY = "richards-resource:life-garden:quit-days:v1";
+const LIFE_GARDEN_VISITS_KEY = "richards-resource:life-garden:visits:v1";
+const GARDEN_COTTAGE_VISITS_TO_BLOOM = 3;
+const GARDEN_COTTAGE_BLOOM_DAYS = 7;
+
+type GardenQuitDays = Record<string, string>;
+
+function gardenQuitDayIsValid(d: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return false;
+  return !Number.isNaN(new Date(`${d}T00:00:00`).getTime());
+}
+
+function loadLifeGardenQuitDays(): GardenQuitDays {
+  try {
+    const parsed: unknown = JSON.parse(safeLocalGet(LIFE_GARDEN_QUIT_DAYS_KEY) ?? "{}");
+    if (typeof parsed !== "object" || parsed === null) return {};
+    const next: GardenQuitDays = {};
+    for (const [k, v] of Object.entries(parsed as Record<string, unknown>)) {
+      if (typeof v === "string" && gardenQuitDayIsValid(v)) next[k] = v;
+    }
+    return next;
+  } catch { return {}; }
+}
+
+function saveLifeGardenQuitDays(next: GardenQuitDays): void {
+  if (Object.keys(next).length === 0) safeLocalRemove(LIFE_GARDEN_QUIT_DAYS_KEY);
+  else safeLocalSet(LIFE_GARDEN_QUIT_DAYS_KEY, JSON.stringify(next));
+}
+
+// Signed days from today to a date: positive means the day is
+// still ahead, negative means it is in the past, zero is today.
+function daysUntilGardenDate(dateStr: string): number | null {
+  if (!gardenQuitDayIsValid(dateStr)) return null;
+  const start = new Date(`${dateStr}T00:00:00`);
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return Math.round((start.getTime() - today.getTime()) / 86400000);
+}
+
+type GardenMilestone = { days: number; label: string };
+const GARDEN_PATH_MILESTONES: GardenMilestone[] = [
+  { days: 0, label: "Quit day — you chose this path" },
+  { days: 1, label: "One day" },
+  { days: 7, label: "One week" },
+  { days: 30, label: "One month" },
+  { days: 90, label: "Three months" },
+  { days: 365, label: "One year" },
+];
+
+function gardenMilestonesReached(daysSinceQuit: number | null): GardenMilestone[] {
+  if (daysSinceQuit == null) return [];
+  return GARDEN_PATH_MILESTONES.filter((m) => daysSinceQuit >= m.days);
+}
+
+type GardenVisits = { count: number; lastVisit: string };
+
+function loadLifeGardenVisits(): GardenVisits {
+  try {
+    const parsed: unknown = JSON.parse(safeLocalGet(LIFE_GARDEN_VISITS_KEY) ?? "{}");
+    if (typeof parsed !== "object" || parsed === null) return { count: 0, lastVisit: "" };
+    const count = typeof (parsed as GardenVisits).count === "number" ? Math.max(0, Math.floor((parsed as GardenVisits).count)) : 0;
+    const lastVisit = typeof (parsed as GardenVisits).lastVisit === "string" && gardenQuitDayIsValid((parsed as GardenVisits).lastVisit) ? (parsed as GardenVisits).lastVisit : "";
+    return { count, lastVisit };
+  } catch { return { count: 0, lastVisit: "" }; }
+}
+
+function recordLifeGardenVisit(): GardenVisits {
+  const next = { count: loadLifeGardenVisits().count + 1, lastVisit: localDay() };
+  safeLocalSet(LIFE_GARDEN_VISITS_KEY, JSON.stringify(next));
+  return next;
+}
+
+// The patch right before the cottage is the last one to bloom:
+// it needs every item cleared, at least three visits to the
+// garden, and a visit within the last seven days. If you stay
+// away, its weeds grow back — maintenance, not punishment.
+function gardenCottagePatchBlooms(visits: GardenVisits, allCleared: boolean): boolean {
+  if (!allCleared) return false;
+  if (visits.count < GARDEN_COTTAGE_VISITS_TO_BLOOM) return false;
+  if (!visits.lastVisit) return false;
+  const since = daysSince(visits.lastVisit);
+  return since != null && since <= GARDEN_COTTAGE_BLOOM_DAYS;
+}
+
+// Stepping stones for one path. With no quit day the path is
+// short — three stones. With a quit day it stretches out: one
+// stone for every milestone, reached stones in flower, the rest
+// still ahead, and a trophy stone at the end.
+function GardenPathSteps({ quitDay }: { quitDay: string | null }) {
+  const until = quitDay == null ? null : daysUntilGardenDate(quitDay);
+  const since = until == null ? null : -until;
+  const reached = gardenMilestonesReached(since);
+  if (quitDay == null || until == null) {
+    return (
+      <div>
+        <p className="leading-relaxed text-[var(--text)]">
+          No quit day yet for this path, so it is short — three stepping stones. Pick a quit day and this path stretches out with steps to walk. It gets longer, one step at a time, not a dead end right away.
+        </p>
+        <div className="mt-3 flex flex-wrap items-center gap-2" aria-label="A short path of three stepping stones">
+          {[1, 2, 3].map((n) => (
+            <span key={n} className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-[var(--border)] bg-[var(--surface)] text-lg font-bold text-[var(--text)]">{n}</span>
+          ))}
+          <span className="text-2xl" aria-hidden="true">🏆</span>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div>
+      <p className="leading-relaxed text-[var(--text)]">
+        {until < 0
+          ? `Your quit day was ${quitDay} — that still counts. You have walked ${since ?? 0} ${(since ?? 0) === 1 ? "day" : "days"} of this path, and it has stretched out with steps behind you.`
+          : until === 0
+            ? `Today is your quit day, ${quitDay}. One step at a time — this path stretches out ahead of you.`
+            : `Your quit day is ${quitDay}, in ${until} ${until === 1 ? "day" : "days"}. The path ahead is long — one step at a time.`}
+      </p>
+      <div className="mt-3 flex flex-wrap items-center gap-2" aria-label="Stepping stones along this path, with a trophy at the end">
+        {GARDEN_PATH_MILESTONES.map((m) => {
+          const done = reached.some((r) => r.days === m.days);
+          return (
+            <span key={m.days} title={m.label} className={`flex min-h-12 min-w-12 items-center justify-center rounded-full border-2 px-2 text-center text-sm font-bold ${done ? "border-[var(--leaf)] bg-[var(--leaf-soft)] text-[var(--text)]" : "border-[var(--border)] bg-[var(--surface)] text-[var(--dim)]"}`}>
+              {done ? `🌸 ${m.label}` : m.label}
+            </span>
+          );
+        })}
+        <span className="text-2xl" aria-hidden="true">🏆</span>
+      </div>
+      <p className="mt-2 text-sm leading-relaxed text-[var(--dim)]">
+        {reached.length} of {GARDEN_PATH_MILESTONES.length} steps reached — the rest are still ahead, and that is fine.
+      </p>
+    </div>
+  );
+}
+
+// The pathway in the garden list view: one patch beside the
+// path for every item, in order from the cottage front steps
+// outward, plus the patch right before the cottage itself.
+// A patch turns to flowers when its item is ticked or its
+// trophy is earned. The cottage patch is last and needs
+// regular visits — its weeds grow back if you stay away.
+function GardenPathStrip({ checked, visits }: { checked: string[]; visits: GardenVisits }) {
+  const trophies = loadLifeGardenTrophies();
+  const cleared = (item: string) => checked.includes(item) || trophies.includes(item);
+  const flowerCount = LIFE_GARDEN_ITEMS.filter(cleared).length;
+  const allCleared = flowerCount === LIFE_GARDEN_ITEMS.length;
+  const cottageBlooms = gardenCottagePatchBlooms(visits, allCleared);
+  return (
+    <Section title="Your pathway, from the cottage steps">
+      <p className="leading-relaxed text-[var(--text)]">
+        Patches of weeds beside the path turn to flowers as you clear them, starting at the cottage front steps and working outward. {flowerCount} of {LIFE_GARDEN_ITEMS.length} patches in flower.
+      </p>
+      <ul className="mt-3 space-y-2">
+        <li className="felt-card flex min-h-14 items-center gap-3 rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 py-3">
+          <span className="text-2xl" aria-hidden="true">{cottageBlooms ? "🌸" : "🌿"}</span>
+          <span className="leading-relaxed text-[var(--text)]">
+            <strong>Right before the cottage</strong> — {cottageBlooms
+              ? "in flower. You cleared the whole path and kept coming back — lovely."
+              : allCleared
+                ? "weeds still here. Even with every box ticked, a few weeds stay right before the cottage. They clear when you keep using the app — come back and visit, and they turn to flowers."
+                : "weeds still here. This patch is the last to bloom — clear the path first, then keep visiting."}
+          </span>
+        </li>
+        {LIFE_GARDEN_ITEMS.map((item) => (
+          <li key={item} className="felt-card flex min-h-14 items-center gap-3 rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 py-3">
+            <span className="text-2xl" aria-hidden="true">{cleared(item) ? "🌸" : "🌿"}</span>
+            <span className="leading-relaxed text-[var(--text)]">
+              <strong>{item}</strong> — {cleared(item) ? "in flower" : "weeds still beside this path"}
+            </span>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-4 leading-relaxed text-[var(--text)]">
+        Weeds grow back if you stay away for a while — that is maintenance, not punishment. Come back, and the flowers return.
+      </p>
+      <p className="mt-2 text-sm leading-relaxed text-[var(--dim)]">
+        This pathway lives on this phone only — nothing is sent anywhere.
+      </p>
+    </Section>
+  );
+}
+
+/* ---------- My Life Garden Pathway — flower pots on the big wrap-around porch ---------- */
+// Sixth piece (Richard, 2026-11-26): as one progresses, nice
+// flower pots with flowers appear on the cottage's big wrap-around
+// porch (Richard, 2026-11-26: "The cottage has a nice big wrap around
+// porch"). Not there at first view — one pot at a time, each time a
+// milestone is hit, and no two pots are identical: each pot has its
+// own colour, shape and flowers. A milestone here is patches of
+// weeds turned to flowers beside the path. It is a small drawn
+// row of pots in the cottage's warm style, an overlay, not a change
+// to the cottage image itself. Tied to the patches already cleared
+// and the trophies already earned — no new points, nothing scored
+// here. Local only, nothing sent anywhere. Held for later pieces,
+// NOT built here: points for weeds.
+const GARDEN_PORCH_POT_MILESTONES = [1, 3, 5, 7, 9, 13];
+
+type GardenPorchPotDesign = {
+  name: string;
+  potFill: string;
+  rimFill: string;
+  potHeight: number;
+  flowers: { dx: number; dy: number; colour: string }[];
+};
+
+// Six pots, no two identical — each has its own colour, height
+// and flowers, and each is earned one at a time.
+const GARDEN_PORCH_POTS: GardenPorchPotDesign[] = [
+  { name: "Little terracotta pot", potFill: "#b5654a", rimFill: "#c97a5e", potHeight: 34, flowers: [{ dx: 0, dy: -52, colour: "#e86a8a" }] },
+  { name: "Blue pot", potFill: "#3f6fb5", rimFill: "#5b8ac9", potHeight: 30, flowers: [{ dx: -10, dy: -46, colour: "#f2a541" }, { dx: 10, dy: -50, colour: "#f2a541" }] },
+  { name: "Tall green pot", potFill: "#4a7a4f", rimFill: "#6aa84f", potHeight: 44, flowers: [{ dx: -12, dy: -58, colour: "#9a5a90" }, { dx: 0, dy: -64, colour: "#9a5a90" }, { dx: 12, dy: -58, colour: "#e86a8a" }] },
+  { name: "Cream pot", potFill: "#e8dcc0", rimFill: "#d9c9a3", potHeight: 32, flowers: [{ dx: -10, dy: -48, colour: "#e87a3a" }, { dx: 10, dy: -48, colour: "#e86a8a" }] },
+  { name: "Red pot", potFill: "#a84a3f", rimFill: "#c05a4e", potHeight: 36, flowers: [{ dx: -12, dy: -52, colour: "#f5f0e6" }, { dx: 0, dy: -58, colour: "#f5f0e6" }, { dx: 12, dy: -52, colour: "#f2a541" }] },
+  { name: "Golden prize pot", potFill: "#d9a441", rimFill: "#f2c14e", potHeight: 40, flowers: [{ dx: -16, dy: -54, colour: "#e86a8a" }, { dx: -6, dy: -62, colour: "#f2a541" }, { dx: 6, dy: -62, colour: "#9a5a90" }, { dx: 16, dy: -54, colour: "#e86a8a" }] },
+];
+
+// How many pots are earned so far: one for every milestone hit.
+function gardenPorchPotsEarned(flowerCount: number): number {
+  return GARDEN_PORCH_POT_MILESTONES.filter((m) => flowerCount >= m).length;
+}
+
+function gardenPorchNextMilestone(flowerCount: number): number | null {
+  return GARDEN_PORCH_POT_MILESTONES.find((m) => flowerCount < m) ?? null;
+}
+
+function GardenPorchPot({ flowerCount, cottageBlooms }: { flowerCount: number; cottageBlooms: boolean }) {
+  const earned = gardenPorchPotsEarned(flowerCount);
+  const next = gardenPorchNextMilestone(flowerCount);
+  const stageText =
+    earned === 0
+      ? "No flower pots on the big wrap-around porch yet — clear a patch of weeds and the first pot will appear."
+      : earned >= GARDEN_PORCH_POTS.length
+        ? cottageBlooms
+          ? "All six flower pots are on the big wrap-around porch — each one different, each one earned — and the whole path is in flower, right up to the cottage."
+          : "All six flower pots are on the big wrap-around porch — each one different, each one earned. The porch is in full bloom."
+        : `You have earned ${earned} of ${GARDEN_PORCH_POTS.length} flower pots on the big wrap-around porch — each one different, each one earned. The next pot comes at ${next} patches in flower.`;
+  return (
+    <Section title="Flower pots on the big wrap-around porch">
+      <p className="leading-relaxed text-[var(--text)]">
+        As you progress, nice flower pots with flowers appear on the cottage&apos;s big wrap-around porch — one pot at a time, each time a milestone is hit, and no two pots are alike. {flowerCount} of {LIFE_GARDEN_ITEMS.length} patches in flower.
+      </p>
+      <div className="felt-card mt-3 rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 py-3">
+        <svg viewBox="0 0 360 170" className="mx-auto w-full" role="img" aria-label={earned === 0 ? "The cottage's big wrap-around porch, with no flower pots yet" : `${earned} of ${GARDEN_PORCH_POTS.length} flower pots earned on the cottage's big wrap-around porch`}>
+          <rect x="10" y="140" width="340" height="10" rx="4" fill="#8a6a4f" />
+          {GARDEN_PORCH_POTS.map((design, i) => {
+            const cx = 40 + i * 56;
+            const potTop = 140 - design.potHeight;
+            const isEarned = i < earned;
+            if (!isEarned) {
+              return <rect key={design.name} x={cx - 20} y={potTop} width="40" height={design.potHeight} rx="5" fill="none" stroke="#b9a48e" strokeWidth="2" strokeDasharray="6 5" />;
+            }
+            return (
+              <g key={design.name}>
+                {design.flowers.map((f) => (
+                  <g key={`${f.dx}-${f.dy}`}>
+                    <line x1={cx + f.dx} y1={potTop + f.dy + 8} x2={cx + f.dx} y2={potTop} stroke="#4a7a4f" strokeWidth="3" strokeLinecap="round" />
+                    <circle cx={cx + f.dx} cy={potTop + f.dy} r="9" fill={f.colour} />
+                    <circle cx={cx + f.dx} cy={potTop + f.dy} r="3" fill="#f5c542" />
+                  </g>
+                ))}
+                <rect x={cx - 24} y={potTop - 8} width="48" height="10" rx="4" fill={design.rimFill} stroke={design.potFill} strokeWidth="2" />
+                <polygon points={`${cx - 20},${potTop + 2} ${cx + 20},${potTop + 2} ${cx + 15},140 ${cx - 15},140`} fill={design.potFill} stroke={design.potFill} strokeWidth="2" />
+              </g>
+            );
+          })}
+        </svg>
+        <p className="mt-2 text-center font-bold leading-relaxed text-[var(--text)]">{stageText}</p>
+        <ul className="mt-2 space-y-1">
+          {GARDEN_PORCH_POTS.map((design, i) => (
+            <li key={design.name} className="text-center text-sm leading-relaxed text-[var(--dim)]">
+              {i < earned ? `✓ ${design.name} — earned at ${GARDEN_PORCH_POT_MILESTONES[i]} ${GARDEN_PORCH_POT_MILESTONES[i] === 1 ? "patch" : "patches"} in flower` : `${design.name} — comes at ${GARDEN_PORCH_POT_MILESTONES[i]} patches in flower`}
+            </li>
+          ))}
+        </ul>
+      </div>
+      <p className="mt-2 text-sm leading-relaxed text-[var(--dim)]">
+        These flower pots live on this phone only — nothing is sent anywhere.
+      </p>
+    </Section>
+  );
+}
+
+function LifeGardenPage({ onGoHome, onGoTab, profiles }: { onGoHome: () => void; onGoTab: (t: TabId) => void; profiles?: Profile[] }) {
+  const [checked, setChecked] = useState<string[]>(() => loadLifeGardenChecked());
+  const [zoomed, setZoomed] = useState(false);
+  // Map piece (Richard, 2026-11-26): the garden list, the Map,
+  // and the Cozy Room are three views of the same place — the
+  // Map and the Cozy Room open from here, and come straight back.
+  const [view, setView] = useState<"list" | "map" | "cozy">("list");
+  // Third piece (Richard, 2026-11-26): your name, your figure and
+  // your spirit guide — optional, local only, nothing sent anywhere.
+  const [gardenName, setGardenName] = useState<string>(() => loadLifeGardenName());
+  const [gardenAvatar, setGardenAvatar] = useState<string | null>(() => loadLifeGardenAvatar());
+  const [gardenGuide, setGardenGuide] = useState<string | null>(() => loadLifeGardenGuide());
+  // Fifth piece (Richard, 2026-11-26): each visit to the garden
+  // counts toward clearing the patch right before the cottage —
+  // recorded once, when the garden opens.
+  const [visits, setVisits] = useState<GardenVisits>(() => loadLifeGardenVisits());
+  useEffect(() => {
+    setVisits(recordLifeGardenVisit());
+  }, []);
+  const saveGardenName = (next: string) => {
+    const clean = next.trim().slice(0, 40);
+    setGardenName(clean);
+    if (clean) safeLocalSet(LIFE_GARDEN_NAME_KEY, clean); else safeLocalRemove(LIFE_GARDEN_NAME_KEY);
+  };
+  const saveGardenAvatar = (next: string) => {
+    setGardenAvatar(next);
+    safeLocalSet(LIFE_GARDEN_AVATAR_KEY, next);
+  };
+  const saveGardenGuide = (next: string) => {
+    setGardenGuide(next);
+    safeLocalSet(LIFE_GARDEN_GUIDE_KEY, next);
+  };
+  if (view === "map") {
+    return <GardenMapPage onGoHome={onGoHome} onGoGarden={() => { setChecked(loadLifeGardenChecked()); setView("list"); }} onGoTab={onGoTab} onOpenCozy={() => setView("cozy")} profiles={profiles} />;
+  }
+  if (view === "cozy") {
+    return <CozyRoomPage onGoHome={onGoHome} onGoGarden={() => { setChecked(loadLifeGardenChecked()); setView("list"); }} />;
+  }
+  const toggleItem = (item: string) => {
+    setChecked((prev) => {
+      const next = prev.includes(item) ? prev.filter((x) => x !== item) : [...prev, item];
+      safeLocalSet(LIFE_GARDEN_KEY, JSON.stringify(next));
+      return next;
+    });
+  };
+  // Sixth piece (Richard, 2026-11-26): the flower pot on the
+  // big wrap-around porch pots are earned one at a time as patches clear.
+  const porchFlowerCount = LIFE_GARDEN_ITEMS.filter((item) => checked.includes(item) || loadLifeGardenTrophies().includes(item)).length;
+  const porchCottageBlooms = gardenCottagePatchBlooms(visits, porchFlowerCount === LIFE_GARDEN_ITEMS.length);
+  return (
+    <div>
+      <button type="button" onClick={onGoHome} className="min-h-11 rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 font-bold text-[var(--text)]">
+        ← Back to Home
+      </button>
+      <p className="mt-4 text-center font-display text-xl font-bold text-[var(--accent)]">Welcome, {gardenName ? gardenName : "friend"}</p>
+      <h2 className="mt-4 font-display text-2xl font-semibold leading-snug text-[var(--text)]">My Life Garden Pathway</h2>
+      {/* Richard's exact intro verbiage (2026-11-26 08:00 PST) —
+          word for word at the start of the garden, before the
+          checklist. Do not paraphrase or add words to it. */}
+      <p className="mt-4 leading-relaxed text-[var(--text)]">
+        Welcome friend. This is your garden of Life. We all choose our own path. You have chosen yours. We are here to help guide you to a happier place, a happier you. Some paths you may have already explored and others await. Enjoy the journey. Peace.
+      </p>
+      {/* Tapping the image zooms the entire photo (Richard,
+          2026-11-25): good enough — no separate zoom on the
+          cottage or the gazebo. */}
+      <button type="button" onClick={() => setZoomed(true)} aria-label="My Life Garden Pathway — tap to see the whole photo bigger" className="mt-4 block w-full overflow-hidden rounded-[var(--radius)] border-2 border-[var(--leaf)]">
+        <img src={myLifeGarden} alt="My Life Garden Pathway — a long pathway of small flat wooden stepping stones, with weeds bordering both sides, leading up to the cottage, with the octagonal gazebo off to the side" className="w-full" />
+      </button>
+      <p className="mt-2 text-center text-sm text-[var(--dim)]">Tap the photo to see it bigger.</p>
+      {zoomed && (
+        <div role="dialog" aria-label="My Life Garden Pathway, enlarged" className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" onClick={() => setZoomed(false)}>
+          <button type="button" onClick={() => setZoomed(false)} aria-label="Close the enlarged photo" className="max-h-full max-w-full">
+            <img src={myLifeGarden} alt="My Life Garden Pathway — enlarged" className="max-h-[85vh] w-auto max-w-full rounded-[var(--radius)]" />
+            <span className="mt-2 block text-center font-semibold text-white">Tap anywhere to close</span>
+          </button>
+        </div>
+      )}
+      <p className="mt-4 leading-relaxed text-[var(--text)]">
+        Hello (name if we know it) Weeds grow naturally and life&apos;s pathway can be full of them. I suspect you have already cleared plenty. Please select from the items below, so we may update your path. Thanks.
+      </p>
+      <Section title="What is already true for you">
+        <ul className="space-y-2">
+          {LIFE_GARDEN_ITEMS.map((item) => (
+            <li key={item}>
+              <label className="felt-card flex min-h-14 cursor-pointer items-center gap-3 rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 py-3">
+                <input type="checkbox" checked={checked.includes(item)} onChange={() => toggleItem(item)} className="h-6 w-6 shrink-0 accent-[#6aa84f]" />
+                <span className="leading-relaxed text-[var(--text)]">{item}</span>
+              </label>
+            </li>
+          ))}
+        </ul>
+      </Section>
+      <p className="mt-4 leading-relaxed text-[var(--text)]">
+        Weed clearing begins from the front steps of the cottage — you have already been invited in. No calorie counting, no weighing, no judging.
+      </p>
+      <p className="mt-2 text-sm leading-relaxed text-[var(--dim)]">
+        What you tick here stays on this phone, in this browser only — nothing is sent anywhere, and nothing is scored yet.
+      </p>
+      <GardenPathStrip checked={checked} visits={visits} />
+      <GardenPorchPot flowerCount={porchFlowerCount} cottageBlooms={porchCottageBlooms} />
+      <GardenCompanions
+        name={gardenName}
+        onName={saveGardenName}
+        avatar={gardenAvatar}
+        onAvatar={saveGardenAvatar}
+        guide={gardenGuide}
+        onGuide={saveGardenGuide}
+      />
+      <div className="mt-6 space-y-3">
+        <button type="button" onClick={() => { setView("map"); if (typeof window !== "undefined") window.scrollTo(0, 0); }} style={{ backgroundColor: "#fdeeda", borderColor: "#d99a4e" }} className="felt-card felt-pressable w-full rounded-[var(--radius)] border-2 p-4 text-left">
+          <p className="font-display text-xl font-black text-[#2e2117]">See the Map →</p>
+          <p className="mt-1 leading-relaxed text-[#6f5a44]">One pathway from the cottage, branching to the gazebo, dead ends with a trophy at the end of each, and the longevity path going on to infinity.</p>
+        </button>
+        <button type="button" onClick={() => { setView("cozy"); if (typeof window !== "undefined") window.scrollTo(0, 0); }} style={{ backgroundColor: "#fbe3ee", borderColor: "#c95a8a" }} className="felt-card felt-pressable w-full rounded-[var(--radius)] border-2 p-4 text-left">
+          <p className="font-display text-xl font-black text-[#2e2117]">Inside view — my Cozy Room →</p>
+          <p className="mt-1 leading-relaxed text-[#6f5a44]">Your cozy room inside the cottage — first view, no trophies yet, a few empty picture frames waiting for your photos.</p>
+        </button>
+      </div>
+      <div className="mt-6">
+        <button type="button" onClick={onGoHome} className="min-h-11 rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 font-bold text-[var(--text)]">
+          ← Back to Home
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Garden Map + Cozy Room (Richard, 2026-11-26) ---------- */
+// The Map piece: warm and cozy from the get-go, navigation links
+// that match all the buttons/tabs. The Cozy Room piece: the first
+// inside view — no trophies yet, a few empty picture frames on the
+// walls, books on the shorter shelf, the taller shelf sparse with
+// two or three empty frames, one candle on the mantle, beige rugs.
+// Trophies earned from the Map wait in the Cozy Room. Local only.
+function GardenMapPage({ onGoHome, onGoGarden, onGoTab, onOpenCozy, profiles }: {
+  onGoHome: () => void;
+  onGoGarden: () => void;
+  onGoTab: (t: TabId) => void;
+  onOpenCozy: () => void;
+  profiles?: Profile[];
+}) {
+  const [selected, setSelected] = useState<string | null>(null);
+  const [trophies, setTrophies] = useState<string[]>(() => loadLifeGardenTrophies());
+  const [checked, setChecked] = useState<string[]>(() => loadLifeGardenChecked());
+  const [quitDays, setQuitDays] = useState<GardenQuitDays>(() => loadLifeGardenQuitDays());
+  const [quitDraft, setQuitDraft] = useState("");
+  const [message, setMessage] = useState<string | null>(null);
+  const [zoomed, setZoomed] = useState(false);
+  // Sixth piece (Richard, 2026-11-26): the flower pot on the
+  // big wrap-around porch pots, shown on the Map near the cottage, are
+  // with the patches already cleared.
+  const porchFlowerCount = LIFE_GARDEN_ITEMS.filter((item) => checked.includes(item) || trophies.includes(item)).length;
+  const porchCottageBlooms = gardenCottagePatchBlooms(loadLifeGardenVisits(), porchFlowerCount === LIFE_GARDEN_ITEMS.length);
+  const earn = (item: string) => {
+    const before = loadLifeGardenTrophies();
+    if (before.includes(item)) {
+      setMessage(`You already have a trophy for "${item}" — it is waiting in your Cozy Room.`);
+      return;
+    }
+    const next = [...before, item];
+    safeLocalSet(LIFE_GARDEN_TROPHY_KEY, JSON.stringify(next));
+    setTrophies(next);
+    const checkedNow = loadLifeGardenChecked();
+    if (!checkedNow.includes(item)) {
+      safeLocalSet(LIFE_GARDEN_KEY, JSON.stringify([...checkedNow, item]));
+      setChecked([...checkedNow, item]);
+    }
+    setMessage(before.length === 0
+      ? "Congratulations, you have your first trophy for your Cozy Room."
+      : `Congratulations, you have another trophy for your Cozy Room — that is ${next.length} trophies in your Cozy Room.`);
+  };
+  const saveQuitDay = (stop: GardenMapStop) => {
+    if (!gardenQuitDayIsValid(quitDraft)) {
+      setMessage("Pick a date first — any day counts, even one in the past.");
+      return;
+    }
+    const next = { ...quitDays, [stop.id]: quitDraft };
+    setQuitDays(next);
+    saveLifeGardenQuitDays(next);
+    setMessage(`Your quit day for ${stop.label} is ${quitDraft}. Your path has stretched out with steps to walk.`);
+  };
+  const clearQuitDay = (stop: GardenMapStop) => {
+    const next = { ...quitDays };
+    delete next[stop.id];
+    setQuitDays(next);
+    saveLifeGardenQuitDays(next);
+    setQuitDraft("");
+    setMessage(`Your quit day for ${stop.label} is cleared — the path is short again, until you pick another day.`);
+  };
+  return (
+    <div>
+      <button type="button" onClick={onGoHome} className="min-h-11 rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 font-bold text-[var(--text)]">
+        ← Back to Home
+      </button>
+      <h2 className="mt-4 font-display text-2xl font-semibold leading-snug text-[var(--text)]">Map — My Life Garden Pathway</h2>
+      <p className="mt-3 leading-relaxed text-[var(--text)]">
+        Warm and cozy from the start. One pathway from the front steps of the cottage, branching — dividing from the path. One branch to the gazebo for quiet time, dead ends for drinking, smoking, gambling, drugs and the rest, and the longevity path going on to infinity.
+      </p>
+      <button type="button" onClick={() => setZoomed(true)} aria-label="Garden map — tap to see the whole photo bigger" className="mt-4 block w-full overflow-hidden rounded-[var(--radius)] border-2 border-[var(--leaf)]">
+        <img src={myLifeGardenMap} alt="My Life Garden Pathway map — one pathway from the cottage front steps, branching to the gazebo, with dead ends for the other paths" className="w-full" />
+      </button>
+      <p className="mt-2 text-center text-sm text-[var(--dim)]">Tap the photo to see it bigger.</p>
+      {zoomed && (
+        <div role="dialog" aria-label="Garden map, enlarged" className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" onClick={() => setZoomed(false)}>
+          <button type="button" onClick={() => setZoomed(false)} aria-label="Close the enlarged photo" className="max-h-full max-w-full">
+            <img src={myLifeGardenMap} alt="My Life Garden Pathway map — enlarged" className="max-h-[85vh] w-auto max-w-full rounded-[var(--radius)]" />
+            <span className="mt-2 block text-center font-semibold text-white">Tap anywhere to close</span>
+          </button>
+        </div>
+      )}
+      <div className="felt-soft mt-4 rounded-[var(--radius)] border-2 border-[var(--leaf)] bg-[var(--leaf-soft)] px-4 py-3" role="img" aria-label="Map diagram: one pathway from the cottage front steps, branching to the gazebo, dead ends, and the longevity path going on to infinity">
+        <svg viewBox="0 0 360 250" className="w-full" aria-hidden="true">
+          <rect x="150" y="8" width="60" height="30" rx="6" fill="#e2f2da" stroke="#6aa84f" strokeWidth="2" />
+          <text x="180" y="28" textAnchor="middle" fontSize="13" fontWeight="bold" fill="#2e2117">Cottage</text>
+          <path d="M180 38 V78" stroke="#6aa84f" strokeWidth="6" strokeLinecap="round" />
+          <path d="M180 78 L118 118" stroke="#6aa84f" strokeWidth="5" strokeLinecap="round" />
+          <path d="M180 78 L242 118" stroke="#6aa84f" strokeWidth="5" strokeLinecap="round" />
+          <path d="M180 78 V208" stroke="#6aa84f" strokeWidth="5" strokeLinecap="round" />
+          <circle cx="108" cy="128" r="22" fill="#f3e2f0" stroke="#9a5a90" strokeWidth="2" />
+          <text x="108" y="132" textAnchor="middle" fontSize="11" fontWeight="bold" fill="#2e2117">Gazebo</text>
+          <text x="108" y="168" textAnchor="middle" fontSize="11" fill="#6f5a44">quiet time</text>
+          <rect x="228" y="112" width="30" height="30" rx="6" fill="#fdeeda" stroke="#d99a4e" strokeWidth="2" />
+          <text x="243" y="131" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#2e2117">🏆</text>
+          <text x="243" y="168" textAnchor="middle" fontSize="11" fill="#6f5a44">dead end</text>
+          <text x="180" y="232" textAnchor="middle" fontSize="13" fontWeight="bold" fill="#2e2117">Longevity → ∞</text>
+        </svg>
+        <p className="text-center text-sm leading-relaxed text-[var(--dim)]">Cottage at the top, gazebo branch for quiet time, dead ends with a trophy on a wooden stool, longevity going on to infinity.</p>
+      </div>
+      <GardenPorchPot flowerCount={porchFlowerCount} cottageBlooms={porchCottageBlooms} />
+      {message && (
+        <div role="status" className="felt-soft mt-4 rounded-[var(--radius)] border-2 border-[var(--sun)] bg-[var(--amber-soft)] px-4 py-3 text-center">
+          <p className="font-bold leading-relaxed text-[var(--text)]">{message}</p>
+          <button type="button" onClick={onOpenCozy} className="mt-2 min-h-11 rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 font-bold text-[var(--text)]">See my Cozy Room →</button>
+        </div>
+      )}
+      <Section title="Tap a place on the map">
+        <ul className="space-y-2">
+          {GARDEN_MAP_STOPS.map((stop) => {
+            const earned = stop.items.filter((item) => trophies.includes(item));
+            const tabLabel = stop.tab ? (TABS.find((t) => t.id === stop.tab)?.label ?? stop.label) : null;
+            const open = selected === stop.id;
+            // A quit day for this path: the one already set on its
+            // tab counts first; otherwise the one picked here in
+            // the garden. Only the five tabs with a quit date
+            // (Alcohol, Smoking, Gambling, Drugs, Codependency)
+            // have a quit day to set.
+            const isQuitStop = stop.tab === "alcohol" || stop.tab === "smoking" || stop.tab === "gambling" || stop.tab === "drugs" || stop.tab === "codependency";
+            const tabProfile = stop.tab != null ? profiles?.find((p) => p.category === stop.tab) : undefined;
+            const tabQuitDay = tabProfile?.quitDate ?? null;
+            const gardenQuitDay = quitDays[stop.id] ?? null;
+            const effectiveQuitDay = tabQuitDay ?? gardenQuitDay;
+            const flowerCount = stop.items.filter((item) => checked.includes(item) || trophies.includes(item)).length;
+            return (
+              <li key={stop.id}>
+                <button type="button" onClick={() => { const next = open ? null : stop.id; setSelected(next); if (next) setQuitDraft(quitDays[next] ?? ""); }} aria-expanded={open} className="felt-card w-full rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] p-4 text-left">
+                  <p className="font-display text-lg font-black text-[var(--text)]">{stop.label}</p>
+                  <p className="mt-1 text-sm font-bold uppercase tracking-widest text-[#6aa84f]">{GARDEN_MAP_KIND_LABEL[stop.kind]}</p>
+                  <p className="mt-1 leading-relaxed text-[var(--dim)]">{stop.note}</p>
+                  {earned.length > 0 && <p className="mt-1 font-bold text-[var(--text)]">Trophy earned — in your Cozy Room ✓ ({earned.length} of {stop.items.length})</p>}
+                  {stop.items.length > 0 && <p className="mt-1 text-sm leading-relaxed text-[var(--dim)]">{flowerCount} of {stop.items.length} {stop.items.length === 1 ? "patch" : "patches"} in flower 🌸 — the rest are weeds still beside this path.</p>}
+                  {effectiveQuitDay && <p className="mt-1 text-sm font-bold leading-relaxed text-[var(--text)]">Quit day {effectiveQuitDay} — this path has stretched out with steps to walk.</p>}
+                  <p className="mt-2 text-sm font-bold text-[var(--accent)]">{open ? "Close ↑" : "Tap to open →"}</p>
+                </button>
+                {open && (
+                  <div className="mt-2 rounded-[var(--radius)] border-2 border-[var(--leaf)] bg-[var(--leaf-soft)] px-4 py-3">
+                    {stop.items.length > 0 ? (
+                      <>
+                        <p className="font-bold leading-relaxed text-[var(--text)]">What is already true for you?</p>
+                        <div className="mt-3 space-y-2">
+                          {stop.items.map((item) => (
+                            <button key={item} type="button" onClick={() => earn(item)} className="min-h-14 w-full rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-left font-bold text-[var(--text)]">
+                              {(checked.includes(item) || trophies.includes(item) ? "🌸 " : "🌿 ") + (trophies.includes(item) ? `✓ ${item} — trophy earned` : item)}
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    ) : stop.id === "cozy" ? (
+                      <p className="leading-relaxed text-[var(--text)]">First view: no trophies yet, and a few empty picture frames on the walls. Room for 100+ trophies.</p>
+                    ) : (
+                      <p className="leading-relaxed text-[var(--text)]">Start here, from the front steps of the cottage — you have already been invited in.</p>
+                    )}
+                    {isQuitStop && (
+                      <div className="mt-4">
+                        <p className="font-bold leading-relaxed text-[var(--text)]">Your quit day for this path</p>
+                        {tabQuitDay ? (
+                          <p className="mt-1 leading-relaxed text-[var(--text)]">
+                            Your quit day on the {tabLabel} tab is {tabQuitDay}. That is the day this path stretches from — a quit day in the past still counts.
+                          </p>
+                        ) : (
+                          <>
+                            <p className="mt-1 leading-relaxed text-[var(--text)]">
+                              Pick a quit day here, or set it on the {tabLabel} tab — either one counts. A quit day in the past still counts: if you already stopped, you are already in recovery, staying stopped.
+                            </p>
+                            <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                              <input type="date" value={quitDraft} onChange={(e) => setQuitDraft(e.target.value)} aria-label={`Pick a quit day for ${stop.label}`} className="min-h-14 flex-1 rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 text-lg text-[var(--text)]" />
+                              <button type="button" onClick={() => saveQuitDay(stop)} className="min-h-14 rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-5 font-bold text-[var(--text)]">Save my quit day</button>
+                              {gardenQuitDay && (
+                                <button type="button" onClick={() => clearQuitDay(stop)} className="min-h-14 rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-5 font-bold text-[var(--text)]">Clear</button>
+                              )}
+                            </div>
+                          </>
+                        )}
+                        <div className="mt-4">
+                          <GardenPathSteps quitDay={effectiveQuitDay} />
+                        </div>
+                        <p className="mt-3 leading-relaxed text-[var(--text)]">
+                          No judging here, and no punishment for a slip — a slip is part of recovery. This path just waits for you, one step at a time.
+                        </p>
+                      </div>
+                    )}
+                    <div className="mt-3 space-y-2">
+                      {stop.tab && <button type="button" onClick={() => onGoTab(stop.tab!)} className="min-h-11 w-full rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 font-bold text-[var(--text)]">Visit {tabLabel} →</button>}
+                      {stop.id === "cozy" && <button type="button" onClick={onOpenCozy} className="min-h-11 w-full rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 font-bold text-[var(--text)]">Open my Cozy Room →</button>}
+                      {stop.id === "garden" && <button type="button" onClick={onGoGarden} className="min-h-11 w-full rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 font-bold text-[var(--text)]">Back to the garden list →</button>}
+                    </div>
+                  </div>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      </Section>
+      <p className="mt-4 leading-relaxed text-[var(--text)]">
+        Trophies are kept on this phone only — nothing is sent anywhere, and nothing is scored yet. No calorie counting, no weighing, no judging.
+      </p>
+      <div className="mt-6 space-y-3">
+        <button type="button" onClick={onOpenCozy} className="min-h-11 w-full rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 font-bold text-[var(--text)]">Inside view — my Cozy Room →</button>
+        <button type="button" onClick={onGoGarden} className="min-h-11 w-full rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 font-bold text-[var(--text)]">Back to the garden list</button>
+        <button type="button" onClick={onGoHome} className="min-h-11 w-full rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 font-bold text-[var(--text)]">← Back to Home</button>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- My Life Garden Pathway — books & photos for the Cozy Room ---------- */
+// Fourth piece (Richard, 2026-11-26): your favourite books, and
+// books you would like to read, as reasonable facsimiles on the
+// bookshelf — a book spine with the title, in its own colours,
+// never an exact cover copy. And your own photos for the empty
+// picture frames — tap a frame, pick a photo from your own photo
+// library, and it takes that frame's place. First view still has
+// a few empty frames; they fill as you choose. Both stay on this
+// phone only, in this browser's localStorage — nothing is sent
+// anywhere, no account. Path expansion / quit day and weeds
+// turning to flowers are built in the garden and the Map (fifth
+// piece, Richard, 2026-11-26). Held for later pieces, NOT built
+// here: badges, points for weeds.
+const LIFE_GARDEN_BOOKS_KEY = "richards-resource:life-garden:books:v1";
+const LIFE_GARDEN_FRAMES_KEY = "richards-resource:life-garden:frames:v1";
+const MAX_GARDEN_BOOKS = 20;
+const GARDEN_FRAME_COUNT = 4;
+
+type GardenBookKind = "favourite" | "to-read";
+type GardenBook = { id: string; title: string; kind: GardenBookKind };
+
+// Warm spine colours, picked from the title so the same book
+// always gets the same colour.
+const GARDEN_BOOK_COLOURS = ["#7a5a3a", "#4a7a4f", "#3f6fb5", "#9a5a90", "#a84a3f", "#d99a4e", "#3f8a8a", "#6b4a8a"];
+
+function gardenBookColour(book: GardenBook): string {
+  let hash = 0;
+  for (const ch of `${book.kind}:${book.title}`) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
+  return GARDEN_BOOK_COLOURS[hash % GARDEN_BOOK_COLOURS.length] ?? "#7a5a3a";
+}
+
+function loadLifeGardenBooks(): GardenBook[] {
+  try {
+    const parsed: unknown = JSON.parse(safeLocalGet(LIFE_GARDEN_BOOKS_KEY) ?? "[]");
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter((x): x is GardenBook => typeof x === "object" && x !== null
+        && typeof (x as GardenBook).id === "string" && typeof (x as GardenBook).title === "string"
+        && ((x as GardenBook).kind === "favourite" || (x as GardenBook).kind === "to-read"))
+      .map((x) => ({ id: x.id, title: x.title.trim().slice(0, 80), kind: x.kind }))
+      .filter((x) => x.title.length > 0)
+      .slice(0, MAX_GARDEN_BOOKS);
+  } catch { return []; }
+}
+
+function loadLifeGardenFrames(): (string | null)[] {
+  try {
+    const parsed: unknown = JSON.parse(safeLocalGet(LIFE_GARDEN_FRAMES_KEY) ?? "[]");
+    if (!Array.isArray(parsed)) return Array(GARDEN_FRAME_COUNT).fill(null);
+    return Array.from({ length: GARDEN_FRAME_COUNT }, (_, i) => {
+      const v: unknown = parsed[i];
+      return typeof v === "string" && v.startsWith("data:image/") ? v : null;
+    });
+  } catch { return Array(GARDEN_FRAME_COUNT).fill(null); }
+}
+
+// Shrink a photo to a small size before keeping it, so a big
+// phone photo cannot fill the phone's storage. Redrawing it
+// also drops the photo's location and camera details — only the
+// picture itself is kept, on this phone only.
+function downscaleGardenPhoto(file: File): Promise<string | null> {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onerror = () => resolve(null);
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => resolve(null);
+      img.onload = () => {
+        try {
+          const max = 600;
+          const scale = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+          const canvas = document.createElement("canvas");
+          canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
+          canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
+          const ctx = canvas.getContext("2d");
+          if (!ctx) { resolve(typeof reader.result === "string" ? reader.result : null); return; }
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL("image/jpeg", 0.72));
+        } catch { resolve(null); }
+      };
+      img.src = typeof reader.result === "string" ? reader.result : "";
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function CozyRoomPage({ onGoHome, onGoGarden }: { onGoHome: () => void; onGoGarden: () => void }) {
+  const [trophies] = useState<string[]>(() => loadLifeGardenTrophies());
+  const [zoomed, setZoomed] = useState(false);
+  // Fourth piece (Richard, 2026-11-26): your books and your photos.
+  const [books, setBooks] = useState<GardenBook[]>(() => loadLifeGardenBooks());
+  const [frames, setFrames] = useState<(string | null)[]>(() => loadLifeGardenFrames());
+  const [bookTitle, setBookTitle] = useState("");
+  const [bookKind, setBookKind] = useState<GardenBookKind>("favourite");
+  const [bookNote, setBookNote] = useState<string | null>(null);
+  const [frameNote, setFrameNote] = useState<string | null>(null);
+  const addBook = () => {
+    const title = bookTitle.trim().slice(0, 80);
+    if (!title) { setBookNote("Type a book title first, then tap Add a book."); return; }
+    if (books.some((b) => b.title.toLowerCase() === title.toLowerCase() && b.kind === bookKind)) {
+      setBookNote("That book is already on your bookshelf.");
+      return;
+    }
+    if (books.length >= MAX_GARDEN_BOOKS) { setBookNote("Your bookshelf is full for now — 20 books is plenty to start with."); return; }
+    const next = [...books, { id: `${Date.now()}-${Math.random().toString(36).slice(2)}`, title, kind: bookKind }];
+    setBooks(next);
+    safeLocalSet(LIFE_GARDEN_BOOKS_KEY, JSON.stringify(next));
+    setBookTitle("");
+    setBookNote(null);
+  };
+  const removeBook = (id: string) => {
+    const next = books.filter((b) => b.id !== id);
+    setBooks(next);
+    if (next.length === 0) safeLocalRemove(LIFE_GARDEN_BOOKS_KEY); else safeLocalSet(LIFE_GARDEN_BOOKS_KEY, JSON.stringify(next));
+  };
+  const addPhoto = async (slot: number, file: File | undefined) => {
+    if (!file) return;
+    const small = await downscaleGardenPhoto(file);
+    if (!small) { setFrameNote("That photo could not be read — please try another one."); return; }
+    const next = frames.map((f, i) => (i === slot ? small : f));
+    safeLocalSet(LIFE_GARDEN_FRAMES_KEY, JSON.stringify(next));
+    // safeLocalSet stays quiet when the store is full, so check
+    // the photo really was kept before showing it.
+    const kept = safeLocalGet(LIFE_GARDEN_FRAMES_KEY);
+    if (!kept || !kept.includes(small.slice(0, 80))) {
+      setFrameNote("That photo was too big to keep on this phone — please try a smaller one.");
+      return;
+    }
+    setFrames(next);
+    setFrameNote(null);
+  };
+  const clearFrame = (slot: number) => {
+    const next = frames.map((f, i) => (i === slot ? null : f));
+    setFrames(next);
+    if (next.every((f) => f === null)) safeLocalRemove(LIFE_GARDEN_FRAMES_KEY); else safeLocalSet(LIFE_GARDEN_FRAMES_KEY, JSON.stringify(next));
+  };
+  return (
+    <div>
+      <button type="button" onClick={onGoHome} className="min-h-11 rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 font-bold text-[var(--text)]">
+        ← Back to Home
+      </button>
+      <h2 className="mt-4 font-display text-2xl font-semibold leading-snug text-[var(--text)]">Inside view — my Cozy Room</h2>
+      <button type="button" onClick={() => setZoomed(true)} aria-label="My Cozy Room — tap to see the whole photo bigger" className="mt-4 block w-full overflow-hidden rounded-[var(--radius)] border-2 border-[var(--leaf)]">
+        <img src={myLifeGardenCozyRoom} alt="My Cozy Room, first view — a cozy warm fireplace-lit sitting room with one candle on the mantle, beige rugs, books on the shorter shelf, a taller shelf sparse with two or three empty frames, and a few empty picture frames on the walls, no trophies yet" className="w-full" />
+      </button>
+      <p className="mt-2 text-center text-sm text-[var(--dim)]">Tap the photo to see it bigger.</p>
+      {zoomed && (
+        <div role="dialog" aria-label="My Cozy Room, enlarged" className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" onClick={() => setZoomed(false)}>
+          <button type="button" onClick={() => setZoomed(false)} aria-label="Close the enlarged photo" className="max-h-full max-w-full">
+            <img src={myLifeGardenCozyRoom} alt="My Cozy Room — enlarged" className="max-h-[85vh] w-auto max-w-full rounded-[var(--radius)]" />
+            <span className="mt-2 block text-center font-semibold text-white">Tap anywhere to close</span>
+          </button>
+        </div>
+      )}
+      <p className="mt-4 leading-relaxed text-[var(--text)]">
+        Your Cozy Room — first view: no trophies yet, and a few empty picture frames on the walls. Books on the shorter shelf, the taller shelf sparse with two or three empty frames, one candle on the mantle, beige rugs. Warm and cozy from the start — your personal cozy space.
+      </p>
+      <Section title="Trophies in your Cozy Room">
+        {trophies.length === 0 ? (
+          <p className="leading-relaxed text-[var(--text)]">No trophies in your Cozy Room yet — earn your first one from the Map. There is room for 100+ trophies here.</p>
+        ) : (
+          <ul className="space-y-2">
+            {trophies.map((trophy) => (
+              <li key={trophy} className="felt-card rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 py-3 font-bold text-[var(--text)]">🏆 {trophy}</li>
+            ))}
+          </ul>
+        )}
+      </Section>
+      <Section title="Your bookshelf">
+        <p className="leading-relaxed text-[var(--text)]">
+          Your favourite books, and books you would like to read. Type a title, tap Add a book, and a reasonable facsimile joins your bookshelf — a book spine with the title, in its own colours. Nothing is an exact cover copy.
+        </p>
+        <div className="mt-3 flex flex-col gap-2">
+          <input
+            type="text"
+            value={bookTitle}
+            maxLength={80}
+            placeholder="A book title"
+            aria-label="A book title"
+            onChange={(e) => setBookTitle(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") addBook(); }}
+            className="min-h-14 flex-1 rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 text-lg text-[var(--text)]"
+          />
+          <select
+            value={bookKind}
+            aria-label="Is this a favourite book, or a book you would like to read?"
+            onChange={(e) => setBookKind(e.target.value as GardenBookKind)}
+            className="min-h-14 rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 text-lg font-bold text-[var(--text)]"
+          >
+            <option value="favourite">A favourite book</option>
+            <option value="to-read">A book I would like to read</option>
+          </select>
+          <button type="button" onClick={addBook} className="min-h-14 rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-5 font-bold text-[var(--text)]">
+            Add a book
+          </button>
+        </div>
+        {bookNote && <p role="status" className="mt-2 font-bold text-[var(--text)]">{bookNote}</p>}
+        {books.length === 0 ? (
+          <p className="mt-3 leading-relaxed text-[var(--text)]">Your bookshelf is waiting — the shorter shelf in the picture has books, and this shelf is yours to fill, one book at a time.</p>
+        ) : (
+          <>
+            <p className="mt-3 font-bold text-[var(--text)]">{books.length} {books.length === 1 ? "book" : "books"} on your bookshelf</p>
+            <div className="mt-3 flex flex-wrap items-end gap-2 rounded-[var(--radius)] border-2 border-[var(--border)] bg-[#8a6b4f] px-3 pb-2 pt-3">
+              {books.map((book) => (
+                <div key={book.id} className="flex flex-col items-center gap-1">
+                  <div
+                    role="img"
+                    aria-label={`${book.kind === "favourite" ? "A favourite book" : "A book to read"}: ${book.title}`}
+                    title={book.title}
+                    style={{ backgroundColor: gardenBookColour(book) }}
+                    className="flex h-[9rem] w-10 items-center justify-center overflow-hidden rounded-sm border border-black/20"
+                  >
+                    <span className="font-bold text-white" style={{ writingMode: "vertical-rl", fontSize: "13px", lineHeight: "1.1" }}>{book.title}</span>
+                  </div>
+                  <span className="text-xs font-bold text-white">{book.kind === "favourite" ? "Favourite" : "To read"}</span>
+                  <button type="button" onClick={() => removeBook(book.id)} aria-label={`Remove ${book.title} from your bookshelf`} className="min-h-11 rounded-[var(--radius)] border border-white/60 bg-white/90 px-2 text-xs font-bold text-[var(--text)]">
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+        <p className="mt-2 text-sm leading-relaxed text-[var(--dim)]">Your books stay on this phone only — nothing is sent anywhere.</p>
+      </Section>
+      <Section title="Your picture frames">
+        <p className="leading-relaxed text-[var(--text)]">
+          A few empty frames on the walls — tap a frame, pick a photo from your own photo library, and it takes that frame&apos;s place. Your fond memory photos, in your Cozy Room.
+        </p>
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          {frames.map((photo, slot) => (
+            <div key={slot} className="flex flex-col gap-2">
+              <label htmlFor={`garden-frame-${slot}`} className="flex min-h-40 cursor-pointer items-center justify-center overflow-hidden rounded-[var(--radius)] border-4 border-[#8a6b4f] bg-[var(--surface)]">
+                {photo ? (
+                  <img src={photo} alt={`Your photo in frame ${slot + 1}`} className="h-full max-h-40 w-full object-contain bg-black/10" />
+                ) : (
+                  <span className="px-3 py-6 text-center font-bold leading-relaxed text-[var(--dim)]">Empty frame {slot + 1} — tap to add a photo</span>
+                )}
+                <input
+                  id={`garden-frame-${slot}`}
+                  type="file"
+                  accept="image/*"
+                  aria-label={`Choose a photo from your photo library for frame ${slot + 1}`}
+                  className="hidden"
+                  onChange={(e) => { void addPhoto(slot, e.target.files?.[0]); e.target.value = ""; }}
+                />
+              </label>
+              {photo && (
+                <button type="button" onClick={() => clearFrame(slot)} aria-label={`Remove the photo from frame ${slot + 1}`} className="min-h-11 rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-3 text-sm font-bold text-[var(--text)]">
+                  Remove photo
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+        {frameNote && <p role="status" className="mt-2 font-bold text-[var(--text)]">{frameNote}</p>}
+        <p className="mt-2 text-sm leading-relaxed text-[var(--dim)]">Your photos stay on this phone only — nothing is sent anywhere. A photo is shrunk to a small size before it is kept, so it cannot fill your phone.</p>
+      </Section>
+      <p className="mt-2 text-sm leading-relaxed text-[var(--dim)]">
+        What is in your Cozy Room stays on this phone, in this browser only — nothing is sent anywhere.
+      </p>
+      <div className="mt-6 space-y-3">
+        <button type="button" onClick={onGoGarden} className="min-h-11 w-full rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 font-bold text-[var(--text)]">See the Map →</button>
+        <button type="button" onClick={onGoHome} className="min-h-11 w-full rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 font-bold text-[var(--text)]">← Back to Home</button>
+      </div>
+    </div>
+  );
+}
+
 function HomePage({ profiles, logs, pointEvents, dayMarks, onGo, onSurf }: {
   profiles: Profile[];
   logs: LogEntry[];
@@ -4701,12 +6014,26 @@ function HomePage({ profiles, logs, pointEvents, dayMarks, onGo, onSurf }: {
   // one button that opens a little pop-up with the explanation,
   // instead of the whole big expanded list on Home.
   const [pointsOpen, setPointsOpen] = useState(false);
+  // My Life Garden Pathway (Richard, 2026-11-26): a Home overlay
+  // view, not a new top tab — the garden opens from its Home
+  // button below and comes straight back to Home.
+  const [gardenOpen, setGardenOpen] = useState(false);
+  // Inside view (Richard, 2026-11-26): an "Inside view" option
+  // button as an addition to the Home screen, opening the Cozy
+  // Room first inside view — no trophies yet, empty frames.
+  const [cozyOpen, setCozyOpen] = useState(false);
   const today = localDay();
   const summaries = (Object.keys(CAT_LABEL) as Category[]).map((c) => {
     const p = profiles.find((x) => x.category === c);
     const days = daysSince(p?.quitDate);
     return { c, days, saved: days != null && p?.dailyCost != null ? p.dailyCost * days : null };
   });
+  if (cozyOpen) {
+    return <CozyRoomPage onGoHome={() => { setCozyOpen(false); if (typeof window !== "undefined") window.scrollTo(0, 0); }} onGoGarden={() => { setCozyOpen(false); setGardenOpen(true); if (typeof window !== "undefined") window.scrollTo(0, 0); }} />;
+  }
+  if (gardenOpen) {
+    return <LifeGardenPage onGoHome={() => { setGardenOpen(false); if (typeof window !== "undefined") window.scrollTo(0, 0); }} onGoTab={onGo} profiles={profiles} />;
+  }
   return (
     <div>
       {/* "We are so Happy you are here" (Richard, 2026-11-18, moved
@@ -4962,6 +6289,36 @@ function HomePage({ profiles, logs, pointEvents, dayMarks, onGo, onSurf }: {
       <div className="felt-soft mt-8 rounded-[var(--radius)] border-2 border-[var(--sun)] bg-[var(--amber-soft)] px-4 py-3 text-center" role="note">
         <p className="font-bold leading-relaxed text-[var(--text)]">Why we made it</p>
         <p className="mt-1 leading-relaxed text-[var(--text)]">To prove AI is here to help, Richard&apos;s Resource and Muse created this free app to help everyone.</p>
+      </div>
+
+      {/* My Life Garden Pathway (Richard, 2026-11-25/26): first
+          piece only — a Home button after the existing Home
+          content, in the same style as the other Home cards.
+          Nothing above it moved. */}
+      <div className="mt-8">
+        <button type="button" onClick={() => { setGardenOpen(true); if (typeof window !== "undefined") window.scrollTo(0, 0); }} style={{ backgroundColor: "#e2f2da", borderColor: "#6aa84f" }} className="felt-card felt-pressable w-full rounded-[var(--radius)] border-4 p-6 text-left">
+          <p className="flex items-center gap-3 font-display text-2xl font-black text-[#2e2117] sm:text-3xl">
+            <FlowerIcon color="var(--bloom)" size={40} />
+            My Life Garden Pathway
+          </p>
+          <p className="mt-2 text-lg font-bold leading-snug text-[#2e2117]">Your pathway, your garden — clear the weeds, one step at a time.</p>
+          <p className="mt-1 leading-relaxed text-[#6f5a44]">See your pathway from the front steps of the cottage, and tell us what is already true for you. Gentle, no counting, no judging.</p>
+          <p className="mt-3 text-sm font-bold uppercase tracking-widest text-[#6aa84f]">Tap to open My Life Garden Pathway →</p>
+        </button>
+      </div>
+
+      {/* Inside view (Richard, 2026-11-26): an addition to the
+          Home screen, right after the garden button — it opens
+          the Cozy Room first inside view. Nothing above it moved. */}
+      <div className="mt-4">
+        <button type="button" onClick={() => { setCozyOpen(true); if (typeof window !== "undefined") window.scrollTo(0, 0); }} style={{ backgroundColor: "#fbe3ee", borderColor: "#c95a8a" }} className="felt-card felt-pressable w-full rounded-[var(--radius)] border-4 p-6 text-left">
+          <p className="flex items-center gap-3 font-display text-2xl font-black text-[#2e2117] sm:text-3xl">
+            Inside view — my Cozy Room
+          </p>
+          <p className="mt-2 text-lg font-bold leading-snug text-[#2e2117]">Your cozy room inside the cottage — warm and cozy from the start.</p>
+          <p className="mt-1 leading-relaxed text-[#6f5a44]">First view: no trophies yet, a few empty picture frames on the walls, waiting for the trophies you earn and the photos you choose.</p>
+          <p className="mt-3 text-sm font-bold uppercase tracking-widest text-[#c95a8a]">Tap to open Inside view →</p>
+        </button>
       </div>
     </div>
   );

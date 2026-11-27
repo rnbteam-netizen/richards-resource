@@ -5,6 +5,7 @@ import { sounds, type CalmToneKind } from "./sound";
 import { speakText, stopSpeaking } from "./speech";
 import welcomeCottage from "./assets/welcome-cottage.jpg";
 import myLifeGarden from "./assets/my-life-garden.webp";
+import myLifeGardenGazebo from "./assets/my-life-garden-gazebo.webp";
 import myLifeGardenCozyRoom from "./assets/my-life-garden-cozy-room.webp";
 import { shareApp } from "./share";
 import { searchApp, loadLastPlace, saveLastPlace, LAST_PLACE_LABELS } from "./search";
@@ -5843,13 +5844,22 @@ function GardenMapPage({ onGoHome, onGoGarden, onGoTab, onOpenCozy, profiles, ga
                     is open, the picture renders BEFORE the stop
                     button / heading, at the very top, big, and
                     the heading, Visit link and features come
-                    below it, to scroll down to. Reversed too
-                    (see below): flipped horizontally, leading
-                    from the cottage to the field. Same bundled
-                    image, no new binary; caption / alt unchanged. */}
+                    below it, to scroll down to.
+                    Replace (Richard, 2026-11-27: "Yes M. That's
+                    the one. Perfect. Please use that one.
+                    Replace."): the trail pic (my-life-garden.webp,
+                    weedy path, gazebo small in the distance) is
+                    replaced here — Gazebo panel only — by the
+                    octagonal gazebo pic (my-life-garden-gazebo.webp):
+                    octagonal wooden gazebo, pyramid roof, bench
+                    with pillows / cushions on the left, rocking
+                    chair on the right, candles in the middle.
+                    NOT flipped: this pic already faces the right
+                    way. The trail pic stays, flipped, for the
+                    garden first pic and its zoom. Caption unchanged. */}
                 {open && stop.id === "gazebo" && (
                   <figure className="mb-3 overflow-hidden rounded-[var(--radius)] border-2 border-[var(--leaf)]">
-                    <img src={myLifeGarden} alt="The gazebo in My Life Garden Pathway — the beautiful octagonal gazebo off to the side of the pathway, with the cottage beyond" className="w-full" style={{ transform: "scaleX(-1)" }} />
+                    <img src={myLifeGardenGazebo} alt="The gazebo in My Life Garden Pathway — the beautiful octagonal wooden gazebo, with a bench with pillows and cushions, a rocking chair, and candles" className="w-full" />
                     <figcaption className="bg-[var(--surface)] px-4 py-3 text-center font-bold leading-relaxed text-[var(--text)]">The gazebo — a quiet place, off to the side of the path.</figcaption>
                   </figure>
                 )}

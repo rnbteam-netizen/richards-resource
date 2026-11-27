@@ -41,19 +41,22 @@ test("gazebo pic is truly first: before the Gazebo heading, Visit link and featu
   assert.ok(!panel.includes("The gazebo in My Life Garden Pathway"), "the panel below the heading must not contain a second copy of the gazebo picture");
 });
 
-test("weedy trail pic is reversed everywhere it appears: cottage to the field", () => {
-  // Every use of the bundled trail picture is flipped
+test("weedy trail pic is reversed everywhere it still appears: cottage to the field", () => {
+  // Every remaining use of the bundled trail picture is flipped
   // horizontally (scaleX(-1)), so the path leads from the
-  // cottage out to the field: garden first pic, its enlarged
-  // zoom, and the Gazebo panel pic.
+  // cottage out to the field: garden first pic and its enlarged
+  // zoom. The Gazebo panel pic is no longer the trail pic — it
+  // was replaced (Richard, 2026-11-27) by the octagonal gazebo
+  // pic, which is NOT flipped.
   const flipped = src.match(/src=\{myLifeGarden\}[^>]*style=\{\{ transform: "scaleX\(-1\)" \}\}/g) ?? [];
-  assert.equal(flipped.length, 3, "all three uses of the trail picture must be flipped horizontally");
+  assert.equal(flipped.length, 2, "both remaining uses of the trail picture must be flipped horizontally");
   assert.ok(garden.includes('style={{ transform: "scaleX(-1)" }}'), "the garden first pic must be flipped");
-  assert.ok(map.includes('style={{ transform: "scaleX(-1)" }}'), "the Gazebo pic must be flipped");
+  assert.ok(!map.includes('src={myLifeGarden}'), "the Gazebo panel must no longer use the trail pic");
   // Caption / alt text unchanged by the flip.
   assert.ok(src.includes("My Life Garden Pathway — a long pathway of small flat wooden stepping stones, with weeds bordering both sides, leading up to the cottage, with the octagonal gazebo off to the side"), "garden pic alt text unchanged");
-  assert.ok(src.includes("The gazebo in My Life Garden Pathway — the beautiful octagonal gazebo off to the side of the pathway, with the cottage beyond"), "gazebo pic alt text unchanged");
   assert.ok(src.includes("The gazebo — a quiet place, off to the side of the path."), "gazebo pic caption unchanged");
   // The Cozy Room picture is a different picture and must NOT be flipped.
   assert.ok(!src.includes("src={myLifeGardenCozyRoom}") || !/src=\{myLifeGardenCozyRoom\}[^>]*scaleX\(-1\)/.test(src), "the Cozy Room picture must not be flipped");
+  // The new octagonal gazebo pic must NOT be flipped either.
+  assert.ok(!/src=\{myLifeGardenGazebo\}[^>]*scaleX\(-1\)/.test(src), "the octagonal gazebo pic must not be flipped");
 });

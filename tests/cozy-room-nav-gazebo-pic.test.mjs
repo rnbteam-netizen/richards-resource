@@ -83,22 +83,25 @@ test("search finds the Cozy Room: cozy room, trophy, cottage inside", () => {
 });
 
 test("tapping Gazebo shows the beautiful gazebo pic first, then the features below it", () => {
-  // The open Gazebo stop must show the garden picture — the one
-  // with the octagonal gazebo off to the side — big, before the
-  // Visit link and the quiet-moment features, so the first thing
-  // you see is the gazebo, and you scroll down for the features.
-  // No new image: the bundled garden picture is reused; the
-  // snapshot cannot carry binary.
+  // The open Gazebo stop must show the octagonal gazebo picture
+  // — bench with pillows, rocking chair, candles — big, before
+  // the Visit link and the quiet-moment features, so the first
+  // thing you see is the gazebo, and you scroll down for the
+  // features.
   // Update (Richard, 2026-11-27): his screenshot showed the
   // heading text above the picture, so the pic was second, not
   // first. The picture now renders BEFORE the stop button /
   // heading, at the very top of the open Gazebo stop — not
   // inside the panel below the heading.
+  // Replace (Richard, 2026-11-27: "Yes M. That's the one.
+  // Perfect. Please use that one. Replace."): the trail pic
+  // (my-life-garden.webp) is replaced here, Gazebo panel only,
+  // by the octagonal gazebo pic (my-life-garden-gazebo.webp).
   const stops = map.slice(map.indexOf("GARDEN_MAP_STOPS.map"), map.indexOf("</ul>", map.indexOf("GARDEN_MAP_STOPS.map")));
   assert.ok(stops.includes("stop.id === \"gazebo\""), "the Gazebo stop must have its own picture block");
   const picAt = stops.indexOf("The gazebo in My Life Garden Pathway");
   assert.ok(picAt !== -1, "the Gazebo stop must show the gazebo picture, with its own alt text");
-  assert.ok(stops.slice(0, picAt).includes("src={myLifeGarden}"), "the gazebo picture must be the bundled garden picture");
+  assert.ok(stops.slice(0, picAt).includes("src={myLifeGardenGazebo}"), "the gazebo picture must be the octagonal gazebo picture, not the trail pic");
   const headingAt = stops.indexOf("{stop.label}");
   assert.ok(headingAt !== -1 && picAt < headingAt, "the gazebo picture must come before the stop heading, so it is truly first, not second");
   const visitAt = stops.indexOf("Visit {tabLabel} →");

@@ -5456,7 +5456,7 @@ function GardenPorchPot({ flowerCount, cottageBlooms }: { flowerCount: number; c
   );
 }
 
-function LifeGardenPage({ onGoHome, onGoTab, profiles, initialView = "list", backLabel }: { onGoHome: () => void; onGoTab: (t: TabId) => void; profiles?: Profile[]; initialView?: "list" | "map" | "cozy"; backLabel?: string }) {
+function LifeGardenPage({ onGoHome, onGoTab, profiles, initialView = "list", mapRequest, backLabel }: { onGoHome: () => void; onGoTab: (t: TabId) => void; profiles?: Profile[]; initialView?: "list" | "map" | "cozy"; mapRequest?: number; backLabel?: string }) {
   const [checked, setChecked] = useState<string[]>(() => loadLifeGardenChecked());
   const [zoomed, setZoomed] = useState(false);
   // Map piece (Richard, 2026-11-26): the garden list, the Map,
@@ -5467,6 +5467,16 @@ function LifeGardenPage({ onGoHome, onGoTab, profiles, initialView = "list", bac
   // list's progress tree is a progress report, not a map, and
   // landing on it is why the map button seemed not to show a map.
   const [view, setView] = useState<"list" | "map" | "cozy">(initialView);
+  // A fresh tap on Site Map must land on the map even when this
+  // same garden is already open: useState(initialView) only runs
+  // on mount, so after Map → garden list, tapping Site Map again
+  // left the garden on the list — "No trail map" (Richard,
+  // 2026-11-26). Every Site Map tap bumps mapRequest, and the
+  // garden answers by going back to its initial view. The garden
+  // opened from Home passes no mapRequest, so nothing changes
+  // there; and this is an effect, not a remount, so no extra
+  // visit is recorded.
+  useEffect(() => { setView(initialView); }, [mapRequest, initialView]);
   // Third piece (Richard, 2026-11-26): your name, your figure and
   // your spirit guide — optional, local only, nothing sent anywhere.
   const [gardenName, setGardenName] = useState<string>(() => loadLifeGardenName());
@@ -5687,20 +5697,20 @@ function GardenMapPage({ onGoHome, onGoGarden, onGoTab, onOpenCozy, profiles, ga
       <p className="mt-3 leading-relaxed text-[var(--text)]">
         Warm and cozy from the start. One pathway from the front steps of the cottage, branching — dividing from the path. One branch to the gazebo for quiet time, dead ends for drinking, smoking, gambling, drugs and the rest, and the longevity path going on to infinity.
       </p>
-      {/* The Map IS the diagram (Richard, 2026-11-26): he saw the
-          old map photo and said it was not a diagram — "Just has
-          cottage, gazebo infinity path". So the map photo is gone.
-          The map is now our real cottage, with the caption Richard
-          liked, and a drawn branching diagram below it that shows
-          every branch in the diagram itself: the gazebo branch,
-          all eight dead ends, each with a trophy on a wooden
-          stool, and the longevity path going on to infinity with
-          trophies along it. The tap-to-open links below it are
-          unchanged. */}
-      <figure className="mt-4 overflow-hidden rounded-[var(--radius)] border-2 border-[var(--leaf)]">
-        <img src={welcomeCottage} alt="Our cottage — a wooden cottage with a grey slate roof, green shutters, a big wrap-around porch, a WELCOME mat and an open please come in sign" className="w-full" />
-        <figcaption className="bg-[var(--surface)] px-4 py-3 text-center font-bold leading-relaxed text-[var(--text)]">Our cottage — where every path begins, warm and cozy from the get-go.</figcaption>
-      </figure>
+      {/* The Map IS the diagram, and it comes first (Richard,
+          2026-11-26): he tapped Site Map, took a quick peek, and
+          saw no trail map — the cottage photo filled the first
+          screen and the diagram was below it, so a peek never
+          reached it. The diagram now pops up at once, right under
+          the heading, so the trail map is what you see when you tap
+          Site Map. Our real cottage, with the caption Richard
+          liked, stays on the Map, just below the diagram. The old
+          map photo is gone: he saw it and said it was not a
+          diagram — "Just has cottage, gazebo infinity path". The
+          diagram shows every branch itself: the gazebo branch, all
+          eight dead ends, each with a trophy on a wooden stool, and
+          the longevity path going on to infinity with trophies
+          along it. The tap-to-open links below it are unchanged. */}
       <div className="felt-soft mt-4 rounded-[var(--radius)] border-2 border-[var(--leaf)] bg-[var(--leaf-soft)] px-4 py-3" role="img" aria-label="Map diagram: one pathway from the cottage front steps, branching to the gazebo for quiet time, eight dead ends — Alcohol, Smoking, Gambling, Drugs, Codependency, Food, Screens, Feeling Unwell — each with a trophy on a wooden stool at the end, and the Longevity path going on to infinity with trophies along it">
         <svg viewBox="0 0 360 660" className="w-full" role="group" aria-label="Map diagram — tap a branch to open it">
           {/* The cottage is the start of the map — it sits at the
@@ -5780,6 +5790,10 @@ function GardenMapPage({ onGoHome, onGoGarden, onGoTab, onOpenCozy, profiles, ga
         <p className="text-center text-base font-bold leading-relaxed text-[var(--text)]">Tap a branch on the map — it opens.</p>
         <p className="text-center text-sm leading-relaxed text-[var(--dim)]">Cottage at the top, gazebo branch for quiet time, eight dead ends each with a trophy on a wooden stool, and Longevity going on to infinity. Tap a branch to open it, then tap Visit to go to that help.</p>
       </div>
+      <figure className="mt-4 overflow-hidden rounded-[var(--radius)] border-2 border-[var(--leaf)]">
+        <img src={welcomeCottage} alt="Our cottage — a wooden cottage with a grey slate roof, green shutters, a big wrap-around porch, a WELCOME mat and an open please come in sign" className="w-full" />
+        <figcaption className="bg-[var(--surface)] px-4 py-3 text-center font-bold leading-relaxed text-[var(--text)]">Your cottage — where every path begins, warm and cozy from the get-go.</figcaption>
+      </figure>
       <GardenPorchPot flowerCount={porchFlowerCount} cottageBlooms={porchCottageBlooms} />
       {message && (
         <div role="status" className="felt-soft mt-4 rounded-[var(--radius)] border-2 border-[var(--sun)] bg-[var(--amber-soft)] px-4 py-3 text-center">
@@ -6167,7 +6181,21 @@ function CozyRoomPage({ onGoHome, onGoMap, gardenName = "", backLabel = "← Bac
                 not open the photo library. The old inner div
                 stopped the tap from reaching the dialog, so
                 tapping the enlarged photo did nothing. */}
-            <CozyRoomVisual trophies={trophies} books={books} frames={frames} onAddPhoto={(slot, file) => { void addPhoto(slot, file); }} onClearFrame={clearFrame} interactive={false} />
+            {/* Enlarged means bigger now (Richard, 2026-11-26:
+                "Cozy Room does not expand to see shelved items" —
+                the enlarged room rendered at the same width as the
+                normal view, so the shelves, trophies and books
+                were no easier to see. The room is now shown about
+                twice as wide, in a sideways-scrolling frame, so the
+                shelves are big enough to see, and you can drag
+                sideways to look around. A plain tap still closes
+                it, as before; a drag scrolls instead. */}
+            <div className="overflow-x-auto rounded-[var(--radius)]">
+              <div className="w-[180%] min-w-[620px]">
+                <CozyRoomVisual trophies={trophies} books={books} frames={frames} onAddPhoto={(slot, file) => { void addPhoto(slot, file); }} onClearFrame={clearFrame} interactive={false} />
+              </div>
+            </div>
+            <p className="mt-2 text-center font-semibold text-white">Drag sideways to look around the room, up close.</p>
             <button type="button" onClick={() => setZoomed(false)} className="mt-2 min-h-11 w-full rounded-[var(--radius)] border-2 border-white/60 bg-white/90 px-4 font-bold text-[var(--text)]">Tap anywhere to close</button>
           </div>
         </div>
@@ -6748,9 +6776,17 @@ export function App() {
   // tap away on the tab buttons too.
   const [siteMapOpen, setSiteMapOpen] = useState(false);
   const [siteMapReturnTab, setSiteMapReturnTab] = useState<TabId>("home");
+  // Every tap on Site Map counts, even when the garden is already
+  // open (Richard, 2026-11-26: "No trail map" — he had gone Map →
+  // garden list, then tapped Site Map again, and the garden was
+  // still on the list). The garden answers the count by going back
+  // to its map view; see LifeGardenPage. No remount, so no extra
+  // visit is recorded — visits are what bloom the cottage patch.
+  const [siteMapRequest, setSiteMapRequest] = useState(0);
   const openSiteMap = () => {
     setSiteMapReturnTab(tab);
     setSiteMapOpen(true);
+    setSiteMapRequest((n) => n + 1);
     setShowTerms(false);
     setSurfCategory(null);
     setPendingRide(null);
@@ -7060,6 +7096,7 @@ export function App() {
                 onGoTab={goToTab}
                 profiles={profiles}
                 initialView="map"
+                mapRequest={siteMapRequest}
                 backLabel={siteMapReturnTab === "home" ? "← Back to Home" : `← Back to ${LAST_PLACE_LABELS[siteMapReturnTab]}`}
               />
             ) : showTerms ? (

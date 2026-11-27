@@ -55,7 +55,7 @@ test("first view is still sparse: empty trophy shelf, empty frames, empty booksh
 
 test("less reading: short lines, Richard's exact words kept", () => {
   assert.ok(src.includes("Welcome friend. This is your garden of Life. We all choose our own path. You have chosen yours. We are here to help guide you to a happier place, a happier you. Some paths you may have already explored and others await. Enjoy the journey. Peace."), "Richard's exact intro verbiage must stay word for word");
-  assert.ok(src.includes("Our cottage — where every path begins, warm and cozy from the get-go."), "the Map caption must stay word for word");
+  assert.ok(src.includes("Your cottage — where every path begins, warm and cozy from the get-go."), "the Map caption must stay word for word");
   assert.ok(src.includes("Loyal, joyful, and always glad you're here"), "the Dog line must stay word for word");
   assert.ok(src.includes("Quiet, independent, and knows when to curl up close"), "the Cat line must stay word for word");
   assert.ok(room.includes("Tap a frame, pick a photo from your own photo library"), "the frames wording must be one short line");

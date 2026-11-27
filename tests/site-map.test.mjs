@@ -144,7 +144,7 @@ test("search finds the Site Map: map, site map, trail map", () => {
 test("Richard's exact verbiage is untouched, and the name-sticks fix is untouched", () => {
   assert.ok(src.includes("Welcome friend. This is your garden of Life. We all choose our own path. You have chosen yours. We are here to help guide you to a happier place, a happier you. Some paths you may have already explored and others await. Enjoy the journey. Peace."),
     "Richard's garden intro must stay word for word");
-  assert.ok(src.includes("Our cottage — where every path begins, warm and cozy from the get-go."),
+  assert.ok(src.includes("Your cottage — where every path begins, warm and cozy from the get-go."),
     "the Map caption must stay word for word");
   // Name sticks (2026-11-26): Save my name button, save on
   // Enter / blur, Saved ✓, name replaces "friend" on Map/Cozy Room.

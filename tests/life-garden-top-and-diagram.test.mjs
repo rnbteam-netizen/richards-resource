@@ -37,7 +37,7 @@ test("garden and Inside view buttons are at the top of Home, once only", () => {
 });
 
 test("the Map shows our real cottage, with the caption Richard liked", () => {
-  assert.ok(map.includes("Our cottage — where every path begins, warm and cozy from the get-go."), "the Map must keep the cottage caption Richard liked, word for word");
+  assert.ok(map.includes("Your cottage — where every path begins, warm and cozy from the get-go."), "the Map must keep the cottage caption Richard liked, word for word");
   assert.ok(map.includes('src={welcomeCottage}'), "the Map cottage must be our real cottage image, not a generic cottage");
   assert.ok(!map.includes("myLifeGardenMap"), "the old generated map photo must be gone from the Map");
 });

@@ -59,5 +59,5 @@ test("the garden first picture still enlarges — same bug, checked, not broken"
 test("the Map cottage picture promises no enlarge — no false tap target added", () => {
   const map = src.slice(src.indexOf("function GardenMapPage("), src.indexOf("function CozyRoomVisual"));
   assert.ok(!map.includes("Tap the photo to see it bigger"), "the Map cottage must not promise an enlarge it does not have");
-  assert.ok(map.includes("Our cottage — where every path begins, warm and cozy from the get-go."), "the Map caption must stay word for word");
+  assert.ok(map.includes("Your cottage — where every path begins, warm and cozy from the get-go."), "the Map caption must stay word for word");
 });

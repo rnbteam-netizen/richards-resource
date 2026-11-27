@@ -6389,6 +6389,11 @@ function HomePage({ profiles, logs, pointEvents, dayMarks, onGo, onSurf }: {
           right after the tab buttons at the front of Home, before
           the cottage. The WelcomeCover keeps it too, unchanged. */}
       <p className="mb-3 text-center font-display text-xl font-bold text-[var(--accent)]">We are so Happy you are here</p>
+      {/* Home instruction (Richard, 2026-11-27): one short line for a
+          first-time visitor, right after the welcome line and above
+          the Home buttons — tap a tab, then scroll down a wee bit
+          for help. Richard's exact words. */}
+      <p className="mb-3 text-center text-base font-semibold leading-relaxed text-[var(--text)]">Just tap a tab, scroll down a wee bit for help</p>
       <WelcomeIntro />
       {/* The true message (Richard, 2026-11-13, rephrased
           2026-11-23): after the cottage — just the one paragraph.

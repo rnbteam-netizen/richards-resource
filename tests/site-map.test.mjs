@@ -31,12 +31,23 @@ const garden = src.slice(src.indexOf("function LifeGardenPage("), src.indexOf("f
 
 test("Site Map button sits at the top, next to Home, where the tabs are", () => {
   assert.ok(nav.includes("Site Map"), "there must be a Site Map button in the top tab nav");
-  assert.ok(nav.includes('aria-label="Site Map — open the trail map"'), "the Site Map button must say plainly that it opens the trail map");
-  const siteMapAt = nav.indexOf("Site Map");
+  assert.ok(nav.includes('ariaLabel="Site Map — open the trail map"'), "the Site Map button must say plainly that it opens the trail map");
+  assert.ok(src.includes("aria-label={ariaLabel}"), "NavTabButton must render that label as the button's aria-label");
+  // The button itself — not the comments above it, which also
+  // say "Site Map" — is found by its label prop.
+  const siteMapAt = nav.indexOf('ariaLabel="Site Map — open the trail map"');
   assert.ok(siteMapAt > 0, "the Site Map button must be in the nav");
-  // It is rendered right after the Home tab button, inside the
-  // same TABS loop — the Home branch carries it.
-  assert.ok(nav.includes('t.id === "home"'), "the Site Map button must be placed next to Home");
+  // It is a real top button in its own right, rendered on its
+  // own right after the Home button — not a conditional tucked
+  // inside the tab loop (2026-11-26: Richard's screenshot of
+  // the tab row showed no Site Map at all, and the loop
+  // conditional was the one place it could hide).
+  assert.ok(!nav.includes('t.id === "home"'), "the Site Map button must not be a conditional inside the tab loop");
+  assert.ok(nav.includes("<NavTabButton"), "the tab buttons must share one NavTabButton shape");
+  const homeAt = nav.indexOf('TabIcon id="home"');
+  const restAt = nav.indexOf('TABS.filter((t) => t.id !== "home")');
+  assert.ok(homeAt !== -1 && homeAt < siteMapAt, "the Home button must come first, before the Site Map button");
+  assert.ok(restAt !== -1 && siteMapAt < restAt, "the Site Map button must come first after Home, before the rest of the tabs");
   assert.ok(nav.includes("onClick={openSiteMap}"), "tapping Site Map must call openSiteMap");
   assert.ok(nav.includes("🗺️"), "the Site Map button must carry a map mark so it reads as a map at a glance");
 });

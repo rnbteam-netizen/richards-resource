@@ -928,6 +928,38 @@ function TabIcon({ id, size = 20 }: { id: TabId; size?: number }) {
   }
 }
 
+// One top tab button — Home, Site Map, and every tab share this
+// shape, so the Site Map is a real top button in its own right,
+// not a conditional tucked inside the tab loop: Home first, Site
+// Map first after Home, then the rest of the tabs, in order,
+// always visible on a phone.
+function NavTabButton({ active, onClick, bg, border, activeBg, activeBorder, ariaLabel, children }: {
+  active: boolean;
+  onClick: () => void;
+  bg: string;
+  border: string;
+  activeBg: string;
+  activeBorder: string;
+  ariaLabel?: string;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-current={active ? "page" : undefined}
+      aria-label={ariaLabel}
+      onClick={onClick}
+      style={{
+        backgroundColor: active ? activeBg : bg,
+        borderColor: active ? activeBorder : border,
+      }}
+      className={`felt-tab ${active ? "felt-tab-active" : ""} inline-flex min-h-11 items-center gap-1.5 rounded-full border-2 px-3 text-sm font-bold text-[#2e2117]`}
+    >
+      {children}
+    </button>
+  );
+}
+
 const FLOWER_COLORS = ["#e5639e", "#f2a541", "#c2437b", "#7fb2c9", "#e8763a", "#8a63c9"];
 
 // The Home hero scene: a sunrise over spring hills, with the sun just
@@ -6907,45 +6939,52 @@ export function App() {
       <div aria-hidden style={{ height: "env(safe-area-inset-top, 0px)", background: "var(--bg)" }} />
       <main className="mx-auto w-full max-w-3xl px-4 pb-10 pt-5">
         <nav aria-label="Sections" className="flex flex-wrap gap-2">
-          {TABS.map((t) => {
+          {/* Home — first tab, always, rendered on its own so the
+              order below is plain to see: Home, Site Map, then
+              the rest of the tabs. */}
+          <NavTabButton
+            active={tab === "home" && !siteMapOpen}
+            onClick={() => { setSiteMapOpen(false); setTab("home"); setShowTerms(false); setSurfCategory(null); setPendingRide(null); }}
+            bg={TAB_PASTELS.home.inactiveBg}
+            border={TAB_PASTELS.home.border}
+            activeBg={TAB_PASTELS.home.activeBg}
+            activeBorder={TAB_PASTELS.home.activeBorder}
+          >
+            <TabIcon id="home" size={16} />
+            Home
+          </NavTabButton>
+          {/* Site Map — a real top button, first after Home, always
+              visible, never buried in the garden and never a
+              conditional inside the tab loop. It opens the trail
+              map itself, at the top, from any tab. */}
+          <NavTabButton
+            active={siteMapOpen}
+            onClick={openSiteMap}
+            bg="#e2f2da"
+            border="#a8d19a"
+            activeBg="#b7e1a8"
+            activeBorder="#6aa84f"
+            ariaLabel="Site Map — open the trail map"
+          >
+            <span aria-hidden="true">🗺️</span>
+            Site Map
+          </NavTabButton>
+          {TABS.filter((t) => t.id !== "home").map((t) => {
             const pastel = TAB_PASTELS[t.id];
             const isActive = tab === t.id && !siteMapOpen;
             return (
-              <span key={t.id} className="contents">
-              <button
-                type="button"
-                aria-current={isActive ? "page" : undefined}
+              <NavTabButton
+                key={t.id}
+                active={isActive}
                 onClick={() => { setSiteMapOpen(false); setTab(t.id); setShowTerms(false); setSurfCategory(null); setPendingRide(null); }}
-                style={{
-                  backgroundColor: isActive ? pastel.activeBg : pastel.inactiveBg,
-                  borderColor: isActive ? pastel.activeBorder : pastel.border,
-                }}
-                className={`felt-tab ${isActive ? "felt-tab-active" : ""} inline-flex min-h-11 items-center gap-1.5 rounded-full border-2 px-3 text-sm font-bold text-[#2e2117]`}
+                bg={pastel.inactiveBg}
+                border={pastel.border}
+                activeBg={pastel.activeBg}
+                activeBorder={pastel.activeBorder}
               >
                 <TabIcon id={t.id} size={16} />
                 {t.label}
-              </button>
-              {/* Site Map — right next to Home, at the top where the
-                  tabs are, always visible, never buried in the
-                  garden. It opens the trail map itself, at the top,
-                  from any tab. */}
-              {t.id === "home" && (
-                <button
-                  type="button"
-                  aria-current={siteMapOpen ? "page" : undefined}
-                  aria-label="Site Map — open the trail map"
-                  onClick={openSiteMap}
-                  style={{
-                    backgroundColor: siteMapOpen ? "#b7e1a8" : "#e2f2da",
-                    borderColor: siteMapOpen ? "#6aa84f" : "#a8d19a",
-                  }}
-                  className={`felt-tab ${siteMapOpen ? "felt-tab-active" : ""} inline-flex min-h-11 items-center gap-1.5 rounded-full border-2 px-3 text-sm font-bold text-[#2e2117]`}
-                >
-                  <span aria-hidden="true">🗺️</span>
-                  Site Map
-                </button>
-              )}
-              </span>
+              </NavTabButton>
             );
           })}
         </nav>

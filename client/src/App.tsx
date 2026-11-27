@@ -4600,14 +4600,23 @@ function ShareButton() {
 // there is no account — and defaults to it on return, with a
 // "Welcome back" banner. The My RR card that used to show this
 // on Home was deleted 2026-11-23; the returning itself stays.
-function SearchBox({ onGo, onOpenSiteMap }: { onGo: (t: TabId) => void; onOpenSiteMap?: () => void }) {
+function SearchBox({ onGo, onOpenSiteMap, onOpenCozyRoom }: { onGo: (t: TabId) => void; onOpenSiteMap?: () => void; onOpenCozyRoom?: () => void }) {
   const [query, setQuery] = useState("");
   const results = searchApp(query);
-  const open = (r: { tab: TabId; openSiteMap?: boolean }) => {
+  const open = (r: { tab: TabId; openSiteMap?: boolean; openCozyRoom?: boolean }) => {
     // The Site Map is not a tab: its result opens the trail map
     // itself, at the top, instead of jumping to a tab.
     if (r.openSiteMap && onOpenSiteMap) {
       onOpenSiteMap();
+      setQuery("");
+      if (typeof window !== "undefined") window.scrollTo(0, 0);
+      return;
+    }
+    // The Cozy Room is not a tab either: its result opens the
+    // inside view of the cottage, at the top, instead of jumping
+    // to a tab.
+    if (r.openCozyRoom && onOpenCozyRoom) {
+      onOpenCozyRoom();
       setQuery("");
       if (typeof window !== "undefined") window.scrollTo(0, 0);
       return;
@@ -4641,7 +4650,7 @@ function SearchBox({ onGo, onOpenSiteMap }: { onGo: (t: TabId) => void; onOpenSi
               <button type="button" onClick={() => open(r)} className="felt-card felt-pressable w-full rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--amber-soft)] p-3 text-left">
                 <span className="block font-bold text-[var(--text)]">{r.title}</span>
                 <span className="mt-0.5 block text-sm leading-relaxed text-[var(--dim)]">{r.snippet}</span>
-                <span className="mt-1 block text-xs font-bold uppercase tracking-widest text-[var(--accent)]">{r.openSiteMap ? "Trail map →" : `${LAST_PLACE_LABELS[r.tab]} tab →`}</span>
+                <span className="mt-1 block text-xs font-bold uppercase tracking-widest text-[var(--accent)]">{r.openCozyRoom ? "Cozy Room →" : r.openSiteMap ? "Trail map →" : `${LAST_PLACE_LABELS[r.tab]} tab →`}</span>
               </button>
             </li>
           ))}
@@ -5831,6 +5840,23 @@ function GardenMapPage({ onGoHome, onGoGarden, onGoTab, onOpenCozy, profiles, ga
                 </button>
                 {open && (
                   <div className="mt-2 rounded-[var(--radius)] border-2 border-[var(--leaf)] bg-[var(--leaf-soft)] px-4 py-3">
+                    {/* The gazebo pic first (Richard, 2026-11-27):
+                        "it would be awesome to first see the
+                        beautiful gazebo Pic when I tap gazebo and
+                        I then scroll down for features." So when
+                        the Gazebo stop opens, the garden picture —
+                        the one with the octagonal gazebo off to
+                        the side, already bundled in the app — is
+                        the first thing in the panel, big, and the
+                        features (Visit, quiet moment, trophies)
+                        come below it, to scroll down to. No new
+                        image: the snapshot cannot carry binary. */}
+                    {stop.id === "gazebo" && (
+                      <figure className="mb-3 overflow-hidden rounded-[var(--radius)] border-2 border-[var(--leaf)]">
+                        <img src={myLifeGarden} alt="The gazebo in My Life Garden Pathway — the beautiful octagonal gazebo off to the side of the pathway, with the cottage beyond" className="w-full" />
+                        <figcaption className="bg-[var(--surface)] px-4 py-3 text-center font-bold leading-relaxed text-[var(--text)]">The gazebo — a quiet place, off to the side of the path.</figcaption>
+                      </figure>
+                    )}
                     {/* Active link to the help tab (Richard,
                         2026-11-26): "if I hit gambling, will it
                         take me to the gambling help portion?" Yes
@@ -6786,6 +6812,7 @@ export function App() {
   const openSiteMap = () => {
     setSiteMapReturnTab(tab);
     setSiteMapOpen(true);
+    setCozyRoomOpen(false);
     setSiteMapRequest((n) => n + 1);
     setShowTerms(false);
     setSurfCategory(null);
@@ -6797,11 +6824,39 @@ export function App() {
     setTab(siteMapReturnTab);
     if (typeof window !== "undefined") window.scrollTo(0, 0);
   };
+  // Cozy Room nav point (Richard, 2026-11-27): "add a Cozy Room
+  // nav point. That makes more sense" — he had to do a bit of
+  // scrolling and buttons to find the Cozy Room, and it is one of
+  // our best features. So it is a button at the top, next to Home
+  // and Site Map, always visible, opening the real CozyRoomPage
+  // straight away, at the top, from any tab or from Home. It is
+  // not a tab and not buried in the garden: it is App-level view
+  // state, reusing CozyRoomPage, so there is no second room. The
+  // tab the visitor came from is remembered, so "back" goes back
+  // there; Home is always one tap away on the tab buttons too.
+  // "See the Map" from the Cozy Room opens the trail map.
+  const [cozyRoomOpen, setCozyRoomOpen] = useState(false);
+  const [cozyRoomReturnTab, setCozyRoomReturnTab] = useState<TabId>("home");
+  const openCozyRoom = () => {
+    setCozyRoomReturnTab(tab);
+    setCozyRoomOpen(true);
+    setSiteMapOpen(false);
+    setShowTerms(false);
+    setSurfCategory(null);
+    setPendingRide(null);
+    if (typeof window !== "undefined") window.scrollTo(0, 0);
+  };
+  const closeCozyRoom = () => {
+    setCozyRoomOpen(false);
+    setTab(cozyRoomReturnTab);
+    if (typeof window !== "undefined") window.scrollTo(0, 0);
+  };
   // One tap to a tab, from the search results, My RR, or a Home
   // card: switch tab, close anything open on top of it, and start
   // at the top of the new tab.
   const goToTab = (t: TabId) => {
     setSiteMapOpen(false);
+    setCozyRoomOpen(false);
     setTab(t);
     setShowTerms(false);
     setSurfCategory(null);
@@ -6976,11 +7031,11 @@ export function App() {
       <main className="mx-auto w-full max-w-3xl px-4 pb-10 pt-5">
         <nav aria-label="Sections" className="flex flex-wrap gap-2">
           {/* Home — first tab, always, rendered on its own so the
-              order below is plain to see: Home, Site Map, then
-              the rest of the tabs. */}
+              order below is plain to see: Home, Site Map, Cozy
+              Room, then the rest of the tabs. */}
           <NavTabButton
-            active={tab === "home" && !siteMapOpen}
-            onClick={() => { setSiteMapOpen(false); setTab("home"); setShowTerms(false); setSurfCategory(null); setPendingRide(null); }}
+            active={tab === "home" && !siteMapOpen && !cozyRoomOpen}
+            onClick={() => { setSiteMapOpen(false); setCozyRoomOpen(false); setTab("home"); setShowTerms(false); setSurfCategory(null); setPendingRide(null); }}
             bg={TAB_PASTELS.home.inactiveBg}
             border={TAB_PASTELS.home.border}
             activeBg={TAB_PASTELS.home.activeBg}
@@ -7005,14 +7060,31 @@ export function App() {
             <span aria-hidden="true">🗺️</span>
             Site Map
           </NavTabButton>
+          {/* Cozy Room — a real top button, next after Site Map,
+              always visible (Richard, 2026-11-27). One tap opens
+              the inside view of the cottage, at the top, from any
+              tab — no scrolling and buttons to find it, because it
+              is one of our best features. */}
+          <NavTabButton
+            active={cozyRoomOpen}
+            onClick={openCozyRoom}
+            bg="#fbe3ee"
+            border="#e8a8c8"
+            activeBg="#f6c6de"
+            activeBorder="#c95a8a"
+            ariaLabel="Cozy Room — see inside my Cozy Room"
+          >
+            <span aria-hidden="true">🛋️</span>
+            Cozy Room
+          </NavTabButton>
           {TABS.filter((t) => t.id !== "home").map((t) => {
             const pastel = TAB_PASTELS[t.id];
-            const isActive = tab === t.id && !siteMapOpen;
+            const isActive = tab === t.id && !siteMapOpen && !cozyRoomOpen;
             return (
               <NavTabButton
                 key={t.id}
                 active={isActive}
-                onClick={() => { setSiteMapOpen(false); setTab(t.id); setShowTerms(false); setSurfCategory(null); setPendingRide(null); }}
+                onClick={() => { setSiteMapOpen(false); setCozyRoomOpen(false); setTab(t.id); setShowTerms(false); setSurfCategory(null); setPendingRide(null); }}
                 bg={pastel.inactiveBg}
                 border={pastel.border}
                 activeBg={pastel.activeBg}
@@ -7028,7 +7100,7 @@ export function App() {
         {/* Search (Richard, 2026-11-21): on every tab, right under
             the tab buttons, so it is there wherever you are. */}
         <div className="mt-4">
-          <SearchBox onGo={goToTab} onOpenSiteMap={openSiteMap} />
+          <SearchBox onGo={goToTab} onOpenSiteMap={openSiteMap} onOpenCozyRoom={openCozyRoom} />
         </div>
 
         {/* Welcome back (Richard, 2026-11-21): shown only when the
@@ -7083,7 +7155,20 @@ export function App() {
 
         {!surfCategory && (
           <div className="mt-6">
-            {siteMapOpen ? (
+            {cozyRoomOpen ? (
+              // The Cozy Room, open on its own from the top button
+              // or from search: the same CozyRoomPage, at the top
+              // — not a second room. "See the Map" opens the trail
+              // map; "Back" goes to the tab the visitor came from,
+              // named on the button; Home is always one tap away
+              // on the tab buttons above.
+              <CozyRoomPage
+                onGoHome={closeCozyRoom}
+                onGoMap={() => { setCozyRoomOpen(false); openSiteMap(); }}
+                gardenName={loadLifeGardenName()}
+                backLabel={cozyRoomReturnTab === "home" ? "← Back to Home" : `← Back to ${LAST_PLACE_LABELS[cozyRoomReturnTab]}`}
+              />
+            ) : siteMapOpen ? (
               // The Site Map, open on its own from the top button or
               // from search: the same garden, landed straight on
               // the real Map, at the top — not a second map. Visit

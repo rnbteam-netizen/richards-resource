@@ -135,9 +135,9 @@ test("Search box: on every tab, under the tab buttons, with the privacy line", (
   assert.ok(src.includes('type="search"'), "the box must be a real search input");
   assert.ok(src.includes("nothing you type is sent anywhere"),
     "the box must tell the visitor their search stays on the phone");
-  assert.ok(src.includes("<SearchBox onGo={goToTab} onOpenSiteMap={openSiteMap} />"), "the search box must be wired to go to a tab — and to open the Site Map");
+  assert.ok(src.includes("<SearchBox onGo={goToTab} onOpenSiteMap={openSiteMap} onOpenCozyRoom={openCozyRoom} />"), "the search box must be wired to go to a tab — and to open the Site Map and the Cozy Room");
   const navEnd = src.indexOf("</nav>", src.indexOf('aria-label="Sections"'));
-  const searchAt = src.indexOf("<SearchBox onGo={goToTab} onOpenSiteMap={openSiteMap} />");
+  const searchAt = src.indexOf("<SearchBox onGo={goToTab} onOpenSiteMap={openSiteMap} onOpenCozyRoom={openCozyRoom} />");
   const pointsAt = src.indexOf("★ {displayTotal} points");
   assert.ok(navEnd > 0 && searchAt > navEnd, "the search box must sit under the tab buttons, so it is on every tab");
   assert.ok(pointsAt > searchAt, "the search box must sit before the points strip");

@@ -5548,13 +5548,19 @@ function LifeGardenPage({ onGoHome, onGoTab, profiles, initialView = "list", map
           2026-11-25): good enough — no separate zoom on the
           cottage or the gazebo. */}
       <button type="button" onClick={() => setZoomed(true)} aria-label="My Life Garden Pathway — tap to see the whole photo bigger" className="mt-4 block w-full overflow-hidden rounded-[var(--radius)] border-2 border-[var(--leaf)]">
-        <img src={myLifeGarden} alt="My Life Garden Pathway — a long pathway of small flat wooden stepping stones, with weeds bordering both sides, leading up to the cottage, with the octagonal gazebo off to the side" className="w-full" />
+        {/* Trail pic reversed (Richard, 2026-11-27): "This weedy
+            trail pic should be seen reversed. Leading from cottage
+            to the field" — so the picture is flipped horizontally
+            (scaleX(-1)), cottage first, path leading out to the
+            field, not field heading towards the cottage. Same
+            bundled image, no new binary; caption / alt unchanged. */}
+        <img src={myLifeGarden} alt="My Life Garden Pathway — a long pathway of small flat wooden stepping stones, with weeds bordering both sides, leading up to the cottage, with the octagonal gazebo off to the side" className="w-full" style={{ transform: "scaleX(-1)" }} />
       </button>
       <p className="mt-2 text-center text-sm text-[var(--dim)]">Tap the photo to see it bigger.</p>
       {zoomed && (
         <div role="dialog" aria-label="My Life Garden Pathway, enlarged" className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" onClick={() => setZoomed(false)}>
           <button type="button" onClick={() => setZoomed(false)} aria-label="Close the enlarged photo" className="max-h-full max-w-full">
-            <img src={myLifeGarden} alt="My Life Garden Pathway — enlarged" className="max-h-[85vh] w-auto max-w-full rounded-[var(--radius)]" />
+            <img src={myLifeGarden} alt="My Life Garden Pathway — enlarged" className="max-h-[85vh] w-auto max-w-full rounded-[var(--radius)]" style={{ transform: "scaleX(-1)" }} />
             <span className="mt-2 block text-center font-semibold text-white">Tap anywhere to close</span>
           </button>
         </div>
@@ -5829,6 +5835,24 @@ function GardenMapPage({ onGoHome, onGoGarden, onGoTab, onOpenCozy, profiles, ga
             const flowerCount = stop.items.filter((item) => checked.includes(item) || trophies.includes(item)).length;
             return (
               <li key={stop.id} id={`garden-map-stop-${stop.id}`}>
+                {/* Gazebo pic truly first (Richard, 2026-11-27):
+                    his screenshot showed the heading text
+                    ("The gazebo — quiet time" / "BRANCH — QUIET
+                    TIME") above the picture, so the pic was
+                    second, not first. Now, when the Gazebo stop
+                    is open, the picture renders BEFORE the stop
+                    button / heading, at the very top, big, and
+                    the heading, Visit link and features come
+                    below it, to scroll down to. Reversed too
+                    (see below): flipped horizontally, leading
+                    from the cottage to the field. Same bundled
+                    image, no new binary; caption / alt unchanged. */}
+                {open && stop.id === "gazebo" && (
+                  <figure className="mb-3 overflow-hidden rounded-[var(--radius)] border-2 border-[var(--leaf)]">
+                    <img src={myLifeGarden} alt="The gazebo in My Life Garden Pathway — the beautiful octagonal gazebo off to the side of the pathway, with the cottage beyond" className="w-full" style={{ transform: "scaleX(-1)" }} />
+                    <figcaption className="bg-[var(--surface)] px-4 py-3 text-center font-bold leading-relaxed text-[var(--text)]">The gazebo — a quiet place, off to the side of the path.</figcaption>
+                  </figure>
+                )}
                 <button type="button" onClick={() => { if (open) { setSelected(null); } else { openStop(stop.id); } }} aria-expanded={open} className="felt-card w-full rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] p-4 text-left">
                   <p className="font-display text-lg font-black text-[var(--text)]">{stop.label}</p>
                   <p className="mt-1 text-sm font-bold uppercase tracking-widest text-[#6aa84f]">{GARDEN_MAP_KIND_LABEL[stop.kind]}</p>
@@ -5840,23 +5864,11 @@ function GardenMapPage({ onGoHome, onGoGarden, onGoTab, onOpenCozy, profiles, ga
                 </button>
                 {open && (
                   <div className="mt-2 rounded-[var(--radius)] border-2 border-[var(--leaf)] bg-[var(--leaf-soft)] px-4 py-3">
-                    {/* The gazebo pic first (Richard, 2026-11-27):
-                        "it would be awesome to first see the
-                        beautiful gazebo Pic when I tap gazebo and
-                        I then scroll down for features." So when
-                        the Gazebo stop opens, the garden picture —
-                        the one with the octagonal gazebo off to
-                        the side, already bundled in the app — is
-                        the first thing in the panel, big, and the
-                        features (Visit, quiet moment, trophies)
-                        come below it, to scroll down to. No new
-                        image: the snapshot cannot carry binary. */}
-                    {stop.id === "gazebo" && (
-                      <figure className="mb-3 overflow-hidden rounded-[var(--radius)] border-2 border-[var(--leaf)]">
-                        <img src={myLifeGarden} alt="The gazebo in My Life Garden Pathway — the beautiful octagonal gazebo off to the side of the pathway, with the cottage beyond" className="w-full" />
-                        <figcaption className="bg-[var(--surface)] px-4 py-3 text-center font-bold leading-relaxed text-[var(--text)]">The gazebo — a quiet place, off to the side of the path.</figcaption>
-                      </figure>
-                    )}
+                    {/* Gazebo pic is now above the stop button /
+                        heading (see above), not in this panel —
+                        it was second there, below the heading
+                        text. The panel now starts with the Visit
+                        link, then the features below it. */}
                     {/* Active link to the help tab (Richard,
                         2026-11-26): "if I hit gambling, will it
                         take me to the gambling help portion?" Yes

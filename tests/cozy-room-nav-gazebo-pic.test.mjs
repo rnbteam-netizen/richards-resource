@@ -83,24 +83,33 @@ test("search finds the Cozy Room: cozy room, trophy, cottage inside", () => {
 });
 
 test("tapping Gazebo shows the beautiful gazebo pic first, then the features below it", () => {
-  // The open Gazebo panel must start with the garden picture —
-  // the one with the octagonal gazebo off to the side — big,
-  // before the Visit link and the quiet-moment features, so the
-  // first thing you see is the gazebo, and you scroll down for
-  // the features. No new image: the bundled garden picture is
-  // reused; the snapshot cannot carry binary.
-  const panel = map.slice(map.indexOf('{open && ('), map.indexOf('{isQuitStop && ('));
-  assert.ok(panel.includes("stop.id === \"gazebo\""), "the Gazebo panel must have its own picture block");
-  const picAt = panel.indexOf("The gazebo in My Life Garden Pathway");
-  assert.ok(picAt !== -1, "the Gazebo panel must show the gazebo picture, with its own alt text");
-  assert.ok(panel.slice(0, picAt).includes("src={myLifeGarden}"), "the gazebo picture must be the bundled garden picture");
-  const visitAt = panel.indexOf("Visit {tabLabel} →");
-  assert.ok(visitAt !== -1, "the Gazebo panel must still offer its Visit link to Peace of Mind");
+  // The open Gazebo stop must show the garden picture — the one
+  // with the octagonal gazebo off to the side — big, before the
+  // Visit link and the quiet-moment features, so the first thing
+  // you see is the gazebo, and you scroll down for the features.
+  // No new image: the bundled garden picture is reused; the
+  // snapshot cannot carry binary.
+  // Update (Richard, 2026-11-27): his screenshot showed the
+  // heading text above the picture, so the pic was second, not
+  // first. The picture now renders BEFORE the stop button /
+  // heading, at the very top of the open Gazebo stop — not
+  // inside the panel below the heading.
+  const stops = map.slice(map.indexOf("GARDEN_MAP_STOPS.map"), map.indexOf("</ul>", map.indexOf("GARDEN_MAP_STOPS.map")));
+  assert.ok(stops.includes("stop.id === \"gazebo\""), "the Gazebo stop must have its own picture block");
+  const picAt = stops.indexOf("The gazebo in My Life Garden Pathway");
+  assert.ok(picAt !== -1, "the Gazebo stop must show the gazebo picture, with its own alt text");
+  assert.ok(stops.slice(0, picAt).includes("src={myLifeGarden}"), "the gazebo picture must be the bundled garden picture");
+  const headingAt = stops.indexOf("{stop.label}");
+  assert.ok(headingAt !== -1 && picAt < headingAt, "the gazebo picture must come before the stop heading, so it is truly first, not second");
+  const visitAt = stops.indexOf("Visit {tabLabel} →");
+  assert.ok(visitAt !== -1, "the Gazebo stop must still offer its Visit link to Peace of Mind");
   assert.ok(picAt < visitAt, "the gazebo picture must come before the Visit link, so it is seen first");
-  assert.ok(panel.includes("The gazebo — a quiet place, off to the side of the path."), "the gazebo picture must carry its caption");
+  assert.ok(stops.includes("The gazebo — a quiet place, off to the side of the path."), "the gazebo picture must carry its caption");
   // The quiet-moment feature is still below, after the picture.
-  const featureAt = panel.indexOf("What is already true for you?");
+  const featureAt = stops.indexOf("What is already true for you?");
   assert.ok(featureAt !== -1 && picAt < featureAt, "the features must come after the gazebo picture, to scroll down to");
   // Only the Gazebo stop gets the picture — the other stops are unchanged.
-  assert.ok(!panel.includes("stop.id === \"alcohol\""), "the picture block must be Gazebo-only, not on every stop");
+  assert.ok(!stops.includes("stop.id === \"alcohol\""), "the picture block must be Gazebo-only, not on every stop");
+  // And it must not be duplicated inside the panel below the heading.
+  assert.equal((stops.match(/The gazebo in My Life Garden Pathway/g) ?? []).length, 1, "the gazebo picture must appear once, above the heading, not twice");
 });

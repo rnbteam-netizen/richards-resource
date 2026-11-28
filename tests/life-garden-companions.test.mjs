@@ -64,6 +64,33 @@ test("eight spirit guides, lifelike profiles, animal labels, companion lines", (
   assert.ok(companions.includes("richards-resource:life-garden:guide:v1"), "the guide must be saved under its own localStorage key");
 });
 
+test("custom spirit guide (Richard, 2026-11-28): fill-in-the-blank 'My own guide', no preset religious list", () => {
+  // Richard: "Are we offended any religious folks, by not offering
+  // a fill in the blank option for spirit guide. Some may want to
+  // type Jesus, God, god, Mohammed, Krishna etc?" So beside the
+  // eight animals there must be a blank field, typed in the
+  // visitor's own words — no doctrine, no one religion, no preset
+  // religious list. Local only, like the name.
+  assert.ok(companions.includes("Or choose my own guide"), "there must be a 'My own guide' option beside the eight animals");
+  assert.ok(companions.includes("Type your own guide"), "the custom guide box must say type your own guide");
+  assert.ok(companions.includes("Save my guide"), "the custom guide must have a clear Save my guide button");
+  assert.ok(companions.includes("Jesus, God, Mohammed, Krishna"), "the custom guide must name Richard's examples, so a religious visitor knows the blank is for them");
+  assert.ok(companions.includes("No list, no doctrine"), "the custom guide must say plainly there is no list and no doctrine");
+  assert.ok(companions.includes("custom:"), "a custom guide must be stored under the same guide key, as custom:<name>");
+  assert.ok(companions.includes("gardenCustomGuideName"), "the code must read a custom guide name back from its stored value");
+  assert.ok(companions.includes("customDraft.trim().slice(0, 40)"), "a typed guide name must be trimmed and capped at 40 chars, like the name, with no character filter");
+  assert.ok(companions.includes("onBlur"), "the custom guide must also save when the box loses focus");
+  assert.ok(companions.includes("`${customGuide} walks beside you, ${displayName}.`"), "the summary must show a typed guide the same way as an animal guide");
+  assert.ok(companions.includes("Saved ✓ — ${customGuide} walks beside you."), "saving a custom guide must confirm it, Saved ✓");
+  // The eight animals are unchanged, and no avatar comes back.
+  assert.equal((companions.match(/label: "/g) ?? []).length, 8, "there must still be exactly eight animal spirit guides");
+  assert.ok(!companions.toLowerCase().includes("avatar"), "adding a custom guide must not re-add avatars");
+  // The garden save path must normalise a custom guide and must
+  // clear the key when the guide is cleared, not save an empty string.
+  assert.ok(gardenView.includes("safeLocalRemove(LIFE_GARDEN_GUIDE_KEY)"), "clearing a guide must remove the guide key");
+  assert.ok(gardenView.includes("useState<string | null>(() => loadLifeGardenGuide())"), "the garden must load the saved guide — animal or custom — on every open");
+});
+
 test("the name sticks: saved to localStorage on Save, Enter and blur, loaded on every garden open", () => {
   // The save itself lives in LifeGardenPage: saveGardenName trims,
   // caps at 40 chars, writes the name key — or removes it when blank.

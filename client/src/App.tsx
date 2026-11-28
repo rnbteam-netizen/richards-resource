@@ -4864,6 +4864,11 @@ const GARDEN_MAP_STOPS: GardenMapStop[] = [
 // anywhere, no account. (Richard, 2026-11-28: the figure
 // choice was removed completely — it's not a video game, and not a
 // good fit for the app. Any figure saved earlier is simply ignored.)
+// (Richard, 2026-11-28: a custom guide, too — a fill-in-the-blank
+// "My own guide", so someone whose guide is Jesus, God, Mohammed,
+// Krishna, or anyone else is not left out. No preset religious
+// list, no doctrine, no one religion — just a blank field, typed
+// in their own words, local only like the rest.)
 // The guides are drawn as
 // naturalistic, lifelike profiles, not cartoons, and keep their
 // animal labels, because those name the animal, not a person.
@@ -4895,10 +4900,25 @@ const GARDEN_GUIDES: GardenGuide[] = [
   { id: "cat", label: "Cat", line: "Quiet, independent, and knows when to curl up close." },
 ];
 
+// A custom guide is stored under the same key, as
+// "custom:<typed name>" — so one saved guide, animal or custom,
+// never both at once. The typed name is trimmed and capped at
+// 40 chars, like the name, with no character filter.
+const LIFE_GARDEN_CUSTOM_GUIDE_PREFIX = "custom:";
+
+function gardenCustomGuideName(guide: string | null): string | null {
+  if (!guide || !guide.startsWith(LIFE_GARDEN_CUSTOM_GUIDE_PREFIX)) return null;
+  const name = guide.slice(LIFE_GARDEN_CUSTOM_GUIDE_PREFIX.length).trim().slice(0, 40);
+  return name ? name : null;
+}
+
 function loadLifeGardenGuide(): string | null {
   try {
     const raw = safeLocalGet(LIFE_GARDEN_GUIDE_KEY);
-    return raw && GARDEN_GUIDES.some((g) => g.id === raw) ? raw : null;
+    if (!raw) return null;
+    if (GARDEN_GUIDES.some((g) => g.id === raw)) return raw;
+    const custom = gardenCustomGuideName(raw);
+    return custom ? `${LIFE_GARDEN_CUSTOM_GUIDE_PREFIX}${custom}` : null;
   } catch { return null; }
 }
 
@@ -5025,10 +5045,25 @@ function GardenCompanions({ name, onName, guide, onGuide }: {
     setSaved(clean.length > 0);
   };
   const chosenGuide = GARDEN_GUIDES.find((g) => g.id === guide) ?? null;
+  const customGuide = gardenCustomGuideName(guide);
+  // Custom guide draft, like the name draft: it follows the saved
+  // guide, so picking an animal clears it, and a stale draft
+  // cannot show an old custom name after a change elsewhere.
+  const [customDraft, setCustomDraft] = useState(customGuide ?? "");
+  const [customSaved, setCustomSaved] = useState(false);
+  useEffect(() => { setCustomDraft(customGuide ?? ""); setCustomSaved(false); }, [guide]);
+  const saveCustomGuide = () => {
+    const clean = customDraft.trim().slice(0, 40);
+    if (!clean) return;
+    onGuide(`${LIFE_GARDEN_CUSTOM_GUIDE_PREFIX}${clean}`);
+    setCustomSaved(true);
+  };
   const displayName = name ? name : "friend";
-  const summary = chosenGuide
-    ? `The ${chosenGuide.label} walks beside you, ${displayName}.`
-    : null;
+  const summary = customGuide
+    ? `${customGuide} walks beside you, ${displayName}.`
+    : chosenGuide
+      ? `The ${chosenGuide.label} walks beside you, ${displayName}.`
+      : null;
   return (
     <Section title="Your name & your spirit guide">
       <p className="leading-relaxed text-[var(--text)]">
@@ -5075,6 +5110,30 @@ function GardenCompanions({ name, onName, guide, onGuide }: {
           </button>
         ))}
       </div>
+      <p className="mt-6 font-bold text-[var(--text)]">Or choose my own guide</p>
+      <p className="mt-1 leading-relaxed text-[var(--dim)]">Type who walks beside you — Jesus, God, Mohammed, Krishna, or anyone else. No list, no doctrine — just your own words.</p>
+      <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+        <input
+          type="text"
+          value={customDraft}
+          maxLength={40}
+          placeholder="Type your own guide"
+          aria-label="Choose my own spirit guide — type your own guide"
+          onChange={(e) => { setCustomDraft(e.target.value); setCustomSaved(false); }}
+          onKeyDown={(e) => { if (e.key === "Enter") saveCustomGuide(); }}
+          onBlur={() => { if (customDraft.trim().slice(0, 40) && customDraft.trim().slice(0, 40) !== customGuide) saveCustomGuide(); }}
+          className="min-h-14 flex-1 rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 text-lg text-[var(--text)]"
+        />
+        <button type="button" onClick={saveCustomGuide} className="min-h-14 rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-5 font-bold text-[var(--text)]">
+          Save my guide
+        </button>
+        {customGuide && (
+          <button type="button" onClick={() => { setCustomDraft(""); setCustomSaved(false); onGuide(""); }} className="min-h-14 rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-5 font-bold text-[var(--text)]">
+            Clear
+          </button>
+        )}
+      </div>
+      {customGuide && <p className="mt-2 font-bold text-[var(--text)]">{customSaved ? `Saved ✓ — ${customGuide} walks beside you.` : `${customGuide} walks beside you.`}</p>}
       {summary && (
         <p role="status" className="mt-4 rounded-[var(--radius)] border-2 border-[var(--sun)] bg-[var(--amber-soft)] px-4 py-3 text-center font-bold leading-relaxed text-[var(--text)]">
           {summary}
@@ -5428,6 +5487,18 @@ function LifeGardenPage({ onGoHome, onGoTab, profiles, initialView = "list", map
     if (clean) safeLocalSet(LIFE_GARDEN_NAME_KEY, clean); else safeLocalRemove(LIFE_GARDEN_NAME_KEY);
   };
   const saveGardenGuide = (next: string) => {
+    // Normalise here too, so a cleared guide removes the key
+    // instead of saving an empty string, and a custom name is
+    // always trimmed and capped at 40 chars.
+    if (!next) { setGardenGuide(null); safeLocalRemove(LIFE_GARDEN_GUIDE_KEY); return; }
+    if (next.startsWith(LIFE_GARDEN_CUSTOM_GUIDE_PREFIX)) {
+      const clean = next.slice(LIFE_GARDEN_CUSTOM_GUIDE_PREFIX.length).trim().slice(0, 40);
+      if (!clean) { setGardenGuide(null); safeLocalRemove(LIFE_GARDEN_GUIDE_KEY); return; }
+      const value = `${LIFE_GARDEN_CUSTOM_GUIDE_PREFIX}${clean}`;
+      setGardenGuide(value);
+      safeLocalSet(LIFE_GARDEN_GUIDE_KEY, value);
+      return;
+    }
     setGardenGuide(next);
     safeLocalSet(LIFE_GARDEN_GUIDE_KEY, next);
   };

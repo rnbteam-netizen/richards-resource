@@ -4807,8 +4807,9 @@ function loadLifeGardenChecked(): string[] {
 // for that issue (for example "No drinking problem"); choosing it
 // earns a trophy for the Cozy Room. Trophies live in this browser's
 // localStorage only — no server, no points scored yet, no account.
-// The third piece (2026-11-26) adds name / avatar / spirit-guide
-// choice, also local only. The fourth piece adds favourite books
+// The third piece (2026-11-26) adds name / spirit-guide
+// choice, also local only. (The figure choice was removed,
+// Richard, 2026-11-28: not a video game, not a good fit.) The fourth piece adds favourite books
 // and your own photos for the frames, in the Cozy Room below.
 // The fifth piece (2026-11-26) adds path expansion / quit day
 // and weeds turning to flowers, also local only. Held for later
@@ -4856,14 +4857,14 @@ const GARDEN_MAP_STOPS: GardenMapStop[] = [
   { id: "cozy", label: "My Cozy Room", tab: null, kind: "room", items: [], note: "Inside the cottage — your trophy room. First view: no trophies yet, and a few empty picture frames on the walls. Room for 100+ trophies." },
 ];
 
-/* ---------- My Life Garden Pathway — your name, avatar & spirit guide ---------- */
-// Third piece (Richard, 2026-11-26): choose your own name, pick a
-// figure that stands for you, and pick a spirit guide to walk
-// beside you. All three are optional, and all three stay on this
-// phone only, in this browser's localStorage — nothing is sent
-// anywhere, no account. The figures have no preset names and no
-// name labels — the figure stands for the visitor under whatever
-// name they chose for themselves. The guides are drawn as
+/* ---------- My Life Garden Pathway — your name & spirit guide ---------- */
+// Third piece (Richard, 2026-11-26): choose your own name, and pick
+// a spirit guide to walk beside you. Both are optional, and both stay
+// on this phone only, in this browser's localStorage — nothing is sent
+// anywhere, no account. (Richard, 2026-11-28: the figure
+// choice was removed completely — it's not a video game, and not a
+// good fit for the app. Any figure saved earlier is simply ignored.)
+// The guides are drawn as
 // naturalistic, lifelike profiles, not cartoons, and keep their
 // animal labels, because those name the animal, not a person.
 // Held for later pieces, NOT built here: badges, points for
@@ -4872,7 +4873,6 @@ const GARDEN_MAP_STOPS: GardenMapStop[] = [
 // books and your own photos for the frames are built in the
 // Cozy Room below (fourth piece, Richard, 2026-11-26).
 const LIFE_GARDEN_NAME_KEY = "richards-resource:life-garden:name:v1";
-const LIFE_GARDEN_AVATAR_KEY = "richards-resource:life-garden:avatar:v1";
 const LIFE_GARDEN_GUIDE_KEY = "richards-resource:life-garden:guide:v1";
 
 function loadLifeGardenName(): string {
@@ -4881,37 +4881,6 @@ function loadLifeGardenName(): string {
     if (!raw) return "";
     return raw.trim().slice(0, 40);
   } catch { return ""; }
-}
-
-type GardenAvatarHair = "long" | "afro" | "short" | "bun" | "bob" | "bald";
-type GardenAvatarFeature = "none" | "beard" | "glasses" | "freckles" | "earrings" | "moustache";
-type GardenAvatar = {
-  id: string;
-  desc: string;
-  skin: string;
-  hair: GardenAvatarHair;
-  hairColor: string;
-  top: string;
-  feature: GardenAvatarFeature;
-};
-
-// Six figures, each drawn differently — different skin tone,
-// hair, features and clothes — so they do not all look alike.
-// No preset names, no name labels under the figures.
-const GARDEN_AVATARS: GardenAvatar[] = [
-  { id: "a1", desc: "long wavy brown hair, warm brown skin, a green top", skin: "#8d5524", hair: "long", hairColor: "#3b2314", top: "#4a7a4f", feature: "none" },
-  { id: "a2", desc: "a black afro and a beard, deep brown skin, a blue shirt", skin: "#5c3a21", hair: "afro", hairColor: "#1a1210", top: "#3f6fb5", feature: "beard" },
-  { id: "a3", desc: "short blond hair, glasses and freckles, light skin, a yellow top", skin: "#f1c9a5", hair: "short", hairColor: "#d9b45b", top: "#d9a441", feature: "glasses" },
-  { id: "a4", desc: "dark hair in a bun with gold earrings, tan skin, a purple top", skin: "#c68642", hair: "bun", hairColor: "#241a12", top: "#7a5a9e", feature: "earrings" },
-  { id: "a5", desc: "a silver-grey bob, light skin, a teal top", skin: "#e8b98d", hair: "bob", hairColor: "#b8b8c0", top: "#3f8a8a", feature: "freckles" },
-  { id: "a6", desc: "a bald head and a moustache, medium brown skin, a red shirt", skin: "#a06a3f", hair: "bald", hairColor: "#2a1c12", top: "#a84a3f", feature: "moustache" },
-];
-
-function loadLifeGardenAvatar(): string | null {
-  try {
-    const raw = safeLocalGet(LIFE_GARDEN_AVATAR_KEY);
-    return raw && GARDEN_AVATARS.some((a) => a.id === raw) ? raw : null;
-  } catch { return null; }
 }
 
 type GardenGuide = { id: string; label: string; line: string };
@@ -4931,55 +4900,6 @@ function loadLifeGardenGuide(): string | null {
     const raw = safeLocalGet(LIFE_GARDEN_GUIDE_KEY);
     return raw && GARDEN_GUIDES.some((g) => g.id === raw) ? raw : null;
   } catch { return null; }
-}
-
-function GardenAvatarFigure({ avatar }: { avatar: GardenAvatar }) {
-  return (
-    <svg viewBox="0 0 120 120" className="h-20 w-20" role="img" aria-label={`A figure with ${avatar.desc}`}>
-      {avatar.hair === "long" && <rect x="30" y="18" width="60" height="100" rx="28" fill={avatar.hairColor} />}
-      {avatar.hair === "afro" && <circle cx="60" cy="38" r="34" fill={avatar.hairColor} />}
-      {avatar.hair === "bob" && <rect x="32" y="18" width="56" height="64" rx="24" fill={avatar.hairColor} />}
-      <path d="M18 118 Q20 88 60 88 Q100 88 102 118 Z" fill={avatar.top} />
-      <rect x="52" y="70" width="16" height="22" fill={avatar.skin} />
-      <circle cx="60" cy="52" r="26" fill={avatar.skin} />
-      {avatar.hair === "short" && <path d="M34 52 Q34 24 60 24 Q86 24 86 52 L86 56 L34 56 Z" fill={avatar.hairColor} />}
-      {avatar.hair === "bun" && (
-        <>
-          <path d="M34 52 Q34 24 60 24 Q86 24 86 52 L86 56 L34 56 Z" fill={avatar.hairColor} />
-          <circle cx="60" cy="20" r="11" fill={avatar.hairColor} />
-        </>
-      )}
-      <circle cx="49" cy="50" r="2.5" fill="#2e2117" />
-      <circle cx="71" cy="50" r="2.5" fill="#2e2117" />
-      {avatar.feature === "glasses" && (
-        <>
-          <circle cx="49" cy="50" r="9" fill="none" stroke="#2e2117" strokeWidth="2" />
-          <circle cx="71" cy="50" r="9" fill="none" stroke="#2e2117" strokeWidth="2" />
-          <path d="M58 50 L62 50" stroke="#2e2117" strokeWidth="2" />
-        </>
-      )}
-      {avatar.feature === "freckles" && (
-        <>
-          <circle cx="46" cy="60" r="1.6" fill="#8a5a3b" />
-          <circle cx="53" cy="62" r="1.6" fill="#8a5a3b" />
-          <circle cx="67" cy="62" r="1.6" fill="#8a5a3b" />
-          <circle cx="74" cy="60" r="1.6" fill="#8a5a3b" />
-        </>
-      )}
-      {avatar.feature === "earrings" && (
-        <>
-          <circle cx="35" cy="58" r="3" fill="#d9a441" />
-          <circle cx="85" cy="58" r="3" fill="#d9a441" />
-        </>
-      )}
-      {avatar.feature === "moustache" && <path d="M50 64 Q55 60 60 64 Q65 60 70 64 Q65 69 60 69 Q55 69 50 64 Z" fill={avatar.hairColor} />}
-      {avatar.feature === "beard" ? (
-        <path d="M44 64 Q60 84 76 64 Q74 78 60 78 Q46 78 44 64 Z" fill={avatar.hairColor} />
-      ) : (
-        <path d="M52 66 Q60 72 68 66" stroke="#2e2117" strokeWidth="2" fill="none" strokeLinecap="round" />
-      )}
-    </svg>
-  );
 }
 
 // Naturalistic, lifelike animal profiles — side and three-quarter
@@ -5083,11 +5003,9 @@ function GardenGuideFigure({ guideId }: { guideId: string }) {
   );
 }
 
-function GardenCompanions({ name, onName, avatar, onAvatar, guide, onGuide }: {
+function GardenCompanions({ name, onName, guide, onGuide }: {
   name: string;
   onName: (next: string) => void;
-  avatar: string | null;
-  onAvatar: (next: string) => void;
   guide: string | null;
   onGuide: (next: string) => void;
 }) {
@@ -5106,20 +5024,15 @@ function GardenCompanions({ name, onName, avatar, onAvatar, guide, onGuide }: {
     onName(clean);
     setSaved(clean.length > 0);
   };
-  const chosenAvatar = GARDEN_AVATARS.find((a) => a.id === avatar) ?? null;
   const chosenGuide = GARDEN_GUIDES.find((g) => g.id === guide) ?? null;
   const displayName = name ? name : "friend";
-  const summary = chosenAvatar && chosenGuide
-    ? `${displayName}, that figure is you, with the ${chosenGuide.label} beside you.`
-    : chosenAvatar
-      ? `${displayName}, that figure is you.`
-      : chosenGuide
-        ? `The ${chosenGuide.label} walks beside you, ${displayName}.`
-        : null;
+  const summary = chosenGuide
+    ? `The ${chosenGuide.label} walks beside you, ${displayName}.`
+    : null;
   return (
-    <Section title="Your name, your avatar & your spirit guide">
+    <Section title="Your name & your spirit guide">
       <p className="leading-relaxed text-[var(--text)]">
-        Optional — leave it blank and stay “friend”. Your name, your figure and your guide stay on this phone only, nothing is sent anywhere.
+        Optional — leave it blank and stay “friend”. Your name and your guide stay on this phone only, nothing is sent anywhere.
       </p>
       <p className="mt-4 font-bold text-[var(--text)]">Choose your own name</p>
       <div className="mt-2 flex flex-col gap-2 sm:flex-row">
@@ -5143,23 +5056,6 @@ function GardenCompanions({ name, onName, avatar, onAvatar, guide, onGuide }: {
       </div>
       {name && <p className="mt-2 font-bold text-[var(--text)]">{saved ? `Saved ✓ — that’s you, ${name}.` : `Welcome, ${name}.`}</p>}
       {!name && <p className="mt-2 text-sm leading-relaxed text-[var(--dim)]">Tap Save my name — it stays on this phone, in this browser.</p>}
-      <p className="mt-6 font-bold text-[var(--text)]">Pick a figure that stands for you</p>
-      <p className="mt-1 leading-relaxed text-[var(--dim)]">Tap one. No names, just a figure.</p>
-      <div className="mt-3 grid grid-cols-3 gap-2">
-        {GARDEN_AVATARS.map((a) => (
-          <button
-            key={a.id}
-            type="button"
-            onClick={() => onAvatar(a.id)}
-            aria-pressed={avatar === a.id}
-            aria-label={`Choose this figure: ${a.desc}`}
-            className={`flex min-h-28 flex-col items-center justify-center rounded-[var(--radius)] border-2 bg-[var(--surface)] p-2 ${avatar === a.id ? "border-[var(--accent)] bg-[var(--amber-soft)]" : "border-[var(--border)]"}`}
-          >
-            <GardenAvatarFigure avatar={a} />
-            {avatar === a.id && <span className="mt-1 text-sm font-bold text-[var(--text)]">That’s you ✓</span>}
-          </button>
-        ))}
-      </div>
       <p className="mt-6 font-bold text-[var(--text)]">Pick a spirit guide</p>
       <p className="mt-1 leading-relaxed text-[var(--dim)]">Tap one.</p>
       <div className="mt-3 grid grid-cols-2 gap-2">
@@ -5509,10 +5405,9 @@ function LifeGardenPage({ onGoHome, onGoTab, profiles, initialView = "list", map
   // there; and this is an effect, not a remount, so no extra
   // visit is recorded.
   useEffect(() => { setView(initialView); }, [mapRequest, initialView]);
-  // Third piece (Richard, 2026-11-26): your name, your figure and
-  // your spirit guide — optional, local only, nothing sent anywhere.
+  // Third piece (Richard, 2026-11-26): your name and your spirit
+  // guide — optional, local only, nothing sent anywhere.
   const [gardenName, setGardenName] = useState<string>(() => loadLifeGardenName());
-  const [gardenAvatar, setGardenAvatar] = useState<string | null>(() => loadLifeGardenAvatar());
   const [gardenGuide, setGardenGuide] = useState<string | null>(() => loadLifeGardenGuide());
   // Mindful break from inside the garden (Richard, 2026-11-28):
   // "Chill in Gazebo for a bit" from the Cozy Room lands on the
@@ -5531,10 +5426,6 @@ function LifeGardenPage({ onGoHome, onGoTab, profiles, initialView = "list", map
     const clean = next.trim().slice(0, 40);
     setGardenName(clean);
     if (clean) safeLocalSet(LIFE_GARDEN_NAME_KEY, clean); else safeLocalRemove(LIFE_GARDEN_NAME_KEY);
-  };
-  const saveGardenAvatar = (next: string) => {
-    setGardenAvatar(next);
-    safeLocalSet(LIFE_GARDEN_AVATAR_KEY, next);
   };
   const saveGardenGuide = (next: string) => {
     setGardenGuide(next);
@@ -5620,8 +5511,6 @@ function LifeGardenPage({ onGoHome, onGoTab, profiles, initialView = "list", map
       <GardenCompanions
         name={gardenName}
         onName={saveGardenName}
-        avatar={gardenAvatar}
-        onAvatar={saveGardenAvatar}
         guide={gardenGuide}
         onGuide={saveGardenGuide}
       />

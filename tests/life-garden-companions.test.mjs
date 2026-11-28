@@ -1,8 +1,7 @@
-// My Life Garden Pathway — name, avatar & spirit guide (Richard,
+// My Life Garden Pathway — name & spirit guide (Richard,
 // 2026-11-26), third piece, source-level tests. Choose your own
 // name (optional, first name or nickname, used in the garden
-// welcome, Clear returns to "friend"); six distinct figures with
-// no preset names and no name labels; eight spirit guides — Owl,
+// welcome, Clear returns to "friend"); eight spirit guides — Owl,
 // Robin, Turtle, Butterfly, Deer, Bear, Dog, Cat — drawn as
 // naturalistic lifelike profiles, not cartoons, with their animal
 // labels and a short companion line each. All local only, nothing
@@ -20,7 +19,7 @@ import path from "node:path";
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const src = readFileSync(path.join(root, "client", "src", "App.tsx"), "utf8");
 const garden = src.slice(src.indexOf("const LIFE_GARDEN_ITEMS"), src.indexOf("function HomePage("));
-const companions = src.slice(src.indexOf("/* ---------- My Life Garden Pathway — your name, avatar & spirit guide"), src.indexOf("/* ---------- My Life Garden Pathway — path expansion & weeds to flowers"));
+const companions = src.slice(src.indexOf("/* ---------- My Life Garden Pathway — your name & spirit guide"), src.indexOf("/* ---------- My Life Garden Pathway — path expansion & weeds to flowers"));
 const gardenView = src.slice(src.indexOf("function LifeGardenPage("), src.indexOf("function HomePage("));
 
 test("choose your own name: optional, used in the welcome, Clear returns to friend", () => {
@@ -35,21 +34,22 @@ test("choose your own name: optional, used in the welcome, Clear returns to frie
   assert.ok(companions.includes("nothing is sent anywhere"), "the companions section must say plainly that nothing is sent anywhere");
 });
 
-test("six figures, each different, with no preset names and no name labels", () => {
-  for (const name of ["Sunny", "Meadow", "Sky", "Blossom", "River", "Ember"]) {
-    assert.ok(!companions.includes(name), `the figures must not carry the preset name "${name}"`);
-  }
-  // Six distinct figures: different skin tones, hair styles, features, clothes.
-  const skins = (companions.match(/skin: "#[0-9a-f]{6}"/g) ?? []).length;
-  assert.ok(skins >= 6, `there must be six figures with different skin tones (found ${skins})`);
-  for (const hair of ["long", "afro", "short", "bun", "bob", "bald"]) {
-    assert.ok(companions.includes(`hair: "${hair}"`), `one figure must have ${hair} hair`);
-  }
-  for (const feature of ["beard", "glasses", "freckles", "earrings", "moustache"]) {
-    assert.ok(companions.includes(`feature: "${feature}"`), `one figure must have ${feature}`);
-  }
-  assert.ok(companions.includes("Pick a figure that stands for you"), "the figure picker must say it stands for you");
-  assert.ok(companions.includes("That’s you"), "picking a figure must confirm that figure is you");
+test("avatars removed completely (Richard, 2026-11-28): no figure picker, no avatar code", () => {
+  // Richard: "the avatars are not really necessary. My bad idea.
+  // It's not a video game. We please need to remove that option
+  // completely. Not a good fit for the app." So the garden must
+  // offer no avatar / figure choice at all, and carry no avatar
+  // code — a saved avatar from before is simply ignored.
+  assert.ok(!companions.toLowerCase().includes("avatar"), "the companions section must not mention avatars at all");
+  assert.ok(!gardenView.toLowerCase().includes("avatar"), "the garden view must not mention avatars at all");
+  assert.ok(!companions.includes("Pick a figure"), "there must be no figure picker");
+  assert.ok(!companions.includes("GARDEN_AVATARS"), "there must be no avatar list left in the code");
+  assert.ok(!companions.includes("GardenAvatarFigure"), "there must be no avatar figure component left");
+  assert.ok(!companions.includes("life-garden:avatar"), "there must be no avatar localStorage key left");
+  assert.ok(!companions.includes("That’s you ✓"), "there must be no 'That’s you' figure confirmation left");
+  // The section is now name + spirit guide only.
+  assert.ok(companions.includes("Your name & your spirit guide"), "the companions section must now be titled name & spirit guide");
+  assert.ok(companions.includes("Pick a spirit guide"), "the spirit guide picker must still be there");
 });
 
 test("eight spirit guides, lifelike profiles, animal labels, companion lines", () => {
@@ -62,7 +62,6 @@ test("eight spirit guides, lifelike profiles, animal labels, companion lines", (
   assert.ok(companions.includes("Pick a spirit guide"), "there must be a spirit guide picker");
   assert.ok(companions.includes("Walking beside you"), "picking a guide must say it walks beside you");
   assert.ok(companions.includes("richards-resource:life-garden:guide:v1"), "the guide must be saved under its own localStorage key");
-  assert.ok(companions.includes("richards-resource:life-garden:avatar:v1"), "the figure must be saved under its own localStorage key");
 });
 
 test("the name sticks: saved to localStorage on Save, Enter and blur, loaded on every garden open", () => {
@@ -108,7 +107,7 @@ test("once the name sticks, it replaces 'friend' everywhere in the garden — ex
 });
 
 test("companions are one gentle section, after the checklist, big buttons, local only", () => {
-  assert.ok(companions.includes("Your name, your avatar & your spirit guide"), "there must be one companions section with that title");
+  assert.ok(companions.includes("Your name & your spirit guide"), "there must be one companions section with that title");
   // In the garden view itself the section is used as one component,
   // after the checklist and before the Map button — not all on the
   // first screen.

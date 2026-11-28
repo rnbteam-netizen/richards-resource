@@ -7,8 +7,9 @@
 // Tapping a map link shows the option for that issue (for example
 // "No drinking problem"); choosing it earns a trophy for the Cozy
 // Room, local only. An "Inside view" option button on Home opens
-// the Cozy Room first inside view. Held, NOT built here: avatar /
-// guide choice, badges, points for weeds. Favourite books and
+// the Cozy Room first inside view. Held, NOT built here: badges,
+// points for weeds. (Avatars were removed, Richard, 2026-11-28;
+// the spirit guide choice lives in the companions section.) Favourite books and
 // your own photos for the frames are built in the Cozy Room
 // (fourth piece, 2026-11-26), so they are no longer held.
 import { test } from "node:test";

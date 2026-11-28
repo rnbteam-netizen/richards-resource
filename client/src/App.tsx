@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode, type TouchEvent, type WheelEvent } from "react";
 import { useIsMutating, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, type ApiResponse } from "./api";
 import { sounds, type CalmToneKind } from "./sound";
@@ -5838,6 +5838,36 @@ function GardenMapBud({ x, y, colour }: { x: number; y: number; colour: string }
   );
 }
 
+// Pinch-to-zoom for the enlarged gazebo (Richard, 2026-11-28):
+// "Sorry doesn't actually get bigger it just removes-ghost outs
+// background. Can it just be like a photo, I can zoom into with
+// diagonal finger touching on my phone screen?" He was right —
+// the enlarged view only darkened the background, the picture
+// stayed about the same size (max-h 85vh). So the enlarged
+// gazebo is now a real phone photo: two fingers apart to zoom
+// in, together to zoom out, one finger drags to look around
+// when zoomed, double-tap zooms in to 2x or resets to 1x, and
+// a single tap still closes. Pure helpers, so the scale and
+// pan maths are testable without a phone.
+type GazeboZoomView = { scale: number; x: number; y: number };
+const GAZEBO_ZOOM_MIN = 1;
+const GAZEBO_ZOOM_MAX = 4;
+const GAZEBO_ZOOM_RESET: GazeboZoomView = { scale: 1, x: 0, y: 0 };
+function gazeboPinchDistance(a: { x: number; y: number }, b: { x: number; y: number }): number {
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
+function gazeboPinchScale(startScale: number, startDistance: number, distance: number): number {
+  if (startDistance <= 0) return startScale;
+  return Math.min(GAZEBO_ZOOM_MAX, Math.max(GAZEBO_ZOOM_MIN, startScale * (distance / startDistance)));
+}
+function gazeboPanOffset(value: number, scale: number): number {
+  // At 1x there is nowhere to pan to; the further zoomed in,
+  // the further the picture may slide, so a corner can be
+  // reached but the picture can never slide clean off screen.
+  const max = 220 * (scale - 1);
+  return Math.max(-max, Math.min(max, value));
+}
+
 function GardenMapPage({ onGoHome, onGoGarden, onGoTab, onOpenCozy, profiles, gardenName = "", backLabel = "← Back to Home" }: {
   onGoHome: () => void;
   onGoGarden: () => void;
@@ -5854,6 +5884,140 @@ function GardenMapPage({ onGoHome, onGoGarden, onGoTab, onOpenCozy, profiles, ga
 }) {
   const [selected, setSelected] = useState<string | null>(null);
   const [gazeboZoomed, setGazeboZoomed] = useState(false);
+  // Pinch-to-zoom state for the enlarged gazebo (Richard,
+  // 2026-11-28): scale 1x to 4x, plus how far the picture has
+  // been dragged while zoomed. The gesture ref holds the
+  // fingers' starting positions; the tap timer waits a beat
+  // after a single tap, in case a second tap follows and it
+  // turns out to be a double-tap instead of a close.
+  const [gazeboZoom, setGazeboZoom] = useState<GazeboZoomView>(GAZEBO_ZOOM_RESET);
+  const gazeboGestureRef = useRef<null | {
+    touches: number;
+    startDistance: number;
+    startScale: number;
+    startMid: { x: number; y: number };
+    startPan: { x: number; y: number };
+    lastPoint: { x: number; y: number };
+    startPoint: { x: number; y: number };
+    startTime: number;
+    moved: boolean;
+  }>(null);
+  const gazeboTapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const gazeboLastTapRef = useRef(0);
+  const closeGazeboZoom = () => {
+    if (gazeboTapTimerRef.current) {
+      clearTimeout(gazeboTapTimerRef.current);
+      gazeboTapTimerRef.current = null;
+    }
+    setGazeboZoom(GAZEBO_ZOOM_RESET);
+    setGazeboZoomed(false);
+  };
+  const gazeboZoomTouchStart = (e: TouchEvent<HTMLDivElement>) => {
+    // A second tap arriving cancels the close the first tap
+    // had scheduled — that is how a double-tap is told apart
+    // from two single taps.
+    if (gazeboTapTimerRef.current) {
+      clearTimeout(gazeboTapTimerRef.current);
+      gazeboTapTimerRef.current = null;
+    }
+    const points = Array.from(e.touches).map((t) => ({ x: t.clientX, y: t.clientY }));
+    const [first, second] = points;
+    if (!first) return;
+    if (points.length === 2 && second) {
+      const mid = { x: (first.x + second.x) / 2, y: (first.y + second.y) / 2 };
+      gazeboGestureRef.current = {
+        touches: 2,
+        startDistance: gazeboPinchDistance(first, second),
+        startScale: gazeboZoom.scale,
+        startMid: mid,
+        startPan: { x: gazeboZoom.x, y: gazeboZoom.y },
+        lastPoint: first,
+        startPoint: first,
+        startTime: Date.now(),
+        moved: false,
+      };
+    } else if (points.length === 1) {
+      gazeboGestureRef.current = {
+        touches: 1,
+        startDistance: 0,
+        startScale: gazeboZoom.scale,
+        startMid: first,
+        startPan: { x: gazeboZoom.x, y: gazeboZoom.y },
+        lastPoint: first,
+        startPoint: first,
+        startTime: Date.now(),
+        moved: false,
+      };
+    }
+  };
+  const gazeboZoomTouchMove = (e: TouchEvent<HTMLDivElement>) => {
+    const g = gazeboGestureRef.current;
+    if (!g) return;
+    const points = Array.from(e.touches).map((t) => ({ x: t.clientX, y: t.clientY }));
+    const [first, second] = points;
+    if (g.touches === 2 && first && second) {
+      // Two fingers: spread them apart to zoom in, bring them
+      // together to zoom out, around the midpoint between them.
+      const distance = gazeboPinchDistance(first, second);
+      const mid = { x: (first.x + second.x) / 2, y: (first.y + second.y) / 2 };
+      const scale = gazeboPinchScale(g.startScale, g.startDistance, distance);
+      g.moved = true;
+      setGazeboZoom({
+        scale,
+        x: gazeboPanOffset(g.startPan.x + (mid.x - g.startMid.x), scale),
+        y: gazeboPanOffset(g.startPan.y + (mid.y - g.startMid.y), scale),
+      });
+    } else if (g.touches === 1 && first) {
+      if (Math.abs(first.x - g.startPoint.x) + Math.abs(first.y - g.startPoint.y) > 10) g.moved = true;
+      // One finger only drags when already zoomed in; at 1x a
+      // drag is just a swipe, and must not close the picture.
+      if (gazeboZoom.scale > 1) {
+        const dx = first.x - g.lastPoint.x;
+        const dy = first.y - g.lastPoint.y;
+        setGazeboZoom((prev) => ({
+          scale: prev.scale,
+          x: gazeboPanOffset(prev.x + dx, prev.scale),
+          y: gazeboPanOffset(prev.y + dy, prev.scale),
+        }));
+      }
+      g.lastPoint = first;
+    }
+  };
+  const gazeboZoomTouchEnd = (e: TouchEvent<HTMLDivElement>) => {
+    const g = gazeboGestureRef.current;
+    if (!g) return;
+    // A pinch ending is never a tap — never close on it, and
+    // if one finger is still down, wait for it to lift too.
+    if (g.touches === 2 || e.touches.length > 0) {
+      gazeboGestureRef.current = null;
+      return;
+    }
+    const wasTap = !g.moved && Date.now() - g.startTime < 500;
+    gazeboGestureRef.current = null;
+    if (!wasTap) return;
+    const now = Date.now();
+    if (now - gazeboLastTapRef.current < 350) {
+      // Double-tap: zoom in to 2x when at 1x, back to 1x when
+      // already zoomed — the reset Richard asked for.
+      gazeboLastTapRef.current = 0;
+      setGazeboZoom((prev) => (prev.scale > 1 ? GAZEBO_ZOOM_RESET : { scale: 2, x: 0, y: 0 }));
+      return;
+    }
+    gazeboLastTapRef.current = now;
+    // Single tap: wait a beat in case a second tap follows,
+    // then close — so a double-tap resets instead of closing.
+    gazeboTapTimerRef.current = setTimeout(() => {
+      closeGazeboZoom();
+    }, 320);
+  };
+  const gazeboZoomWheel = (e: WheelEvent<HTMLDivElement>) => {
+    // Mouse wheel, for a bigger screen: scroll up to zoom in,
+    // down to zoom out, same 1x to 4x limits as a pinch.
+    setGazeboZoom((prev) => {
+      const scale = Math.min(GAZEBO_ZOOM_MAX, Math.max(GAZEBO_ZOOM_MIN, prev.scale * (e.deltaY < 0 ? 1.15 : 1 / 1.15)));
+      return scale === 1 ? GAZEBO_ZOOM_RESET : { scale, x: gazeboPanOffset(prev.x, scale), y: gazeboPanOffset(prev.y, scale) };
+    });
+  };
   const [trophies, setTrophies] = useState<string[]>(() => loadLifeGardenTrophies());
   const [checked, setChecked] = useState<string[]>(() => loadLifeGardenChecked());
   const [quitDays, setQuitDays] = useState<GardenQuitDays>(() => loadLifeGardenQuitDays());
@@ -6216,18 +6380,31 @@ function GardenMapPage({ onGoHome, onGoGarden, onGoTab, onOpenCozy, profiles, ga
                           backdrop, tap anywhere to close. The
                           caption does not block enlarging — the
                           picture simply was not wired up yet. */}
-                      <button type="button" onClick={() => setGazeboZoomed(true)} aria-label="The gazebo — tap to see it bigger" className="block w-full">
+                      <button type="button" onClick={() => { setGazeboZoom(GAZEBO_ZOOM_RESET); setGazeboZoomed(true); }} aria-label="The gazebo — tap to see it bigger" className="block w-full">
                         <img src={myLifeGardenGazebo} alt="The gazebo in My Life Garden Pathway — the beautiful octagonal wooden gazebo, with a bench with pillows and cushions, a rocking chair, and candles" className="w-full" />
                       </button>
                       <figcaption className="bg-[var(--surface)] px-4 py-3 text-center font-bold leading-relaxed text-[var(--text)]">The gazebo — a quiet place, off to the side of the path.</figcaption>
                       <p className="bg-[var(--surface)] pb-3 text-center text-sm text-[var(--dim)]">Tap the photo to see it bigger.</p>
                     </figure>
                     {gazeboZoomed && (
-                      <div role="dialog" aria-label="The gazebo, enlarged" className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" onClick={() => setGazeboZoomed(false)}>
-                        <button type="button" onClick={() => setGazeboZoomed(false)} aria-label="Close the enlarged gazebo photo" className="max-h-full max-w-full">
-                          <img src={myLifeGardenGazebo} alt="The gazebo — enlarged" className="max-h-[85vh] w-auto max-w-full rounded-[var(--radius)]" />
-                          <span className="mt-2 block text-center font-semibold text-white">Tap anywhere to close</span>
-                        </button>
+                      <div role="dialog" aria-label="The gazebo, enlarged" className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-black/80 p-4" style={{ touchAction: "none" }} onClick={(e) => { if (e.target === e.currentTarget) closeGazeboZoom(); }} onTouchStart={gazeboZoomTouchStart} onTouchMove={gazeboZoomTouchMove} onTouchEnd={gazeboZoomTouchEnd} onWheel={gazeboZoomWheel}>
+                        <div className="flex max-h-full flex-col items-center">
+                          <button type="button" onClick={closeGazeboZoom} aria-label="Close the enlarged gazebo photo" className="mb-2 self-end rounded-full bg-white/90 px-4 py-2 font-bold text-[var(--text)]">✕ Close</button>
+                          {/* Pinch-to-zoom (Richard, 2026-11-28): the
+                              old enlarged view only darkened the
+                              background — the picture stayed the
+                              same size. Now it is a real phone
+                              photo: two fingers apart to zoom in
+                              (up to 4x), together to zoom out, one
+                              finger drags to look around when
+                              zoomed, double-tap zooms in to 2x or
+                              resets to 1x. touchAction none stops
+                              the phone's own pinch-zoom fighting
+                              ours; the picture never slides clean
+                              off screen. */}
+                          <img src={myLifeGardenGazebo} alt="The gazebo — enlarged" draggable={false} className="max-h-[75vh] w-auto max-w-full touch-none select-none rounded-[var(--radius)]" style={{ transform: `translate(${gazeboZoom.x}px, ${gazeboZoom.y}px) scale(${gazeboZoom.scale})`, transformOrigin: "center center" }} />
+                          <span className="mt-2 block text-center font-semibold text-white">Pinch with two fingers to zoom in, drag to look around, double-tap to reset. Tap anywhere to close.</span>
+                        </div>
                       </div>
                     )}
                   </>

@@ -237,10 +237,17 @@ test("the gazebo picture taps to enlarge — folks can be there (Richard, 2026-1
   // not wired up yet. Same pattern as the garden first pic.
   assert.ok(map.includes("const [gazeboZoomed, setGazeboZoomed] = useState(false)"), "the Map page must hold a gazebo enlarged state");
   assert.ok(map.includes('aria-label="The gazebo — tap to see it bigger"'), "the gazebo picture must be a tap target that says tap to see it bigger");
-  assert.ok(map.includes("onClick={() => setGazeboZoomed(true)}"), "tapping the gazebo picture must open the enlarged view");
+  // Updated 2026-11-28, pinch-to-zoom: opening now resets the
+  // zoom to 1x first, so it never opens at the last visit's zoom.
+  assert.ok(map.includes("setGazeboZoom(GAZEBO_ZOOM_RESET); setGazeboZoomed(true)"), "tapping the gazebo picture must open the enlarged view, starting at 1x");
   assert.ok(map.includes('role="dialog" aria-label="The gazebo, enlarged"'), "the enlarged view must be a dialog labelled The gazebo, enlarged");
   assert.ok(map.includes('aria-label="Close the enlarged gazebo photo"'), "the enlarged view must have a close button");
-  assert.ok(map.includes("onClick={() => setGazeboZoomed(false)}"), "tapping the enlarged view must close it");
+  // Updated 2026-11-28, pinch-to-zoom: closing now goes through
+  // closeGazeboZoom (which also resets the zoom), and a tap on
+  // the backdrop — not on the picture — closes it, so a pinch
+  // ending on the picture never closes it by accident.
+  assert.ok(map.includes("onClick={closeGazeboZoom}"), "the enlarged view's close button must close it");
+  assert.ok(map.includes("if (e.target === e.currentTarget) closeGazeboZoom()"), "a tap on the dark backdrop around the picture must close it");
   assert.ok(map.includes('alt="The gazebo — enlarged"'), "the enlarged view must show the gazebo pic big");
   assert.ok(map.includes("Tap the photo to see it bigger."), "the gazebo must say tap the photo to see it bigger");
   // Unchanged: the pic file, the caption wording, and the pic

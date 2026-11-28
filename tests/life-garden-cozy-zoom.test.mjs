@@ -56,6 +56,33 @@ test("the garden first picture still enlarges — same bug, checked, not broken"
   assert.ok(garden.includes('aria-label="My Life Garden Pathway, enlarged"'), "the garden enlarged view must still exist");
 });
 
+test("the enlarged gazebo really pinch-zooms — two fingers, 1x to 4x, drag to pan, double-tap to reset (Richard, 2026-11-28)", () => {
+  // Richard: "Sorry doesn't actually get bigger it just
+  // removes-ghost outs background. Can it just be like a photo,
+  // I can zoom into with diagonal finger touching on my phone
+  // screen?" The old enlarged view only darkened the
+  // background. The helpers are pure, so their scale and pan
+  // maths are asserted here; the dialog wiring is asserted
+  // below. Source-level tests, like the rest of this file.
+  const map = src.slice(src.indexOf("function GardenMapPage("), src.indexOf("function CozyRoomVisual"));
+  assert.ok(src.includes("const GAZEBO_ZOOM_MAX = 4"), "pinch zoom must go up to 4x");
+  assert.ok(src.includes("const GAZEBO_ZOOM_MIN = 1"), "pinch zoom must bottom out at 1x, never smaller");
+  assert.ok(src.includes("Math.min(GAZEBO_ZOOM_MAX, Math.max(GAZEBO_ZOOM_MIN, startScale * (distance / startDistance)))"), "spreading two fingers apart must grow the picture in proportion to how far apart they move, clamped to 1x–4x");
+  assert.ok(src.includes("const max = 220 * (scale - 1)"), "panning must be clamped so the picture can slide to a corner but never clean off screen, and cannot pan at all at 1x");
+  const dialog = map.slice(map.indexOf('aria-label="The gazebo, enlarged"'));
+  assert.ok(dialog.includes("onTouchStart={gazeboZoomTouchStart}"), "the enlarged gazebo must listen for fingers touching down");
+  assert.ok(dialog.includes("onTouchMove={gazeboZoomTouchMove}"), "the enlarged gazebo must listen for fingers moving — the pinch itself");
+  assert.ok(dialog.includes("onTouchEnd={gazeboZoomTouchEnd}"), "the enlarged gazebo must listen for fingers lifting — so a pinch ending never closes it");
+  assert.ok(dialog.includes("touchAction: \"none\""), "the phone's own pinch-zoom must be switched off inside the enlarged view, or it fights ours");
+  assert.ok(dialog.includes("translate(${gazeboZoom.x}px, ${gazeboZoom.y}px) scale(${gazeboZoom.scale})"), "the enlarged picture must actually grow and slide with the fingers, not just sit still on a dark background");
+  assert.ok(dialog.includes("Pinch with two fingers to zoom in, drag to look around, double-tap to reset."), "the enlarged view must tell the visitor how to zoom, in plain words");
+  assert.ok(map.includes("prev.scale > 1 ? GAZEBO_ZOOM_RESET : { scale: 2, x: 0, y: 0 }"), "a double-tap must reset a zoomed picture to 1x, or zoom a 1x picture in to 2x");
+  assert.ok(map.includes("setGazeboZoom(GAZEBO_ZOOM_RESET); setGazeboZoomed(true)"), "opening the enlarged gazebo must start at 1x, never at the last visit's zoom");
+  assert.ok(dialog.includes("Tap anywhere to close"), "a single tap must still close the enlarged gazebo");
+  assert.ok(dialog.includes('aria-label="Close the enlarged gazebo photo"'), "the enlarged gazebo must still have its close button");
+  assert.ok(map.includes("The gazebo — a quiet place, off to the side of the path."), "the gazebo caption must stay word for word");
+});
+
 test("the Map cottage picture promises no enlarge — the gazebo does, the cottage does not (Richard, 2026-11-28)", () => {
   const map = src.slice(src.indexOf("function GardenMapPage("), src.indexOf("function CozyRoomVisual"));
   // Updated 2026-11-28: the Map now DOES have one enlarge — the

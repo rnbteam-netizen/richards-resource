@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode, type TouchEvent, type WheelEvent } from "react";
 import { useIsMutating, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, type ApiResponse } from "./api";
-import { sounds, type CalmToneKind } from "./sound";
+import { sounds, GAZEBO_BELL_EVERY_MINUTE_MS, GAZEBO_MUSIC_KINDS, type CalmToneKind, type GazeboMusicKind } from "./sound";
 import { speakText, stopSpeaking } from "./speech";
 import welcomeCottage from "./assets/welcome-cottage.jpg";
 import myLifeGarden from "./assets/my-life-garden.webp";
@@ -6116,6 +6116,50 @@ function GardenMapPage({ onGoHome, onGoGarden, onGoTab, onOpenCozy, profiles, ga
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gazeboRequest]);
+  // Gazebo music + bell every minute (Richard, 2026-11-28):
+  // "We want our user to be able to select from those 5 while
+  // in the gazebo. And the bell is very spaced apart, like one
+  // minute spacing." Five original pieces — soft piano, harp,
+  // harmonica, acoustic guitar, violins — made here with Web
+  // Audio, no files, no copyrighted songs. Off by default:
+  // nothing plays until the visitor taps one. The music stops
+  // when they leave the gazebo, and the bell's every-minute
+  // ringing is off to start with, and stops when they leave.
+  const [gazeboMusic, setGazeboMusic] = useState<GazeboMusicKind | null>(null);
+  const [gazeboBellEveryMinute, setGazeboBellEveryMinute] = useState(false);
+  const chooseGazeboMusic = (kind: GazeboMusicKind) => {
+    if (gazeboMusic === kind) {
+      sounds.stopGazeboMusic();
+      setGazeboMusic(null);
+      return;
+    }
+    sounds.prepareAudio();
+    sounds.startGazeboMusic(kind);
+    setGazeboMusic(kind);
+  };
+  const stopGazeboMusic = () => {
+    sounds.stopGazeboMusic();
+    setGazeboMusic(null);
+  };
+  useEffect(() => {
+    if (selected !== "gazebo") {
+      sounds.stopGazeboMusic();
+      setGazeboMusic(null);
+      setGazeboBellEveryMinute(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected]);
+  useEffect(() => () => {
+    sounds.stopGazeboMusic();
+  }, []);
+  useEffect(() => {
+    if (!gazeboBellEveryMinute || selected !== "gazebo") return;
+    const id = setInterval(() => {
+      sounds.prepareAudio();
+      sounds.playGazeboBell();
+    }, GAZEBO_BELL_EVERY_MINUTE_MS);
+    return () => clearInterval(id);
+  }, [gazeboBellEveryMinute, selected]);
   return (
     <div>
       <button type="button" onClick={onGoHome} className="min-h-11 rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 font-bold text-[var(--text)]">
@@ -6419,6 +6463,34 @@ function GardenMapPage({ onGoHome, onGoGarden, onGoTab, onOpenCozy, profiles, ga
                       <div className="bg-[var(--surface)] px-4 pb-4 text-center">
                         <button type="button" onClick={() => { sounds.prepareAudio(); sounds.playGazeboBell(); }} aria-label="Ring the tiny bell — a quiet moment, like the bell at the end of a yoga session" className="min-h-11 rounded-[var(--radius)] border-2 border-[#9a5a90] bg-[var(--surface)] px-4 font-bold text-[var(--text)]">🔔 Ring the bell</button>
                         <p className="mt-2 text-sm leading-relaxed text-[var(--dim)]">A tiny bell, like the one at the end of a yoga session — tap it to mark a quiet moment.</p>
+                        {/* Bell every minute (Richard, 2026-11-28):
+                            "the bell is very spaced apart, like
+                            one minute spacing" — an opt-in toggle:
+                            while it is on and you stay in the
+                            gazebo, the tiny bell rings once every
+                            minute. Off to start with. */}
+                        <button type="button" onClick={() => setGazeboBellEveryMinute((on) => !on)} aria-pressed={gazeboBellEveryMinute} aria-label="Ring the bell every minute — the tiny bell rings once every minute while you are in the gazebo" className="mt-3 min-h-11 rounded-[var(--radius)] border-2 border-[#9a5a90] bg-[var(--surface)] px-4 font-bold text-[var(--text)]">{gazeboBellEveryMinute ? "🔔 Bell every minute — on, tap to turn off" : "🔔 Ring the bell every minute"}</button>
+                        <p className="mt-2 text-sm leading-relaxed text-[var(--dim)]">When on, the tiny bell rings once every minute, spaced apart, while you are in the gazebo. Off to start with — the bell only rings when you tap it.</p>
+                      </div>
+                      {/* Music in the gazebo (Richard, 2026-11-28):
+                          "We want our user to be able to select
+                          from those 5 while in the gazebo." Five
+                          original pieces, made here with Web Audio
+                          — soft piano, harp, harmonica, acoustic
+                          guitar, violins. No audio files, no
+                          downloaded music, no copyrighted songs.
+                          Off by default: nothing plays until the
+                          visitor taps one, and it stops when they
+                          leave the gazebo. */}
+                      <div className="bg-[var(--surface)] px-4 pb-4 text-center">
+                        <p className="font-bold leading-relaxed text-[var(--text)]">Choose music in the gazebo</p>
+                        <p className="mt-1 text-sm leading-relaxed text-[var(--dim)]">Original music, made here for the gazebo — soft and slow, no copyrighted songs. Tap one to play it, tap it again to stop.</p>
+                        <div role="group" aria-label="Choose music in the gazebo" className="mt-2 flex flex-wrap justify-center gap-2">
+                          {GAZEBO_MUSIC_KINDS.map((kind) => (
+                            <button key={kind.id} type="button" onClick={() => chooseGazeboMusic(kind.id)} aria-pressed={gazeboMusic === kind.id} aria-label={gazeboMusic === kind.id ? `${kind.label} — playing, tap to stop` : `Play ${kind.label} in the gazebo`} className="min-h-11 rounded-[var(--radius)] border-2 border-[#9a5a90] bg-[var(--surface)] px-3 font-bold text-[var(--text)]">{gazeboMusic === kind.id ? `♪ ${kind.label} — playing` : `♪ ${kind.label}`}</button>
+                          ))}
+                        </div>
+                        {gazeboMusic && <p className="mt-2 text-sm font-bold leading-relaxed text-[var(--text)]">Playing {GAZEBO_MUSIC_KINDS.find((k) => k.id === gazeboMusic)?.label} — tap it again, or leave the gazebo, to stop.</p>}
                       </div>
                     </figure>
                     {gazeboZoomed && (
@@ -6449,6 +6521,18 @@ function GardenMapPage({ onGoHome, onGoGarden, onGoTab, onOpenCozy, profiles, ga
                               off screen. */}
                           <img src={myLifeGardenGazebo} alt="The gazebo — enlarged" draggable={false} className="max-h-[75vh] w-auto max-w-full touch-none select-none rounded-[var(--radius)]" style={{ transform: `translate(${gazeboZoom.x}px, ${gazeboZoom.y}px) scale(${gazeboZoom.scale})`, transformOrigin: "center center" }} />
                           <span className="mt-2 block text-center font-semibold text-white">Pinch with two fingers to zoom in, drag to look around, double-tap to reset. Tap anywhere to close.</span>
+                          {/* Music in the enlarged gazebo too
+                              (Richard, 2026-11-28): the same five
+                              choices, while you are there in the
+                              picture. The taps must not reach the
+                              dialog's touch handlers — a tap there
+                              would be read as a tap to close — so
+                              they stop here, like the bell. */}
+                          <div role="group" aria-label="Choose music in the gazebo" className="mt-2 flex flex-wrap justify-center gap-2" onTouchStart={(e) => e.stopPropagation()} onTouchEnd={(e) => e.stopPropagation()}>
+                            {GAZEBO_MUSIC_KINDS.map((kind) => (
+                              <button key={kind.id} type="button" onClick={(e) => { e.stopPropagation(); chooseGazeboMusic(kind.id); }} onTouchStart={(e) => e.stopPropagation()} onTouchEnd={(e) => e.stopPropagation()} aria-pressed={gazeboMusic === kind.id} aria-label={gazeboMusic === kind.id ? `${kind.label} — playing, tap to stop` : `Play ${kind.label} in the gazebo`} className="rounded-full bg-white/90 px-3 py-2 font-bold text-[var(--text)]">{gazeboMusic === kind.id ? `♪ ${kind.label} — playing` : `♪ ${kind.label}`}</button>
+                            ))}
+                          </div>
                         </div>
                       </div>
                     )}

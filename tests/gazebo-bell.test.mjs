@@ -65,19 +65,25 @@ test("the enlarged gazebo view has the bell too, and ringing it does not close t
 });
 
 test("the bell only rings when tapped — never on its own, never when the gazebo opens, never on a loop", () => {
-  // Two call sites only, both inside a tap handler: the panel
-  // button and the enlarged-view button. Nothing else plays it.
+  // Three call sites only: the panel button and the enlarged-view
+  // button, both inside a tap handler, plus the opt-in
+  // every-minute interval (Richard, 2026-11-28) — nothing else
+  // plays it.
   const calls = [...src.matchAll(/sounds\.playGazeboBell\(\)/g)];
-  assert.equal(calls.length, 2, "playGazeboBell must be called from exactly two places — the panel button and the enlarged-view button");
+  assert.equal(calls.length, 3, "playGazeboBell must be called from exactly three places — the panel button, the enlarged-view button, and the opt-in every-minute interval");
   for (const call of calls) {
     const around = src.slice(Math.max(0, call.index - 200), call.index);
-    assert.ok(around.includes("onClick"), "each bell ring must come from a tap handler");
+    assert.ok(around.includes("onClick") || around.includes("setInterval"), "each bell ring must come from a tap handler or the opt-in every-minute interval");
   }
-  // No autoplay: no effect, timer or open-handler plays it.
+  // No autoplay: no effect or open-handler plays it on its own.
   assert.ok(!src.includes("useEffect") || !/useEffect\([^)]*playGazeboBell/s.test(src),
     "no effect may ring the bell");
   assert.ok(!/setTimeout\([^)]*playGazeboBell/.test(src), "no timer may ring the bell");
-  assert.ok(!/setInterval\([^)]*playGazeboBell/.test(src), "the bell must never loop");
+  // The only loop is the opt-in every-minute one, guarded by
+  // the toggle and by still being in the gazebo — see the
+  // gazebo-music tests for the full check.
+  const intervals = [...src.matchAll(/setInterval\([\s\S]*?playGazeboBell\(\)/g)];
+  assert.equal(intervals.length, 1, "there must be exactly one bell interval — the opt-in every-minute one");
   // Opening the gazebo must not ring it: the openers only open
   // the Map and bump the gazebo request.
   const openAt = src.indexOf("const openGazebo");

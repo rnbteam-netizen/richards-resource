@@ -30,9 +30,18 @@
 // 4. Gazebo bell (My Life Garden Pathway, Richard, 2026-11-28): one
 //    small, gentle bell in the gazebo — a tiny yoga bell, like the
 //    one his yoga instructor rang at the end of a session — to mark
-//    a quiet moment. See GAZEBO_BELL_* below. Music was deliberately
-//    not added: copyright makes music tricky, so the bell stands
-//    alone. It only ever rings when tapped, never on its own.
+//    a quiet moment. See GAZEBO_BELL_* below. It only ever rings
+//    when tapped, never on its own — unless the visitor turns on
+//    "Ring the bell every minute", when it rings once a minute,
+//    spaced apart, while they stay in the gazebo.
+// 5. Gazebo music (My Life Garden Pathway, Richard, 2026-11-28):
+//    five original, gentle pieces to choose from while in the
+//    gazebo — soft piano, harp, harmonica, acoustic guitar,
+//    violins. Every note is made here with Web Audio, in the
+//    instrument's own voice — no audio files, no downloaded
+//    music, no copyrighted songs, no copied melody. See
+//    GAZEBO_MUSIC_* below. Off by default: nothing plays until
+//    the visitor taps one, and it stops when they leave.
 //
 // Privacy: no recording, no microphone, no data leaves the phone for
 // any of this. Sound on/off is not saved to the server and not tied
@@ -101,6 +110,78 @@ export const SLOT_TONE_SPECS: Record<SlotSoundKind, { frequencyHz: number; durat
 export const GAZEBO_BELL_FREQUENCIES_HZ: [number, number, number] = [1568, 2352, 3136];
 export const GAZEBO_BELL_DURATION_MS = 2400;
 export const GAZEBO_BELL_GAIN = 0.07;
+// Bell every minute (Richard, 2026-11-28): "the bell is very
+// spaced apart, like one minute spacing" — an opt-in toggle in
+// the gazebo rings the tiny bell once every 60 seconds, while
+// the visitor stays in the gazebo. Off by default.
+export const GAZEBO_BELL_EVERY_MINUTE_MS = 60000;
+
+// Gazebo music (Richard, 2026-11-28): five original, gentle
+// pieces to choose from while in the gazebo — soft piano, harp,
+// harmonica, acoustic guitar, violins. Each piece is a slow,
+// original phrase in the instrument's own voice, made here with
+// Web Audio oscillators — no audio files, no downloaded music,
+// no copyrighted songs, no copied melody. All five phrases are
+// slow, soft, and in the same gentle key (C major, the notes of
+// a calm scale), so any of them fits a quiet moment, and each
+// one sounds different: piano steps down gently, harp arpeggiates
+// up and down, harmonica holds long notes, guitar plucks short
+// ones, violins sing long and slow.
+export type GazeboMusicKind = "piano" | "harp" | "harmonica" | "guitar" | "violins";
+export const GAZEBO_MUSIC_KINDS: { id: GazeboMusicKind; label: string }[] = [
+  { id: "piano", label: "Soft piano" },
+  { id: "harp", label: "Harp" },
+  { id: "harmonica", label: "Harmonica" },
+  { id: "guitar", label: "Acoustic guitar" },
+  { id: "violins", label: "Violins" },
+];
+// The phrase loops, slow and unhurried — one phrase is about
+// 30 seconds, then it begins again, until the visitor stops it
+// or leaves the gazebo.
+export const GAZEBO_MUSIC_LOOP_MS = 30000;
+
+export type GazeboMusicNote = { frequencyHz: number; startMs: number; durationMs: number };
+
+// The notes of a calm scale, in hertz: C4 D4 E4 G4 A4 C5 E5 G5.
+const GAZEBO_MUSIC_NOTES_HZ = {
+  C4: 261.63, D4: 293.66, E4: 329.63, G4: 392.0, A4: 440.0, C5: 523.25, E5: 659.25, G5: 783.99,
+} as const;
+
+// One slow, original phrase per instrument — twelve notes each,
+// each note starting about 2.4 seconds after the last, so the
+// phrase runs about 30 seconds. The five phrases are different
+// shapes, so each instrument's piece is its own tune, not the
+// same notes played louder or faster.
+export function gazeboMusicPhrase(kind: GazeboMusicKind): GazeboMusicNote[] {
+  const steps: Record<GazeboMusicKind, (keyof typeof GAZEBO_MUSIC_NOTES_HZ)[]> = {
+    piano: ["C4", "E4", "G4", "E4", "A4", "G4", "E4", "C4", "D4", "E4", "G4", "C5"],
+    harp: ["C4", "G4", "E4", "G4", "A4", "C5", "E5", "A4", "G4", "E4", "C5", "G4"],
+    harmonica: ["E4", "G4", "A4", "G4", "E4", "D4", "C4", "E4", "G4", "E4", "D4", "C4"],
+    guitar: ["C4", "G4", "E4", "C4", "A4", "E4", "G4", "C4", "E4", "G4", "A4", "E4"],
+    violins: ["C4", "E4", "G4", "A4", "G4", "E4", "D4", "C4", "E4", "G4", "A4", "C5"],
+  };
+  const durationsMs: Record<GazeboMusicKind, number> = {
+    piano: 2200, harp: 2000, harmonica: 3200, guitar: 1400, violins: 3600,
+  };
+  return steps[kind].map((note, i) => ({
+    frequencyHz: GAZEBO_MUSIC_NOTES_HZ[note],
+    startMs: i * 2400,
+    durationMs: durationsMs[kind],
+  }));
+}
+
+// Each instrument's voice — the oscillator shape and loudness
+// that makes it sound like itself, still soft, still gentle.
+export function gazeboMusicVoice(kind: GazeboMusicKind): { type: OscillatorType; gain: number } {
+  const voices: Record<GazeboMusicKind, { type: OscillatorType; gain: number }> = {
+    piano: { type: "triangle", gain: 0.09 },
+    harp: { type: "sine", gain: 0.09 },
+    harmonica: { type: "sine", gain: 0.07 },
+    guitar: { type: "triangle", gain: 0.08 },
+    violins: { type: "sine", gain: 0.08 },
+  };
+  return voices[kind];
+}
 
 export type HappySoundKind = "tap" | "bell";
 export const HAPPY_TAP_FREQUENCY_HZ = 660;
@@ -133,6 +214,13 @@ class AppSounds {
   private ctx: AudioContext | null = null;
   private calmTone: ToneNodes | null = null;
   private calmVolume: number = CALM_TONE_GAIN;
+  // Gazebo music (Richard, 2026-11-28): the piece now playing,
+  // its loop timer, and the not-yet-started notes of the current
+  // phrase, so stopping clears what has not sounded yet. Notes
+  // already sounding are short and fade within a few seconds.
+  private gazeboMusicKind: GazeboMusicKind | null = null;
+  private gazeboMusicTimer: ReturnType<typeof setInterval> | null = null;
+  private gazeboMusicTimeouts: ReturnType<typeof setTimeout>[] = [];
 
   // The breathing exercise's own volume slider calls this. Clamped
   // to 0–0.4, so the tone can never get harsh. If a tone is playing,
@@ -210,14 +298,57 @@ class AppSounds {
 
   // Gazebo bell (Richard, 2026-11-28): one small, gentle ring —
   // a tiny yoga bell to mark a quiet moment at the end of a
-  // mindful break. Web Audio only, no audio file, no music,
-  // no copyright. Tap-only: the caller plays it from the
-  // "Ring the bell" tap, never on load, never on opening the
-  // gazebo, never on a loop.
+  // mindful break. Web Audio only, no audio file, no copyright.
+  // Tap-only: the caller plays it from the "Ring the bell" tap,
+  // never on load, never on opening the gazebo — unless the
+  // visitor turns on "Ring the bell every minute", when it rings
+  // once a minute, spaced apart, while they stay in the gazebo.
   playGazeboBell(): void {
     this.playTone(GAZEBO_BELL_FREQUENCIES_HZ[0], GAZEBO_BELL_DURATION_MS, "sine", GAZEBO_BELL_GAIN);
     this.playTone(GAZEBO_BELL_FREQUENCIES_HZ[1], 1800, "sine", 0.035);
     this.playTone(GAZEBO_BELL_FREQUENCIES_HZ[2], 1200, "sine", 0.02);
+  }
+
+  // Gazebo music (Richard, 2026-11-28): the visitor's chosen
+  // piece, played only after they tap it — never on opening
+  // the gazebo, never on load. The phrase plays once, then
+  // loops every GAZEBO_MUSIC_LOOP_MS until stopped. Choosing
+  // another piece stops the first; stopping, or leaving the
+  // gazebo, clears the loop and any notes not yet sounded.
+  currentGazeboMusic(): GazeboMusicKind | null {
+    return this.gazeboMusicKind;
+  }
+
+  startGazeboMusic(kind: GazeboMusicKind): void {
+    this.ensureContext();
+    this.stopGazeboMusic();
+    this.gazeboMusicKind = kind;
+    this.playGazeboMusicPhrase(kind);
+    this.gazeboMusicTimer = setInterval(() => {
+      if (this.gazeboMusicKind === kind) this.playGazeboMusicPhrase(kind);
+    }, GAZEBO_MUSIC_LOOP_MS);
+  }
+
+  private playGazeboMusicPhrase(kind: GazeboMusicKind): void {
+    const voice = gazeboMusicVoice(kind);
+    for (const note of gazeboMusicPhrase(kind)) {
+      const id = setTimeout(() => {
+        if (this.gazeboMusicKind === kind) {
+          this.playTone(note.frequencyHz, note.durationMs, voice.type, voice.gain);
+        }
+      }, note.startMs);
+      this.gazeboMusicTimeouts.push(id);
+    }
+  }
+
+  stopGazeboMusic(): void {
+    if (this.gazeboMusicTimer !== null) {
+      clearInterval(this.gazeboMusicTimer);
+      this.gazeboMusicTimer = null;
+    }
+    for (const id of this.gazeboMusicTimeouts) clearTimeout(id);
+    this.gazeboMusicTimeouts = [];
+    this.gazeboMusicKind = null;
   }
 
   playSlotSound(kind: SlotSoundKind): void {
@@ -292,6 +423,7 @@ class AppSounds {
 
   stopAll(): void {
     this.stopCalmTone();
+    this.stopGazeboMusic();
   }
 }
 

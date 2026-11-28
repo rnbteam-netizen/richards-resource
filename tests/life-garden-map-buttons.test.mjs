@@ -41,7 +41,7 @@ test("there are exactly two See the Map buttons, and both open the real Map", ()
 test("the Cozy Room takes an onGoMap prop, wired to the Map in both places it opens", () => {
   assert.ok(room.includes("onGoMap: () => void"), "CozyRoomPage must take an onGoMap prop");
   // From inside the garden: the Cozy Room's onGoMap sets the view to "map".
-  assert.ok(garden.includes('onGoMap={() => { setView("map")'), "the garden's Cozy Room must open the Map on See the Map");
+  assert.ok(garden.includes('onGoMap={() => { setMapGazeboRequest(0); setView("map")'), "the garden's Cozy Room must open the Map on See the Map — clearing any earlier gazebo request, so a plain Map tap lands on the Map top");
   // From Home: the Cozy Room's onGoMap opens the garden landed on the Map.
   assert.ok(home.includes('setGardenInitialView("map")'), "Home's Cozy Room must land the garden on the Map on See the Map");
   assert.ok(home.includes("setGardenOpen(true)"), "Home's Cozy Room See the Map must open the garden");

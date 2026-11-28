@@ -2483,18 +2483,20 @@ function BulletList({ items }: { items: string[] }) {
   );
 }
 
-function CategoryPage({ category, profile, logs, dayMarks, onSurf }: {
+function CategoryPage({ category, profile, logs, dayMarks, onSurf, onGoGazebo }: {
   category: Category;
   profile: Profile | undefined;
   logs: LogEntry[];
   dayMarks: DayMark[];
   onSurf: (c: Category) => void;
+  onGoGazebo?: () => void;
 }) {
   const catLogs = logs.filter((l) => l.category === category);
   const isCodep = category === "codependency";
   return (
     <div>
       <TabPointsChip tab={category} />
+      {onGoGazebo && <GazeboBreakLink onGoGazebo={onGoGazebo} />}
       {category === "alcohol" && (
         <>
           <div className="felt-soft rounded-[var(--radius)] bg-[var(--crisis-soft)] p-4">
@@ -2790,7 +2792,7 @@ function ScoreResult({ kind, title, score, max }: { kind: "phq9" | "gad7"; title
   );
 }
 
-function WellbeingPage() {
+function WellbeingPage({ onGoGazebo }: { onGoGazebo?: () => void }) {
   const { awardFields } = usePoints();
   const [phq, setPhq] = useState<(number | null)[]>(() => PHQ9_QUESTIONS.map(() => null));
   const [gad, setGad] = useState<(number | null)[]>(() => GAD7_QUESTIONS.map(() => null));
@@ -2826,6 +2828,7 @@ function WellbeingPage() {
     <div>
       <TabPointsChip tab="wellbeing" />
       <WellbeingHook />
+      {onGoGazebo && <GazeboBreakLink onGoGazebo={onGoGazebo} />}
       <DisclaimerShort />
       <div className="mt-5"><CrisisStrip /></div>
 
@@ -3020,7 +3023,7 @@ function FoodPause() {
   );
 }
 
-function FoodPage() {
+function FoodPage({ onGoGazebo }: { onGoGazebo?: () => void }) {
   const { awardFields } = usePoints();
   const [answers, setAnswers] = useState<(boolean | null)[]>(() => SCOFF_QUESTIONS.map(() => null));
   const [moment, setMoment] = useState<FoodMoment | null>(null);
@@ -3041,6 +3044,7 @@ function FoodPage() {
     <div>
       <TabPointsChip tab="food" />
       <FoodHook />
+      {onGoGazebo && <GazeboBreakLink onGoGazebo={onGoGazebo} />}
       <div className="sunrise-band mb-5 flex items-center gap-3 rounded-[var(--radius)] px-4 py-3" aria-hidden="true">
         <svg width="40" height="28" viewBox="0 0 30 22" className="shrink-0">
           <path d="M3 19a12 12 0 0 1 24 0Z" fill="#ffd35c" stroke="#e8763a" strokeWidth="1.6" />
@@ -3357,7 +3361,7 @@ const PHONE_FREE_PLAN: { zone: string; intro: string; ideas: string[] }[] = [
   },
 ];
 
-function ScreensPage() {
+function ScreensPage({ onGoGazebo }: { onGoGazebo?: () => void }) {
   const { award, awardFields } = usePoints();
   const [answers, setAnswers] = useState<(number | null)[]>(() => SCREEN_CHECKIN.map(() => null));
   const [picked, setPicked] = useState<string[]>([]);
@@ -3409,6 +3413,7 @@ function ScreensPage() {
     <div>
       <TabPointsChip tab="screens" />
       <ScreensHook />
+      {onGoGazebo && <GazeboBreakLink onGoGazebo={onGoGazebo} />}
       <div className="sunrise-band mb-5 flex items-center gap-3 rounded-[var(--radius)] px-4 py-3" aria-hidden="true">
         <svg width="40" height="28" viewBox="0 0 30 22" className="shrink-0">
           <path d="M3 19a12 12 0 0 1 24 0Z" fill="#ffd35c" stroke="#e8763a" strokeWidth="1.6" />
@@ -3651,7 +3656,7 @@ function LongevityHook() {
   );
 }
 
-function LongevityPage() {
+function LongevityPage({ onGoGazebo }: { onGoGazebo?: () => void }) {
   // Deliberately NO awardFields here. The check-in below is a gentle
   // reflection for you alone — Richard's rule for this tab is no
   // points for the ticks. Taps anywhere in the app still earn their
@@ -3683,6 +3688,7 @@ function LongevityPage() {
     <div>
       <TabPointsChip tab="longevity" />
       <LongevityHook />
+      {onGoGazebo && <GazeboBreakLink onGoGazebo={onGoGazebo} />}
       <div className="sunrise-band mb-5 flex items-center gap-3 rounded-[var(--radius)] px-4 py-3" aria-hidden="true">
         <svg width="40" height="28" viewBox="0 0 30 22" className="shrink-0">
           <path d="M3 19a12 12 0 0 1 24 0Z" fill="#ffd35c" stroke="#e8763a" strokeWidth="1.6" />
@@ -3910,7 +3916,22 @@ function PeaceHook() {
   );
 }
 
-function PeacePage({ onGoHome }: { onGoHome?: () => void }) {
+// Mindful break — the gazebo (Richard, 2026-11-28): "Give myself
+// a break" / "Chill in Gazebo for a bit" — his words, verbatim.
+// A pause, not giving up: if you are struggling on any help tab,
+// one tap takes you to the gazebo to ease the stress, and the
+// Map's back button brings you back to the tab you came from.
+// Small and gentle, never shouting — the gazebo is a quiet place.
+function GazeboBreakLink({ onGoGazebo }: { onGoGazebo: () => void }) {
+  return (
+    <div className="felt-soft mt-4 rounded-[var(--radius)] border-2 border-[#9a5a90] bg-[#f3e2f0] px-4 py-3">
+      <p className="leading-relaxed text-[var(--text)]">Struggling right now? A mindful break can ease the stress — a pause, not giving up.</p>
+      <button type="button" onClick={onGoGazebo} aria-label="Give myself a break — Chill in Gazebo for a bit" className="mt-2 min-h-11 w-full rounded-[var(--radius)] border-2 border-[#9a5a90] bg-[var(--surface)] px-4 font-bold text-[var(--text)]">Give myself a break — Chill in Gazebo for a bit</button>
+    </div>
+  );
+}
+
+function PeacePage({ onGoHome, onGoGazebo }: { onGoHome?: () => void; onGoGazebo?: () => void }) {
   const { award } = usePoints();
   // "I took a quiet moment" — +10, on your own word. The app can't
   // check whether you meditated or prayed, and it doesn't pretend to:
@@ -3928,6 +3949,7 @@ function PeacePage({ onGoHome }: { onGoHome?: () => void }) {
     <div>
       <TabPointsChip tab="peace" />
       <PeaceHook />
+      {onGoGazebo && <GazeboBreakLink onGoGazebo={onGoGazebo} />}
       <div className="sunrise-band mb-5 flex items-center gap-3 rounded-[var(--radius)] px-4 py-3" aria-hidden="true">
         <svg width="40" height="28" viewBox="0 0 30 22" className="shrink-0">
           <path d="M3 19a12 12 0 0 1 24 0Z" fill="#ffd35c" stroke="#e8763a" strokeWidth="1.6" />
@@ -5466,7 +5488,7 @@ function GardenPorchPot({ flowerCount, cottageBlooms }: { flowerCount: number; c
   );
 }
 
-function LifeGardenPage({ onGoHome, onGoTab, profiles, initialView = "list", mapRequest, backLabel }: { onGoHome: () => void; onGoTab: (t: TabId) => void; profiles?: Profile[]; initialView?: "list" | "map" | "cozy"; mapRequest?: number; backLabel?: string }) {
+function LifeGardenPage({ onGoHome, onGoTab, profiles, initialView = "list", mapRequest, gazeboRequest, onGazeboOpened, backLabel }: { onGoHome: () => void; onGoTab: (t: TabId) => void; profiles?: Profile[]; initialView?: "list" | "map" | "cozy"; mapRequest?: number; gazeboRequest?: number; onGazeboOpened?: () => void; backLabel?: string }) {
   const [checked, setChecked] = useState<string[]>(() => loadLifeGardenChecked());
   const [zoomed, setZoomed] = useState(false);
   // Map piece (Richard, 2026-11-26): the garden list, the Map,
@@ -5492,6 +5514,12 @@ function LifeGardenPage({ onGoHome, onGoTab, profiles, initialView = "list", map
   const [gardenName, setGardenName] = useState<string>(() => loadLifeGardenName());
   const [gardenAvatar, setGardenAvatar] = useState<string | null>(() => loadLifeGardenAvatar());
   const [gardenGuide, setGardenGuide] = useState<string | null>(() => loadLifeGardenGuide());
+  // Mindful break from inside the garden (Richard, 2026-11-28):
+  // "Chill in Gazebo for a bit" from the Cozy Room lands on the
+  // Map with the gazebo stop open. The App-level request and
+  // this one add up — either can open the gazebo.
+  const [mapGazeboRequest, setMapGazeboRequest] = useState(0);
+  const effectiveGazeboRequest = (gazeboRequest ?? 0) + mapGazeboRequest;
   // Fifth piece (Richard, 2026-11-26): each visit to the garden
   // counts toward clearing the patch right before the cottage —
   // recorded once, when the garden opens.
@@ -5513,13 +5541,13 @@ function LifeGardenPage({ onGoHome, onGoTab, profiles, initialView = "list", map
     safeLocalSet(LIFE_GARDEN_GUIDE_KEY, next);
   };
   if (view === "map") {
-    return <GardenMapPage onGoHome={onGoHome} onGoGarden={() => { setChecked(loadLifeGardenChecked()); setView("list"); if (typeof window !== "undefined") window.scrollTo(0, 0); }} onGoTab={onGoTab} onOpenCozy={() => { setView("cozy"); if (typeof window !== "undefined") window.scrollTo(0, 0); }} profiles={profiles} gardenName={gardenName} backLabel={backLabel} />;
+    return <GardenMapPage onGoHome={onGoHome} onGoGarden={() => { setChecked(loadLifeGardenChecked()); setView("list"); if (typeof window !== "undefined") window.scrollTo(0, 0); }} onGoTab={onGoTab} onOpenCozy={() => { setView("cozy"); if (typeof window !== "undefined") window.scrollTo(0, 0); }} profiles={profiles} gardenName={gardenName} backLabel={backLabel} gazeboRequest={effectiveGazeboRequest} onGazeboOpened={() => { setMapGazeboRequest(0); onGazeboOpened?.(); }} />;
   }
   if (view === "cozy") {
     // The map button in the Cozy Room must open the real Map
     // (Richard, 2026-11-26) — it used to go back to the garden
     // list, so it did not show a map at all.
-    return <CozyRoomPage onGoHome={onGoHome} onGoMap={() => { setView("map"); if (typeof window !== "undefined") window.scrollTo(0, 0); }} gardenName={gardenName} backLabel={backLabel} />;
+    return <CozyRoomPage onGoHome={onGoHome} onGoMap={() => { setMapGazeboRequest(0); setView("map"); if (typeof window !== "undefined") window.scrollTo(0, 0); }} onGoGazebo={() => { setMapGazeboRequest((n) => n + 1); setView("map"); if (typeof window !== "undefined") window.scrollTo(0, 0); }} gardenName={gardenName} backLabel={backLabel} />;
   }
   const toggleItem = (item: string) => {
     setChecked((prev) => {
@@ -5598,7 +5626,7 @@ function LifeGardenPage({ onGoHome, onGoTab, profiles, initialView = "list", map
         onGuide={saveGardenGuide}
       />
       <div className="mt-6 space-y-3">
-        <button type="button" onClick={() => { setView("map"); if (typeof window !== "undefined") window.scrollTo(0, 0); }} style={{ backgroundColor: "#fdeeda", borderColor: "#d99a4e" }} className="felt-card felt-pressable w-full rounded-[var(--radius)] border-2 p-4 text-left">
+        <button type="button" onClick={() => { setMapGazeboRequest(0); setView("map"); if (typeof window !== "undefined") window.scrollTo(0, 0); }} style={{ backgroundColor: "#fdeeda", borderColor: "#d99a4e" }} className="felt-card felt-pressable w-full rounded-[var(--radius)] border-2 p-4 text-left">
           <p className="font-display text-xl font-black text-[#2e2117]">See the Map →</p>
           <p className="mt-1 leading-relaxed text-[#6f5a44]">One path, branching to the gazebo, dead ends, and Longevity to infinity.</p>
         </button>
@@ -5868,7 +5896,7 @@ function gazeboPanOffset(value: number, scale: number): number {
   return Math.max(-max, Math.min(max, value));
 }
 
-function GardenMapPage({ onGoHome, onGoGarden, onGoTab, onOpenCozy, profiles, gardenName = "", backLabel = "← Back to Home" }: {
+function GardenMapPage({ onGoHome, onGoGarden, onGoTab, onOpenCozy, profiles, gardenName = "", backLabel = "← Back to Home", gazeboRequest, onGazeboOpened }: {
   onGoHome: () => void;
   onGoGarden: () => void;
   onGoTab: (t: TabId) => void;
@@ -5881,6 +5909,15 @@ function GardenMapPage({ onGoHome, onGoGarden, onGoTab, onOpenCozy, profiles, ga
   // promises Home when it goes elsewhere. The top tab buttons are
   // always there too, including Home.
   backLabel?: string;
+  // Mindful break (Richard, 2026-11-28): a "Give myself a
+  // break" tap on a help tab, Peace of Mind or the Cozy Room
+  // opens the Map with the gazebo stop already open — the
+  // gazebo pic first, as live. Each tap bumps this counter.
+  gazeboRequest?: number;
+  // Called once the gazebo has been opened for a break, so
+  // the request is consumed: a later plain "See the Map" must
+  // land on the Map top, not re-open the gazebo.
+  onGazeboOpened?: () => void;
 }) {
   const [selected, setSelected] = useState<string | null>(null);
   const [gazeboZoomed, setGazeboZoomed] = useState(false);
@@ -6098,6 +6135,18 @@ function GardenMapPage({ onGoHome, onGoGarden, onGoTab, onOpenCozy, profiles, ga
   const diagramKey = (e: React.KeyboardEvent, id: string) => {
     if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openStop(id); }
   };
+  // A mindful-break tap bumps gazeboRequest: open the Map with
+  // the gazebo stop already open, pic first. This is an effect,
+  // not a remount, so no extra garden visit is recorded. The
+  // request is consumed by onGazeboOpened, so a later plain
+  // "See the Map" lands on the Map top.
+  useEffect(() => {
+    if (gazeboRequest && gazeboRequest > 0) {
+      openStop("gazebo");
+      onGazeboOpened?.();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gazeboRequest]);
   return (
     <div>
       <button type="button" onClick={onGoHome} className="min-h-11 rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 font-bold text-[var(--text)]">
@@ -6700,7 +6749,7 @@ function CozyRoomVisual({ trophies, books, frames, onAddPhoto, onClearFrame, onE
   );
 }
 
-function CozyRoomPage({ onGoHome, onGoMap, gardenName = "", backLabel = "← Back to Home" }: { onGoHome: () => void; onGoMap: () => void; gardenName?: string; backLabel?: string }) {
+function CozyRoomPage({ onGoHome, onGoMap, onGoGazebo, gardenName = "", backLabel = "← Back to Home" }: { onGoHome: () => void; onGoMap: () => void; onGoGazebo?: () => void; gardenName?: string; backLabel?: string }) {
   const [trophies] = useState<string[]>(() => loadLifeGardenTrophies());
   const [zoomed, setZoomed] = useState(false);
   // Fourth piece (Richard, 2026-11-26): your books and your photos.
@@ -6898,6 +6947,12 @@ function CozyRoomPage({ onGoHome, onGoMap, gardenName = "", backLabel = "← Bac
         What is in your Cozy Room stays on this phone, in this browser only — nothing is sent anywhere.
       </p>
       <div className="mt-6 space-y-3">
+        {/* Mindful break (Richard, 2026-11-28): "Give myself a
+            break" / "Chill in Gazebo for a bit" — from the quiet
+            of the Cozy Room, step out to the gazebo for a bit,
+            then come back. Falls back to the Map when no gazebo
+            opener was passed. */}
+        <button type="button" onClick={onGoGazebo ?? onGoMap} aria-label="Give myself a break — Chill in Gazebo for a bit" className="min-h-11 w-full rounded-[var(--radius)] border-2 border-[#9a5a90] bg-[#f3e2f0] px-4 font-bold text-[var(--text)]">Give myself a break — Chill in Gazebo for a bit</button>
         {/* "See the Map" must open the real Map (Richard,
             2026-11-26) — it used to go back to the garden list,
             so it did not show a map at all. onGoMap lands
@@ -6931,6 +6986,10 @@ function HomePage({ profiles, logs, pointEvents, dayMarks, onGo, onSurf }: {
   // the Map" from the Cozy Room must land straight on the real
   // Map, so the garden needs an initial view, not just "list".
   const [gardenInitialView, setGardenInitialView] = useState<"list" | "map" | "cozy">("list");
+  // Mindful break from the Home garden's Cozy Room (Richard,
+  // 2026-11-28): "Chill in Gazebo for a bit" lands on the Map
+  // with the gazebo stop open, not just on the Map top.
+  const [gardenGazeboRequest, setGardenGazeboRequest] = useState(0);
   // Inside view (Richard, 2026-11-26): an "Inside view" option
   // button as an addition to the Home screen, opening the Cozy
   // Room first inside view — no trophies yet, empty frames.
@@ -6945,10 +7004,10 @@ function HomePage({ profiles, logs, pointEvents, dayMarks, onGo, onSurf }: {
     // "See the Map" from the Cozy Room opened from Home must
     // land straight on the real Map, at the top — it used to
     // open the garden list instead, so it did not show a map.
-    return <CozyRoomPage onGoHome={() => { setCozyOpen(false); if (typeof window !== "undefined") window.scrollTo(0, 0); }} onGoMap={() => { setCozyOpen(false); setGardenInitialView("map"); setGardenOpen(true); if (typeof window !== "undefined") window.scrollTo(0, 0); }} gardenName={loadLifeGardenName()} />;
+    return <CozyRoomPage onGoHome={() => { setCozyOpen(false); if (typeof window !== "undefined") window.scrollTo(0, 0); }} onGoMap={() => { setCozyOpen(false); setGardenInitialView("map"); setGardenGazeboRequest(0); setGardenOpen(true); if (typeof window !== "undefined") window.scrollTo(0, 0); }} onGoGazebo={() => { setCozyOpen(false); setGardenInitialView("map"); setGardenGazeboRequest((n) => n + 1); setGardenOpen(true); if (typeof window !== "undefined") window.scrollTo(0, 0); }} gardenName={loadLifeGardenName()} />;
   }
   if (gardenOpen) {
-    return <LifeGardenPage onGoHome={() => { setGardenOpen(false); if (typeof window !== "undefined") window.scrollTo(0, 0); }} onGoTab={onGo} profiles={profiles} initialView={gardenInitialView} />;
+    return <LifeGardenPage onGoHome={() => { setGardenOpen(false); if (typeof window !== "undefined") window.scrollTo(0, 0); }} onGoTab={onGo} profiles={profiles} initialView={gardenInitialView} gazeboRequest={gardenGazeboRequest} onGazeboOpened={() => setGardenGazeboRequest(0)} />;
   }
   return (
     <div>
@@ -7391,6 +7450,29 @@ export function App() {
     setSurfCategory(null);
     setPendingRide(null);
     if (typeof window !== "undefined") window.scrollTo(0, 0);
+    // A plain Site Map tap must land on the Map top, not
+    // re-open the gazebo from an earlier break — the gazebo
+    // request is only for openGazebo, below.
+    setGazeboRequest(0);
+  };
+  // Mindful break — the gazebo (Richard, 2026-11-28): "Give
+  // myself a break" / "Chill in Gazebo for a bit". Like
+  // openSiteMap, but it also bumps gazeboRequest, so the Map
+  // opens with the gazebo stop already open, pic first. The
+  // tab the visitor came from is remembered, so the Map's
+  // back button brings them back to the help they paused —
+  // a break, not giving up.
+  const [gazeboRequest, setGazeboRequest] = useState(0);
+  const openGazebo = () => {
+    setSiteMapReturnTab(tab);
+    setSiteMapOpen(true);
+    setCozyRoomOpen(false);
+    setSiteMapRequest((n) => n + 1);
+    setGazeboRequest((n) => n + 1);
+    setShowTerms(false);
+    setSurfCategory(null);
+    setPendingRide(null);
+    if (typeof window !== "undefined") window.scrollTo(0, 0);
   };
   const closeSiteMap = () => {
     setSiteMapOpen(false);
@@ -7738,6 +7820,7 @@ export function App() {
               <CozyRoomPage
                 onGoHome={closeCozyRoom}
                 onGoMap={() => { setCozyRoomOpen(false); openSiteMap(); }}
+                onGoGazebo={() => { setCozyRoomOpen(false); openGazebo(); }}
                 gardenName={loadLifeGardenName()}
                 backLabel={cozyRoomReturnTab === "home" ? "← Back to Home" : `← Back to ${LAST_PLACE_LABELS[cozyRoomReturnTab]}`}
               />
@@ -7755,6 +7838,8 @@ export function App() {
                 profiles={profiles}
                 initialView="map"
                 mapRequest={siteMapRequest}
+                gazeboRequest={gazeboRequest}
+                onGazeboOpened={() => setGazeboRequest(0)}
                 backLabel={siteMapReturnTab === "home" ? "← Back to Home" : `← Back to ${LAST_PLACE_LABELS[siteMapReturnTab]}`}
               />
             ) : showTerms ? (
@@ -7767,13 +7852,13 @@ export function App() {
               <HomePage profiles={profiles} logs={logs} pointEvents={pointEvents} dayMarks={dayMarks} onGo={goToTab} onSurf={() => setSurfCategory(activeSurf ?? "gambling")} />
             )}
             {state.isSuccess && tab === "resources" && <ResourcesPage profiles={profiles} logs={logs} pointEvents={pointEvents} dayMarks={dayMarks} onTerms={() => setShowTerms(true)} />}
-            {tab === "wellbeing" && <WellbeingPage />}
-            {tab === "food" && <FoodPage />}
-            {tab === "screens" && <ScreensPage />}
-            {tab === "longevity" && <LongevityPage />}
-            {tab === "peace" && <PeacePage onGoHome={() => setTab("home")} />}
+            {tab === "wellbeing" && <WellbeingPage onGoGazebo={openGazebo} />}
+            {tab === "food" && <FoodPage onGoGazebo={openGazebo} />}
+            {tab === "screens" && <ScreensPage onGoGazebo={openGazebo} />}
+            {tab === "longevity" && <LongevityPage onGoGazebo={openGazebo} />}
+            {tab === "peace" && <PeacePage onGoHome={() => setTab("home")} onGoGazebo={openGazebo} />}
             {state.isSuccess && tab !== "home" && tab !== "resources" && tab !== "wellbeing" && tab !== "food" && tab !== "screens" && tab !== "longevity" && tab !== "peace" && (
-              <CategoryPage category={tab} profile={profileFor(tab)} logs={logs} dayMarks={dayMarks} onSurf={(c) => setSurfCategory(c)} />
+              <CategoryPage category={tab} profile={profileFor(tab)} logs={logs} dayMarks={dayMarks} onSurf={(c) => setSurfCategory(c)} onGoGazebo={openGazebo} />
             )}
               </>
             )}

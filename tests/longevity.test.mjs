@@ -29,13 +29,13 @@ test("Longevity tab sits after Feeling Unwell, before Help & Resources", () => {
 
 test("Longevity page: hook, one breathing exercise, no points for check-in ticks", () => {
   assert.ok(src.includes("function LongevityHook()"), "Longevity needs its skippable hook");
-  assert.ok(src.includes("function LongevityPage()"), "LongevityPage must exist");
-  assert.ok(src.includes('{tab === "longevity" && <LongevityPage />}'),
+  assert.ok(src.includes("function LongevityPage("), "LongevityPage must exist");
+  assert.ok(src.includes('{tab === "longevity" && <LongevityPage onGoGazebo={openGazebo} />}'),
     "the app must render LongevityPage for the longevity tab");
   // Exactly one CalmingBreathing inside the Longevity page section
   // (up to the next top-level section, Peace of Mind).
   const page = src.slice(
-    src.indexOf("function LongevityPage()"),
+    src.indexOf("function LongevityPage("),
     src.indexOf("/* ---------- peace of mind"),
   );
   const breathing = page.match(/<CalmingBreathing \/>/g) ?? [];
@@ -57,7 +57,7 @@ test("Longevity page: hook, one breathing exercise, no points for check-in ticks
 
 test("Longevity vitamin D note (Richard, 2026-11-21): gentle, doctor-led, no level or dose", () => {
   const page = src.slice(
-    src.indexOf("function LongevityPage()"),
+    src.indexOf("function LongevityPage("),
     src.indexOf("/* ---------- peace of mind"),
   );
   // JSX wraps the wording across source lines, so match on
@@ -89,7 +89,7 @@ test("Longevity vitamin D note (Richard, 2026-11-21): gentle, doctor-led, no lev
   assert.ok(!page.includes("prevents"), "the note must not claim vitamin D prevents a disease");
   // No points, no check-in question for vitamin D.
   assert.ok(!page.includes('awardFields("longevity"'), "vitamin D must not award points");
-  const home = src.slice(0, src.indexOf("function LongevityPage()"));
+  const home = src.slice(0, src.indexOf("function LongevityPage("));
   assert.ok(!home.includes("Ask your own doctor about checking your vitamin D"),
     "the vitamin D note must not appear on Home or any earlier tab");
 });

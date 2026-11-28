@@ -33,7 +33,7 @@ test("Peace of Mind tab sits after Longevity, before Help & Resources", () => {
   assert.ok(src.includes('peace: "Peace of Mind"'), "POINT_TAB_LABEL must name peace");
   assert.ok(src.includes('case "peace":'), "TabIcon must have a case for peace");
   assert.ok(src.includes('<TabIcon id="peace" size={24}'), "Home Peace card must show the tab icon");
-  assert.ok(src.includes('{tab === "peace" && <PeacePage onGoHome={() => setTab("home")} />}'),
+  assert.ok(src.includes('{tab === "peace" && <PeacePage onGoHome={() => setTab("home")} onGoGazebo={openGazebo} />}'),
     "the app must render PeacePage for the peace tab");
 });
 

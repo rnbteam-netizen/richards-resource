@@ -7428,10 +7428,19 @@ export function App() {
   // to its map view; see LifeGardenPage. No remount, so no extra
   // visit is recorded — visits are what bloom the cottage patch.
   const [siteMapRequest, setSiteMapRequest] = useState(0);
+  // Which top button opened the Map — the Site Map, or the
+  // Gazebo (Richard, 2026-11-28). The gazebo request counter
+  // is consumed as soon as the Map opens the gazebo stop, so
+  // it cannot say afterwards which button was tapped; this
+  // flag can, so the Gazebo button stays lit while the
+  // gazebo view is open, and the Site Map button stays lit
+  // for a plain Map tap.
+  const [gazeboNavActive, setGazeboNavActive] = useState(false);
   const openSiteMap = () => {
     setSiteMapReturnTab(tab);
     setSiteMapOpen(true);
     setCozyRoomOpen(false);
+    setGazeboNavActive(false);
     setSiteMapRequest((n) => n + 1);
     setShowTerms(false);
     setSurfCategory(null);
@@ -7454,6 +7463,7 @@ export function App() {
     setSiteMapReturnTab(tab);
     setSiteMapOpen(true);
     setCozyRoomOpen(false);
+    setGazeboNavActive(true);
     setSiteMapRequest((n) => n + 1);
     setGazeboRequest((n) => n + 1);
     setShowTerms(false);
@@ -7463,6 +7473,7 @@ export function App() {
   };
   const closeSiteMap = () => {
     setSiteMapOpen(false);
+    setGazeboNavActive(false);
     setTab(siteMapReturnTab);
     if (typeof window !== "undefined") window.scrollTo(0, 0);
   };
@@ -7498,6 +7509,7 @@ export function App() {
   // at the top of the new tab.
   const goToTab = (t: TabId) => {
     setSiteMapOpen(false);
+    setGazeboNavActive(false);
     setCozyRoomOpen(false);
     setTab(t);
     setShowTerms(false);
@@ -7674,7 +7686,8 @@ export function App() {
         <nav aria-label="Sections" className="flex flex-wrap gap-2">
           {/* Home — first tab, always, rendered on its own so the
               order below is plain to see: Home, Site Map, Cozy
-              Room, then the rest of the tabs. */}
+              Room, then the rest of the tabs, then the Gazebo —
+              last, to the right of Help & Resources. */}
           <NavTabButton
             active={tab === "home" && !siteMapOpen && !cozyRoomOpen}
             onClick={() => { setSiteMapOpen(false); setCozyRoomOpen(false); setTab("home"); setShowTerms(false); setSurfCategory(null); setPendingRide(null); }}
@@ -7737,6 +7750,31 @@ export function App() {
               </NavTabButton>
             );
           })}
+          {/* Gazebo — a real top button, last in the nav, to the
+              right of Help & Resources (Richard, 2026-11-28:
+              "Search work's. Refreshed a couple times, no gazebo
+              button yet. Would look good same size and to the
+              right of help and resources"). The big Home Gazebo
+              button is live, but it sits below the cottage and
+              needs scrolling to reach — this one is always
+              visible, same NavTabButton size and shape as the
+              other top buttons. It is not a tab: it calls the
+              same openGazebo as the Home button and the mindful-
+              break links, opening the Map with the gazebo stop
+              already open, pic first, and Back returns to the
+              tab you came from. */}
+          <NavTabButton
+            active={siteMapOpen && gazeboNavActive}
+            onClick={openGazebo}
+            bg="#f3e2f0"
+            border="#c49cc0"
+            activeBg="#d8b4d4"
+            activeBorder="#9a5a90"
+            ariaLabel="Gazebo — quiet time, open the gazebo"
+          >
+            <span aria-hidden="true">🌿</span>
+            Gazebo
+          </NavTabButton>
         </nav>
 
         {/* Search (Richard, 2026-11-21): on every tab, right under

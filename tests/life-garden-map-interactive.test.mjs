@@ -28,7 +28,10 @@ test("every diagram branch is a tappable button that opens its stop", () => {
     assert.ok(diagram.includes(`onClick={() => openStop("${id}")}`), `the diagram must have a tappable branch for "${id}"`);
     assert.ok(diagram.includes(`aria-label="Tap to open`), `each diagram branch must say it is tappable`);
   }
-  assert.equal((diagram.match(/role="button"/g) ?? []).length, 10, "there must be ten tappable branches in the diagram (gazebo, eight dead ends, longevity)");
+  // Eleven now, not ten: the ten branches (gazebo, eight dead
+  // ends, longevity) plus the cottage button at the top, which
+  // pulls the cottage up big (Richard, 2026-11-28).
+  assert.equal((diagram.match(/role="button"/g) ?? []).length, 11, "there must be eleven tappable buttons in the diagram (ten branches plus the cottage button)");
   assert.ok(map.includes("const openStop = (id: string)"), "there must be one shared opener for diagram and list");
   assert.ok(map.includes("scrollIntoView"), "opening a stop from the diagram must scroll it into view");
   assert.ok(map.includes("garden-map-stop-${stop.id}"), "each stop must have an id the diagram can scroll to");

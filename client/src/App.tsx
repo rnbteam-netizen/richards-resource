@@ -5352,109 +5352,128 @@ function GardenPathStrip({ checked, visits }: { checked: string[]; visits: Garde
   );
 }
 
-/* ---------- My Life Garden Pathway — flower pots on the big wrap-around porch ---------- */
-// Sixth piece (Richard, 2026-11-26): as one progresses, nice
-// flower pots with flowers appear on the cottage's big wrap-around
-// porch (Richard, 2026-11-26: "The cottage has a nice big wrap around
-// porch"). Not there at first view — one pot at a time, each time a
-// milestone is hit, and no two pots are identical: each pot has its
-// own colour, shape and flowers. A milestone here is patches of
-// weeds turned to flowers beside the path. It is a small drawn
-// row of pots in the cottage's warm style, an overlay, not a change
-// to the cottage image itself. Tied to the patches already cleared
-// and the trophies already earned — no new points, nothing scored
-// here. Local only, nothing sent anywhere. Held for later pieces,
-// NOT built here: points for weeds.
-const GARDEN_PORCH_POT_MILESTONES = [1, 3, 5, 7, 9, 13];
-
-type GardenPorchPotDesign = {
-  name: string;
-  potFill: string;
-  rimFill: string;
-  potHeight: number;
-  flowers: { dx: number; dy: number; colour: string }[];
-};
-
-// Six pots, no two identical — each has its own colour, height
-// and flowers, and each is earned one at a time.
-const GARDEN_PORCH_POTS: GardenPorchPotDesign[] = [
-  { name: "Little terracotta pot", potFill: "#b5654a", rimFill: "#c97a5e", potHeight: 34, flowers: [{ dx: 0, dy: -52, colour: "#e86a8a" }] },
-  { name: "Blue pot", potFill: "#3f6fb5", rimFill: "#5b8ac9", potHeight: 30, flowers: [{ dx: -10, dy: -46, colour: "#f2a541" }, { dx: 10, dy: -50, colour: "#f2a541" }] },
-  { name: "Tall green pot", potFill: "#4a7a4f", rimFill: "#6aa84f", potHeight: 44, flowers: [{ dx: -12, dy: -58, colour: "#9a5a90" }, { dx: 0, dy: -64, colour: "#9a5a90" }, { dx: 12, dy: -58, colour: "#e86a8a" }] },
-  { name: "Cream pot", potFill: "#e8dcc0", rimFill: "#d9c9a3", potHeight: 32, flowers: [{ dx: -10, dy: -48, colour: "#e87a3a" }, { dx: 10, dy: -48, colour: "#e86a8a" }] },
-  { name: "Red pot", potFill: "#a84a3f", rimFill: "#c05a4e", potHeight: 36, flowers: [{ dx: -12, dy: -52, colour: "#f5f0e6" }, { dx: 0, dy: -58, colour: "#f5f0e6" }, { dx: 12, dy: -52, colour: "#f2a541" }] },
-  { name: "Golden prize pot", potFill: "#d9a441", rimFill: "#f2c14e", potHeight: 40, flowers: [{ dx: -16, dy: -54, colour: "#e86a8a" }, { dx: -6, dy: -62, colour: "#f2a541" }, { dx: 6, dy: -62, colour: "#9a5a90" }, { dx: 16, dy: -54, colour: "#e86a8a" }] },
-];
-
-// How many pots are earned so far: one for every milestone hit.
-function gardenPorchPotsEarned(flowerCount: number): number {
-  return GARDEN_PORCH_POT_MILESTONES.filter((m) => flowerCount >= m).length;
-}
-
-function gardenPorchNextMilestone(flowerCount: number): number | null {
-  return GARDEN_PORCH_POT_MILESTONES.find((m) => flowerCount < m) ?? null;
-}
-
-function GardenPorchPot({ flowerCount, cottageBlooms }: { flowerCount: number; cottageBlooms: boolean }) {
-  const earned = gardenPorchPotsEarned(flowerCount);
-  const next = gardenPorchNextMilestone(flowerCount);
-  const stageText =
-    earned === 0
-      ? "No flower pots on the big wrap-around porch yet — clear a patch of weeds and the first pot will appear."
-      : earned >= GARDEN_PORCH_POTS.length
-        ? cottageBlooms
-          ? "All six flower pots are on the big wrap-around porch — each one different, each one earned — and the whole path is in flower, right up to the cottage."
-          : "All six flower pots are on the big wrap-around porch — each one different, each one earned. The porch is in full bloom."
-        : `You have earned ${earned} of ${GARDEN_PORCH_POTS.length} flower pots on the big wrap-around porch — each one different, each one earned. The next pot comes at ${next} patches in flower.`;
-  return (
-    <Section title="Flower pots on the big wrap-around porch">
-      <p className="leading-relaxed text-[var(--text)]">
-        Flower pots appear on the big wrap-around porch — one pot at a time, each time a milestone is hit, and no two pots are alike. {flowerCount} of {LIFE_GARDEN_ITEMS.length} patches in flower.
-      </p>
-      <div className="felt-card mt-3 rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 py-3">
-        <svg viewBox="0 0 360 170" className="mx-auto w-full" role="img" aria-label={earned === 0 ? "The cottage's big wrap-around porch, with no flower pots yet" : `${earned} of ${GARDEN_PORCH_POTS.length} flower pots earned on the cottage's big wrap-around porch`}>
-          <rect x="10" y="140" width="340" height="10" rx="4" fill="#8a6a4f" />
-          {GARDEN_PORCH_POTS.map((design, i) => {
-            const cx = 40 + i * 56;
-            const potTop = 140 - design.potHeight;
-            const isEarned = i < earned;
-            if (!isEarned) {
-              return <rect key={design.name} x={cx - 20} y={potTop} width="40" height={design.potHeight} rx="5" fill="none" stroke="#b9a48e" strokeWidth="2" strokeDasharray="6 5" />;
-            }
-            return (
-              <g key={design.name}>
-                {design.flowers.map((f) => (
-                  <g key={`${f.dx}-${f.dy}`}>
-                    <line x1={cx + f.dx} y1={potTop + f.dy + 8} x2={cx + f.dx} y2={potTop} stroke="#4a7a4f" strokeWidth="3" strokeLinecap="round" />
-                    <circle cx={cx + f.dx} cy={potTop + f.dy} r="9" fill={f.colour} />
-                    <circle cx={cx + f.dx} cy={potTop + f.dy} r="3" fill="#f5c542" />
-                  </g>
-                ))}
-                <rect x={cx - 24} y={potTop - 8} width="48" height="10" rx="4" fill={design.rimFill} stroke={design.potFill} strokeWidth="2" />
-                <polygon points={`${cx - 20},${potTop + 2} ${cx + 20},${potTop + 2} ${cx + 15},140 ${cx - 15},140`} fill={design.potFill} stroke={design.potFill} strokeWidth="2" />
-              </g>
-            );
-          })}
-        </svg>
-        <p className="mt-2 text-center font-bold leading-relaxed text-[var(--text)]">{stageText}</p>
-        <ul className="mt-2 space-y-1">
-          {GARDEN_PORCH_POTS.map((design, i) => (
-            <li key={design.name} className="text-center text-sm leading-relaxed text-[var(--dim)]">
-              {i < earned ? `✓ ${design.name} — earned at ${GARDEN_PORCH_POT_MILESTONES[i]} ${GARDEN_PORCH_POT_MILESTONES[i] === 1 ? "patch" : "patches"} in flower` : `${design.name} — comes at ${GARDEN_PORCH_POT_MILESTONES[i]} patches in flower`}
-            </li>
-          ))}
-        </ul>
-      </div>
-      <p className="mt-2 text-sm leading-relaxed text-[var(--dim)]">
-        These flower pots live on this phone only — nothing is sent anywhere.
-      </p>
-    </Section>
-  );
-}
-
+/* ---------- My Life Garden Pathway — flower pots (removed, Richard 2026-11-28) ---------- */
+// Richard, 2026-11-28: "Let's just please remove the adding
+// flower pots. I think it adds confusion, if and when we do
+// interactive on cottage porches, we can revisit that issue.
+// For now, the cottage looks fabulous." So the "Flower pots on
+// the big wrap-around porch" section is gone entirely — no pot
+// window, no pot list, no pot milestones on the garden list or
+// on the Map. Nothing else changed: the checklist, the trophies,
+// the weeds-to-flowers patches and the cottage patch all stay
+// exactly as they were, and the cottage looks fabulous as it is.
+// Revisit only if Richard asks for an interactive porch later.
 function LifeGardenPage({ onGoHome, onGoTab, profiles, initialView = "list", mapRequest, gazeboRequest, onGazeboOpened, backLabel }: { onGoHome: () => void; onGoTab: (t: TabId) => void; profiles?: Profile[]; initialView?: "list" | "map" | "cozy"; mapRequest?: number; gazeboRequest?: number; onGazeboOpened?: () => void; backLabel?: string }) {
   const [checked, setChecked] = useState<string[]>(() => loadLifeGardenChecked());
-  const [zoomed, setZoomed] = useState(false);
+  // Cottage pinch-to-zoom (Richard, 2026-11-28): "Our beautiful
+  // cottage pic in the field should be pinch to expand, so folks
+  // can enjoy the fine wood grain and details." The old enlarged
+  // view only darkened the background — the picture stayed the
+  // same size (max-h 85vh). Now it is a real phone photo, the
+  // same treatment as the gazebo: two fingers apart to zoom in
+  // (up to 4x), together to zoom out, one finger drags to look
+  // around when zoomed, double-tap zooms in to 2x or resets to
+  // 1x, and a single tap still closes. The helpers are the
+  // gazebo's (gazeboPinchDistance / gazeboPinchScale /
+  // gazeboPanOffset), defined below — this component runs after
+  // the module loads, so they are ready by then.
+  const [cottageZoomed, setCottageZoomed] = useState(false);
+  const [cottageZoom, setCottageZoom] = useState<GazeboZoomView>(GAZEBO_ZOOM_RESET);
+  const cottageGestureRef = useRef<null | {
+    touches: number; startDistance: number; startScale: number;
+    startMid: { x: number; y: number }; startPan: { x: number; y: number };
+    lastPoint: { x: number; y: number }; startPoint: { x: number; y: number };
+    startTime: number; moved: boolean;
+  }>(null);
+  const cottageTapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cottageLastTapRef = useRef(0);
+  const closeCottageZoom = () => {
+    if (cottageTapTimerRef.current) {
+      clearTimeout(cottageTapTimerRef.current);
+      cottageTapTimerRef.current = null;
+    }
+    setCottageZoom(GAZEBO_ZOOM_RESET);
+    setCottageZoomed(false);
+  };
+  const cottageZoomTouchStart = (e: TouchEvent<HTMLDivElement>) => {
+    if (cottageTapTimerRef.current) {
+      clearTimeout(cottageTapTimerRef.current);
+      cottageTapTimerRef.current = null;
+    }
+    const points = Array.from(e.touches).map((t) => ({ x: t.clientX, y: t.clientY }));
+    const [first, second] = points;
+    if (!first) return;
+    if (points.length === 2 && second) {
+      const mid = { x: (first.x + second.x) / 2, y: (first.y + second.y) / 2 };
+      cottageGestureRef.current = {
+        touches: 2, startDistance: gazeboPinchDistance(first, second), startScale: cottageZoom.scale,
+        startMid: mid, startPan: { x: cottageZoom.x, y: cottageZoom.y },
+        lastPoint: first, startPoint: first, startTime: Date.now(), moved: false,
+      };
+    } else if (points.length === 1) {
+      cottageGestureRef.current = {
+        touches: 1, startDistance: 0, startScale: cottageZoom.scale,
+        startMid: first, startPan: { x: cottageZoom.x, y: cottageZoom.y },
+        lastPoint: first, startPoint: first, startTime: Date.now(), moved: false,
+      };
+    }
+  };
+  const cottageZoomTouchMove = (e: TouchEvent<HTMLDivElement>) => {
+    const g = cottageGestureRef.current;
+    if (!g) return;
+    const points = Array.from(e.touches).map((t) => ({ x: t.clientX, y: t.clientY }));
+    const [first, second] = points;
+    if (g.touches === 2 && first && second) {
+      const distance = gazeboPinchDistance(first, second);
+      const mid = { x: (first.x + second.x) / 2, y: (first.y + second.y) / 2 };
+      const scale = gazeboPinchScale(g.startScale, g.startDistance, distance);
+      g.moved = true;
+      setCottageZoom({
+        scale,
+        x: gazeboPanOffset(g.startPan.x + (mid.x - g.startMid.x), scale),
+        y: gazeboPanOffset(g.startPan.y + (mid.y - g.startMid.y), scale),
+      });
+    } else if (g.touches === 1 && first) {
+      if (Math.abs(first.x - g.startPoint.x) + Math.abs(first.y - g.startPoint.y) > 10) g.moved = true;
+      if (cottageZoom.scale > 1) {
+        const dx = first.x - g.lastPoint.x;
+        const dy = first.y - g.lastPoint.y;
+        setCottageZoom((prev) => ({
+          scale: prev.scale,
+          x: gazeboPanOffset(prev.x + dx, prev.scale),
+          y: gazeboPanOffset(prev.y + dy, prev.scale),
+        }));
+      }
+      g.lastPoint = first;
+    }
+  };
+  const cottageZoomTouchEnd = (e: TouchEvent<HTMLDivElement>) => {
+    const g = cottageGestureRef.current;
+    if (!g) return;
+    if (g.touches === 2 || e.touches.length > 0) {
+      cottageGestureRef.current = null;
+      return;
+    }
+    const wasTap = !g.moved && Date.now() - g.startTime < 500;
+    cottageGestureRef.current = null;
+    if (!wasTap) return;
+    const now = Date.now();
+    if (now - cottageLastTapRef.current < 350) {
+      cottageLastTapRef.current = 0;
+      setCottageZoom((prev) => (prev.scale > 1 ? GAZEBO_ZOOM_RESET : { scale: 2, x: 0, y: 0 }));
+      return;
+    }
+    cottageLastTapRef.current = now;
+    cottageTapTimerRef.current = setTimeout(() => {
+      closeCottageZoom();
+    }, 320);
+  };
+  const cottageZoomWheel = (e: WheelEvent<HTMLDivElement>) => {
+    setCottageZoom((prev) => {
+      const scale = Math.min(GAZEBO_ZOOM_MAX, Math.max(GAZEBO_ZOOM_MIN, prev.scale * (e.deltaY < 0 ? 1.15 : 1 / 1.15)));
+      return scale === 1 ? GAZEBO_ZOOM_RESET : { scale, x: gazeboPanOffset(prev.x, scale), y: gazeboPanOffset(prev.y, scale) };
+    });
+  };
   // Map piece (Richard, 2026-11-26): the garden list, the Map,
   // and the Cozy Room are three views of the same place — the
   // Map and the Cozy Room open from here, and come straight back.
@@ -5527,10 +5546,6 @@ function LifeGardenPage({ onGoHome, onGoTab, profiles, initialView = "list", map
       return next;
     });
   };
-  // Sixth piece (Richard, 2026-11-26): the flower pot on the
-  // big wrap-around porch pots are earned one at a time as patches clear.
-  const porchFlowerCount = LIFE_GARDEN_ITEMS.filter((item) => checked.includes(item) || loadLifeGardenTrophies().includes(item)).length;
-  const porchCottageBlooms = gardenCottagePatchBlooms(visits, porchFlowerCount === LIFE_GARDEN_ITEMS.length);
   return (
     <div>
       <button type="button" onClick={onGoHome} className="min-h-11 rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] px-4 font-bold text-[var(--text)]">
@@ -5547,7 +5562,7 @@ function LifeGardenPage({ onGoHome, onGoTab, profiles, initialView = "list", map
       {/* Tapping the image zooms the entire photo (Richard,
           2026-11-25): good enough — no separate zoom on the
           cottage or the gazebo. */}
-      <button type="button" onClick={() => setZoomed(true)} aria-label="My Life Garden Pathway — tap to see the whole photo bigger" className="mt-4 block w-full overflow-hidden rounded-[var(--radius)] border-2 border-[var(--leaf)]">
+      <button type="button" onClick={() => { setCottageZoom(GAZEBO_ZOOM_RESET); setCottageZoomed(true); }} aria-label="My Life Garden Pathway — tap to see the whole photo bigger" className="mt-4 block w-full overflow-hidden rounded-[var(--radius)] border-2 border-[var(--leaf)]">
         {/* Trail pic reversed (Richard, 2026-11-27): "This weedy
             trail pic should be seen reversed. Leading from cottage
             to the field" — so the picture is flipped horizontally
@@ -5556,13 +5571,16 @@ function LifeGardenPage({ onGoHome, onGoTab, profiles, initialView = "list", map
             bundled image, no new binary; caption / alt unchanged. */}
         <img src={myLifeGarden} alt="My Life Garden Pathway — a long pathway of small flat wooden stepping stones, with weeds bordering both sides, leading up to the cottage, with the octagonal gazebo off to the side" className="w-full" style={{ transform: "scaleX(-1)" }} />
       </button>
-      <p className="mt-2 text-center text-sm text-[var(--dim)]">Tap the photo to see it bigger.</p>
-      {zoomed && (
-        <div role="dialog" aria-label="My Life Garden Pathway, enlarged" className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" onClick={() => setZoomed(false)}>
-          <button type="button" onClick={() => setZoomed(false)} aria-label="Close the enlarged photo" className="max-h-full max-w-full">
-            <img src={myLifeGarden} alt="My Life Garden Pathway — enlarged" className="max-h-[85vh] w-auto max-w-full rounded-[var(--radius)]" style={{ transform: "scaleX(-1)" }} />
-            <span className="mt-2 block text-center font-semibold text-white">Tap anywhere to close</span>
-          </button>
+      <p className="mt-2 text-center text-sm text-[var(--dim)]">Tap the photo to see it bigger — pinch to zoom in close, to see the wood grain and the details.</p>
+      {cottageZoomed && (
+        <div role="dialog" aria-label="My Life Garden Pathway — the cottage in the field, enlarged" className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-black/80 p-4" style={{ touchAction: "none" }} onClick={(e) => { if (e.target === e.currentTarget) closeCottageZoom(); }} onTouchStart={cottageZoomTouchStart} onTouchMove={cottageZoomTouchMove} onTouchEnd={cottageZoomTouchEnd} onWheel={cottageZoomWheel}>
+          <div className="flex max-h-full flex-col items-center">
+            <div className="mb-2 flex w-full items-center justify-end gap-2">
+              <button type="button" onClick={closeCottageZoom} aria-label="Close the enlarged cottage photo" className="rounded-full bg-white/90 px-4 py-2 font-bold text-[var(--text)]">✕ Close</button>
+            </div>
+            <img src={myLifeGarden} alt="My Life Garden Pathway — the cottage in the field, enlarged" draggable={false} className="max-h-[75vh] w-auto max-w-full touch-none select-none rounded-[var(--radius)]" style={{ transform: `translate(${cottageZoom.x}px, ${cottageZoom.y}px) scale(${cottageZoom.scale}) scaleX(-1)`, transformOrigin: "center center" }} />
+            <span className="mt-2 block text-center font-semibold text-white">Pinch with two fingers to zoom in, drag to look around, double-tap to reset. Tap anywhere to close.</span>
+          </div>
         </div>
       )}
       <p className="mt-4 leading-relaxed text-[var(--text)]">
@@ -5587,7 +5605,6 @@ function LifeGardenPage({ onGoHome, onGoTab, profiles, initialView = "list", map
         What you tick here stays on this phone, in this browser only — nothing is sent anywhere, and nothing is scored yet.
       </p>
       <GardenPathStrip checked={checked} visits={visits} />
-      <GardenPorchPot flowerCount={porchFlowerCount} cottageBlooms={porchCottageBlooms} />
       <GardenCompanions
         name={gardenName}
         onName={saveGardenName}
@@ -6024,16 +6041,119 @@ function GardenMapPage({ onGoHome, onGoGarden, onGoTab, onOpenCozy, profiles, ga
       return scale === 1 ? GAZEBO_ZOOM_RESET : { scale, x: gazeboPanOffset(prev.x, scale), y: gazeboPanOffset(prev.y, scale) };
     });
   };
+  // Cottage on the Map (Richard, 2026-11-28): "Do we want the
+  // cottage button (start here) to actually pull up the
+  // cottage?" Yes — tapping the cottage at the top of the
+  // diagram, or the cottage photo below it, pulls the cottage
+  // up big, pinchable like the gazebo and the garden first pic,
+  // so you start where every path begins. Same 1x–4x pinch,
+  // drag, double-tap and wheel, same 320 ms single-tap wait.
+  const [mapCottageZoomed, setMapCottageZoomed] = useState(false);
+  const [mapCottageZoom, setMapCottageZoom] = useState<GazeboZoomView>(GAZEBO_ZOOM_RESET);
+  const mapCottageGestureRef = useRef<null | {
+    touches: number; startDistance: number; startScale: number;
+    startMid: { x: number; y: number }; startPan: { x: number; y: number };
+    lastPoint: { x: number; y: number }; startPoint: { x: number; y: number };
+    startTime: number; moved: boolean;
+  }>(null);
+  const mapCottageTapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mapCottageLastTapRef = useRef(0);
+  const openMapCottage = () => {
+    setMapCottageZoom(GAZEBO_ZOOM_RESET);
+    setMapCottageZoomed(true);
+  };
+  const closeMapCottageZoom = () => {
+    if (mapCottageTapTimerRef.current) {
+      clearTimeout(mapCottageTapTimerRef.current);
+      mapCottageTapTimerRef.current = null;
+    }
+    setMapCottageZoom(GAZEBO_ZOOM_RESET);
+    setMapCottageZoomed(false);
+  };
+  const mapCottageZoomTouchStart = (e: TouchEvent<HTMLDivElement>) => {
+    if (mapCottageTapTimerRef.current) {
+      clearTimeout(mapCottageTapTimerRef.current);
+      mapCottageTapTimerRef.current = null;
+    }
+    const points = Array.from(e.touches).map((t) => ({ x: t.clientX, y: t.clientY }));
+    const [first, second] = points;
+    if (!first) return;
+    if (points.length === 2 && second) {
+      const mid = { x: (first.x + second.x) / 2, y: (first.y + second.y) / 2 };
+      mapCottageGestureRef.current = {
+        touches: 2, startDistance: gazeboPinchDistance(first, second), startScale: mapCottageZoom.scale,
+        startMid: mid, startPan: { x: mapCottageZoom.x, y: mapCottageZoom.y },
+        lastPoint: first, startPoint: first, startTime: Date.now(), moved: false,
+      };
+    } else if (points.length === 1) {
+      mapCottageGestureRef.current = {
+        touches: 1, startDistance: 0, startScale: mapCottageZoom.scale,
+        startMid: first, startPan: { x: mapCottageZoom.x, y: mapCottageZoom.y },
+        lastPoint: first, startPoint: first, startTime: Date.now(), moved: false,
+      };
+    }
+  };
+  const mapCottageZoomTouchMove = (e: TouchEvent<HTMLDivElement>) => {
+    const g = mapCottageGestureRef.current;
+    if (!g) return;
+    const points = Array.from(e.touches).map((t) => ({ x: t.clientX, y: t.clientY }));
+    const [first, second] = points;
+    if (g.touches === 2 && first && second) {
+      const distance = gazeboPinchDistance(first, second);
+      const mid = { x: (first.x + second.x) / 2, y: (first.y + second.y) / 2 };
+      const scale = gazeboPinchScale(g.startScale, g.startDistance, distance);
+      g.moved = true;
+      setMapCottageZoom({
+        scale,
+        x: gazeboPanOffset(g.startPan.x + (mid.x - g.startMid.x), scale),
+        y: gazeboPanOffset(g.startPan.y + (mid.y - g.startMid.y), scale),
+      });
+    } else if (g.touches === 1 && first) {
+      if (Math.abs(first.x - g.startPoint.x) + Math.abs(first.y - g.startPoint.y) > 10) g.moved = true;
+      if (mapCottageZoom.scale > 1) {
+        const dx = first.x - g.lastPoint.x;
+        const dy = first.y - g.lastPoint.y;
+        setMapCottageZoom((prev) => ({
+          scale: prev.scale,
+          x: gazeboPanOffset(prev.x + dx, prev.scale),
+          y: gazeboPanOffset(prev.y + dy, prev.scale),
+        }));
+      }
+      g.lastPoint = first;
+    }
+  };
+  const mapCottageZoomTouchEnd = (e: TouchEvent<HTMLDivElement>) => {
+    const g = mapCottageGestureRef.current;
+    if (!g) return;
+    if (g.touches === 2 || e.touches.length > 0) {
+      mapCottageGestureRef.current = null;
+      return;
+    }
+    const wasTap = !g.moved && Date.now() - g.startTime < 500;
+    mapCottageGestureRef.current = null;
+    if (!wasTap) return;
+    const now = Date.now();
+    if (now - mapCottageLastTapRef.current < 350) {
+      mapCottageLastTapRef.current = 0;
+      setMapCottageZoom((prev) => (prev.scale > 1 ? GAZEBO_ZOOM_RESET : { scale: 2, x: 0, y: 0 }));
+      return;
+    }
+    mapCottageLastTapRef.current = now;
+    mapCottageTapTimerRef.current = setTimeout(() => {
+      closeMapCottageZoom();
+    }, 320);
+  };
+  const mapCottageZoomWheel = (e: WheelEvent<HTMLDivElement>) => {
+    setMapCottageZoom((prev) => {
+      const scale = Math.min(GAZEBO_ZOOM_MAX, Math.max(GAZEBO_ZOOM_MIN, prev.scale * (e.deltaY < 0 ? 1.15 : 1 / 1.15)));
+      return scale === 1 ? GAZEBO_ZOOM_RESET : { scale, x: gazeboPanOffset(prev.x, scale), y: gazeboPanOffset(prev.y, scale) };
+    });
+  };
   const [trophies, setTrophies] = useState<string[]>(() => loadLifeGardenTrophies());
   const [checked, setChecked] = useState<string[]>(() => loadLifeGardenChecked());
   const [quitDays, setQuitDays] = useState<GardenQuitDays>(() => loadLifeGardenQuitDays());
   const [quitDraft, setQuitDraft] = useState("");
   const [message, setMessage] = useState<string | null>(null);
-  // Sixth piece (Richard, 2026-11-26): the flower pot on the
-  // big wrap-around porch pots, shown on the Map near the cottage, are
-  // with the patches already cleared.
-  const porchFlowerCount = LIFE_GARDEN_ITEMS.filter((item) => checked.includes(item) || trophies.includes(item)).length;
-  const porchCottageBlooms = gardenCottagePatchBlooms(loadLifeGardenVisits(), porchFlowerCount === LIFE_GARDEN_ITEMS.length);
   // Flowers along each branch on the Map (Richard, 2026-11-28):
   // the same effective quit day the stop panel uses — the tab's
   // quit day first, otherwise the garden one — so the flowers on
@@ -6119,13 +6239,24 @@ function GardenMapPage({ onGoHome, onGoGarden, onGoTab, onOpenCozy, profiles, ga
   // Gazebo music + bell every minute (Richard, 2026-11-28):
   // "We want our user to be able to select from those 5 while
   // in the gazebo. And the bell is very spaced apart, like one
-  // minute spacing." Five original pieces — soft piano, harp,
-  // harmonica, acoustic guitar, violins — made here with Web
-  // Audio, no files, no copyrighted songs. Off by default:
+  // minute spacing." Six original pieces — soft piano, harp,
+  // harmonica, acoustic guitar, violins, and oboe (added
+  // 2026-11-28, Richard: "Oboe are nice too") — made here with
+  // Web Audio, no files, no copyrighted songs. Off by default:
   // nothing plays until the visitor taps one. The music stops
   // when they leave the gazebo, and the bell's every-minute
   // ringing is off to start with, and stops when they leave.
   const [gazeboMusic, setGazeboMusic] = useState<GazeboMusicKind | null>(null);
+  // Gazebo music volume (Richard, 2026-11-28): "Not loud enough
+  // or we need volume control" — the pieces were a whisper at
+  // gain 0.07–0.09. The slider sets the music's own volume, 0
+  // to 0.4, default 55% (0.22, the same level as the calm tone),
+  // following the breathing exercise's calm-tone volume slider.
+  // Sound still follows the phone's volume and silent switch.
+  const [gazeboMusicVolume, setGazeboMusicVolume] = useState(55);
+  useEffect(() => {
+    sounds.setGazeboMusicVolume((gazeboMusicVolume / 100) * 0.4);
+  }, [gazeboMusicVolume]);
   const [gazeboBellEveryMinute, setGazeboBellEveryMinute] = useState(false);
   const chooseGazeboMusic = (kind: GazeboMusicKind) => {
     if (gazeboMusic === kind) {
@@ -6136,10 +6267,6 @@ function GardenMapPage({ onGoHome, onGoGarden, onGoTab, onOpenCozy, profiles, ga
     sounds.prepareAudio();
     sounds.startGazeboMusic(kind);
     setGazeboMusic(kind);
-  };
-  const stopGazeboMusic = () => {
-    sounds.stopGazeboMusic();
-    setGazeboMusic(null);
   };
   useEffect(() => {
     if (selected !== "gazebo") {
@@ -6194,8 +6321,10 @@ function GardenMapPage({ onGoHome, onGoGarden, onGoTab, onOpenCozy, profiles, ga
               top of the diagram, so the diagram reads as a map
               from the cottage, not as a tree. The pathway runs
               down from its front steps, straight down the middle. */}
+          <g role="button" tabIndex={0} aria-label="Tap to open the cottage — where every path begins" onClick={openMapCottage} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openMapCottage(); } }} style={{ cursor: "pointer" }}>
           <rect x="105" y="4" width="150" height="36" rx="8" fill="#fdeeda" stroke="#d99a4e" strokeWidth="2" />
           <text x="180" y="28" textAnchor="middle" fontSize="14" fontWeight="bold" fill="#2e2117">🏠 Cottage — start here</text>
+          </g>
           {/* The main pathway, winding gently down from the cottage
               front steps (Richard, 2026-11-28): a dirt path with
               stepping stones on it, not a straight green stick.
@@ -6379,10 +6508,23 @@ function GardenMapPage({ onGoHome, onGoGarden, onGoTab, onOpenCozy, profiles, ga
         <p className="text-center text-sm leading-relaxed text-[var(--dim)]">Cottage at the top, gazebo branch for quiet time, eight dead ends each with a trophy, and Longevity going on to infinity. The green lines are stepping-stone pathways now, winding gently from the cottage — a path fills with flowers along its whole length, around the stones, as its milestones are reached. Life is a long path, so the tree is taller than one screen — scroll down to walk it all. Tap a branch to open it, then tap Visit to go to that help.</p>
       </div>
       <figure className="mt-4 overflow-hidden rounded-[var(--radius)] border-2 border-[var(--leaf)]">
-        <img src={welcomeCottage} alt="Our cottage — a wooden cottage with a grey slate roof, green shutters, a big wrap-around porch, a WELCOME mat and an open please come in sign" className="w-full" />
+        <button type="button" onClick={openMapCottage} aria-label="The cottage — tap to see it bigger" className="block w-full">
+          <img src={welcomeCottage} alt="Our cottage — a wooden cottage with a grey slate roof, green shutters, a big wrap-around porch, a WELCOME mat and an open please come in sign" className="w-full" />
+        </button>
         <figcaption className="bg-[var(--surface)] px-4 py-3 text-center font-bold leading-relaxed text-[var(--text)]">Your cottage — where every path begins, warm and cozy from the get-go.</figcaption>
+        <p className="bg-[var(--surface)] pb-3 text-center text-sm text-[var(--dim)]">Tap the cottage to pull it up big — pinch to zoom in close, to see the wood grain and the details.</p>
       </figure>
-      <GardenPorchPot flowerCount={porchFlowerCount} cottageBlooms={porchCottageBlooms} />
+      {mapCottageZoomed && (
+        <div role="dialog" aria-label="The cottage, enlarged" className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-black/80 p-4" style={{ touchAction: "none" }} onClick={(e) => { if (e.target === e.currentTarget) closeMapCottageZoom(); }} onTouchStart={mapCottageZoomTouchStart} onTouchMove={mapCottageZoomTouchMove} onTouchEnd={mapCottageZoomTouchEnd} onWheel={mapCottageZoomWheel}>
+          <div className="flex max-h-full flex-col items-center">
+            <div className="mb-2 flex w-full items-center justify-end gap-2">
+              <button type="button" onClick={closeMapCottageZoom} aria-label="Close the enlarged cottage photo" className="rounded-full bg-white/90 px-4 py-2 font-bold text-[var(--text)]">✕ Close</button>
+            </div>
+            <img src={welcomeCottage} alt="Our cottage — enlarged" draggable={false} className="max-h-[75vh] w-auto max-w-full touch-none select-none rounded-[var(--radius)]" style={{ transform: `translate(${mapCottageZoom.x}px, ${mapCottageZoom.y}px) scale(${mapCottageZoom.scale})`, transformOrigin: "center center" }} />
+            <span className="mt-2 block text-center font-semibold text-white">Pinch with two fingers to zoom in, drag to look around, double-tap to reset. Tap anywhere to close.</span>
+          </div>
+        </div>
+      )}
       {message && (
         <div role="status" className="felt-soft mt-4 rounded-[var(--radius)] border-2 border-[var(--sun)] bg-[var(--amber-soft)] px-4 py-3 text-center">
           <p className="font-bold leading-relaxed text-[var(--text)]">{message}</p>
@@ -6474,10 +6616,10 @@ function GardenMapPage({ onGoHome, onGoGarden, onGoTab, onOpenCozy, profiles, ga
                       </div>
                       {/* Music in the gazebo (Richard, 2026-11-28):
                           "We want our user to be able to select
-                          from those 5 while in the gazebo." Five
+                          from those 5 while in the gazebo." Six
                           original pieces, made here with Web Audio
                           — soft piano, harp, harmonica, acoustic
-                          guitar, violins. No audio files, no
+                          guitar, violins, and oboe. No audio files, no
                           downloaded music, no copyrighted songs.
                           Off by default: nothing plays until the
                           visitor taps one, and it stops when they
@@ -6491,6 +6633,11 @@ function GardenMapPage({ onGoHome, onGoGarden, onGoTab, onOpenCozy, profiles, ga
                           ))}
                         </div>
                         {gazeboMusic && <p className="mt-2 text-sm font-bold leading-relaxed text-[var(--text)]">Playing {GAZEBO_MUSIC_KINDS.find((k) => k.id === gazeboMusic)?.label} — tap it again, or leave the gazebo, to stop.</p>}
+                        <div className="mt-3 text-left">
+                          <label htmlFor="gazebo-music-volume" className="text-sm font-semibold text-[var(--text)]">Gazebo music volume</label>
+                          <input id="gazebo-music-volume" type="range" min={0} max={100} value={gazeboMusicVolume} onChange={(e) => setGazeboMusicVolume(Number(e.target.value))} aria-label="Gazebo music volume" className="mt-1 w-full" />
+                          <p className="mt-1 text-sm text-[var(--dim)]">This is the music&apos;s own volume, inside the app — sound still follows your phone&apos;s volume and silent switch.</p>
+                        </div>
                       </div>
                     </figure>
                     {gazeboZoomed && (
@@ -6522,7 +6669,7 @@ function GardenMapPage({ onGoHome, onGoGarden, onGoTab, onOpenCozy, profiles, ga
                           <img src={myLifeGardenGazebo} alt="The gazebo — enlarged" draggable={false} className="max-h-[75vh] w-auto max-w-full touch-none select-none rounded-[var(--radius)]" style={{ transform: `translate(${gazeboZoom.x}px, ${gazeboZoom.y}px) scale(${gazeboZoom.scale})`, transformOrigin: "center center" }} />
                           <span className="mt-2 block text-center font-semibold text-white">Pinch with two fingers to zoom in, drag to look around, double-tap to reset. Tap anywhere to close.</span>
                           {/* Music in the enlarged gazebo too
-                              (Richard, 2026-11-28): the same five
+                              (Richard, 2026-11-28): the same six
                               choices, while you are there in the
                               picture. The taps must not reach the
                               dialog's touch handlers — a tap there
@@ -6532,6 +6679,10 @@ function GardenMapPage({ onGoHome, onGoGarden, onGoTab, onOpenCozy, profiles, ga
                             {GAZEBO_MUSIC_KINDS.map((kind) => (
                               <button key={kind.id} type="button" onClick={(e) => { e.stopPropagation(); chooseGazeboMusic(kind.id); }} onTouchStart={(e) => e.stopPropagation()} onTouchEnd={(e) => e.stopPropagation()} aria-pressed={gazeboMusic === kind.id} aria-label={gazeboMusic === kind.id ? `${kind.label} — playing, tap to stop` : `Play ${kind.label} in the gazebo`} className="rounded-full bg-white/90 px-3 py-2 font-bold text-[var(--text)]">{gazeboMusic === kind.id ? `♪ ${kind.label} — playing` : `♪ ${kind.label}`}</button>
                             ))}
+                          </div>
+                          <div className="mt-2 w-full max-w-md rounded-[var(--radius)] bg-white/90 px-3 py-2" onTouchStart={(e) => e.stopPropagation()} onTouchEnd={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
+                            <label htmlFor="gazebo-music-volume-enlarged" className="text-sm font-semibold text-[var(--text)]">Gazebo music volume</label>
+                            <input id="gazebo-music-volume-enlarged" type="range" min={0} max={100} value={gazeboMusicVolume} onChange={(e) => setGazeboMusicVolume(Number(e.target.value))} aria-label="Gazebo music volume" className="mt-1 w-full" />
                           </div>
                         </div>
                       </div>

@@ -35,13 +35,19 @@
 //    "Ring the bell every minute", when it rings once a minute,
 //    spaced apart, while they stay in the gazebo.
 // 5. Gazebo music (My Life Garden Pathway, Richard, 2026-11-28):
-//    five original, gentle pieces to choose from while in the
+//    six original, gentle pieces to choose from while in the
 //    gazebo — soft piano, harp, harmonica, acoustic guitar,
-//    violins. Every note is made here with Web Audio, in the
+//    violins, and oboe (added 2026-11-28, Richard: "Oboe are
+//    nice too"). Every note is made here with Web Audio, in the
 //    instrument's own voice — no audio files, no downloaded
 //    music, no copyrighted songs, no copied melody. See
 //    GAZEBO_MUSIC_* below. Off by default: nothing plays until
-//    the visitor taps one, and it stops when they leave.
+//    the visitor taps one, and it stops when they leave. Each
+//    piece is its own tune in its own key/mode, with its own
+//    rhythm and voice — the band had been playing the same tune
+//    (one shared C-major pool, near-identical oscillators),
+//    so 2026-11-28 gave each instrument a different phrase,
+//    a louder voice, and a volume slider in the gazebo.
 //
 // Privacy: no recording, no microphone, no data leaves the phone for
 // any of this. Sound on/off is not saved to the server and not tied
@@ -101,13 +107,15 @@ export const SLOT_TONE_SPECS: Record<SlotSoundKind, { frequencyHz: number; durat
 // thermometer fills, never on an ordinary tap.
 // Gazebo bell (Richard, 2026-11-28): a tiny bell, not the big
 // carnival bell. Higher and softer than the Happy Button bell —
-// one strike at 1568 Hz with quiet harmonics (2352, 3136 Hz),
-// gains about half the carnival bell's, ringing together for
-// about 2.4 seconds, then fading — like the small bell at the
-// end of a yoga session. It plays only when the visitor taps
+// one strike at 2093 Hz (C7 — raised a clear step from 1568 Hz
+// on 2026-11-28, Richard: "the pitch on the bell needs to be
+// higher") with quiet harmonics (3136, 4186 Hz), gains about
+// half the carnival bell's, ringing together for about 2.4
+// seconds, then fading — like the small bell at the end of a
+// yoga session. It plays only when the visitor taps
 // "Ring the bell" in the gazebo, never on its own, never on a
 // loop, and never when the gazebo opens.
-export const GAZEBO_BELL_FREQUENCIES_HZ: [number, number, number] = [1568, 2352, 3136];
+export const GAZEBO_BELL_FREQUENCIES_HZ: [number, number, number] = [2093, 3136, 4186];
 export const GAZEBO_BELL_DURATION_MS = 2400;
 export const GAZEBO_BELL_GAIN = 0.07;
 // Bell every minute (Richard, 2026-11-28): "the bell is very
@@ -116,69 +124,100 @@ export const GAZEBO_BELL_GAIN = 0.07;
 // the visitor stays in the gazebo. Off by default.
 export const GAZEBO_BELL_EVERY_MINUTE_MS = 60000;
 
-// Gazebo music (Richard, 2026-11-28): five original, gentle
+// Gazebo music (Richard, 2026-11-28): six original, gentle
 // pieces to choose from while in the gazebo — soft piano, harp,
-// harmonica, acoustic guitar, violins. Each piece is a slow,
-// original phrase in the instrument's own voice, made here with
-// Web Audio oscillators — no audio files, no downloaded music,
-// no copyrighted songs, no copied melody. All five phrases are
-// slow, soft, and in the same gentle key (C major, the notes of
-// a calm scale), so any of them fits a quiet moment, and each
-// one sounds different: piano steps down gently, harp arpeggiates
-// up and down, harmonica holds long notes, guitar plucks short
-// ones, violins sing long and slow.
-export type GazeboMusicKind = "piano" | "harp" | "harmonica" | "guitar" | "violins";
+// harmonica, acoustic guitar, violins, and oboe. Each piece is
+// a slow, original phrase in its own key and mode, in the
+// instrument's own voice, made here with Web Audio oscillators
+// — no audio files, no downloaded music, no copyrighted songs,
+// no copied melody. Each one sounds different: piano steps down
+// gently in C major, harp arpeggiates wide, harmonica holds long
+// notes in D minor, guitar plucks short and rhythmic in E major,
+// violins sing long and slow in A minor, oboe sings reedy in
+// G major. A volume slider in the gazebo sets how loud they
+// play, 0 to 0.4, default 0.22.
+export type GazeboMusicKind = "piano" | "harp" | "harmonica" | "guitar" | "violins" | "oboe";
 export const GAZEBO_MUSIC_KINDS: { id: GazeboMusicKind; label: string }[] = [
   { id: "piano", label: "Soft piano" },
   { id: "harp", label: "Harp" },
   { id: "harmonica", label: "Harmonica" },
   { id: "guitar", label: "Acoustic guitar" },
   { id: "violins", label: "Violins" },
+  { id: "oboe", label: "Oboe" },
 ];
-// The phrase loops, slow and unhurried — one phrase is about
-// 30 seconds, then it begins again, until the visitor stops it
-// or leaves the gazebo.
+// Gazebo music volume (Richard, 2026-11-28): "Not loud enough
+// or we need volume control" — the pieces were a whisper at
+// gain 0.07–0.09. They now play at about 0.22 by default (the
+// same level as the calm tone), and the gazebo has its own
+// volume slider, 0 to 0.4, following the breathing exercise's
+// setCalmToneVolume pattern. Sound still follows the phone's
+// volume and silent switch — this is the music's own volume,
+// inside the app. The slider only moves music that is playing.
+export const GAZEBO_MUSIC_VOLUME_DEFAULT = 0.22;
+export const GAZEBO_MUSIC_VOLUME_MAX = 0.4;
 export const GAZEBO_MUSIC_LOOP_MS = 30000;
 
 export type GazeboMusicNote = { frequencyHz: number; startMs: number; durationMs: number };
 
-// The notes of a calm scale, in hertz: C4 D4 E4 G4 A4 C5 E5 G5.
+// The notes, in hertz — several keys and modes, so each
+// instrument's piece is genuinely its own tune, not the same
+// notes in a different voice:
+//   piano: C-major pentatonic, stepping down gently;
+//   harp: C major, arpeggiating wide, up and down;
+//   harmonica: D minor pentatonic, long held notes;
+//   guitar: E major, plucked and rhythmic;
+//   violins: A minor, slow and legato, long and low;
+//   oboe: G major pentatonic, singing and reedy.
 const GAZEBO_MUSIC_NOTES_HZ = {
-  C4: 261.63, D4: 293.66, E4: 329.63, G4: 392.0, A4: 440.0, C5: 523.25, E5: 659.25, G5: 783.99,
+  C4: 261.63, D4: 293.66, E4: 329.63, F4: 349.23, G4: 392.0, A4: 440.0, B4: 493.88,
+  C5: 523.25, D5: 587.33, E5: 659.25, F5: 698.46, G5: 783.99, A5: 880.0,
+  A3: 220.0, B3: 246.94, E3: 164.81, G3: 196.0, D3: 146.83, GSharp4: 415.3, CSharp5: 554.37,
 } as const;
 
 // One slow, original phrase per instrument — twelve notes each,
-// each note starting about 2.4 seconds after the last, so the
-// phrase runs about 30 seconds. The five phrases are different
-// shapes, so each instrument's piece is its own tune, not the
-// same notes played louder or faster.
+// each in its own key, shape and rhythm, so the band no longer
+// plays the same tune. Start spacing and note length differ per
+// instrument too: guitar plucks short and quick, harmonica and
+// violins hold long notes, piano and oboe sit in between.
 export function gazeboMusicPhrase(kind: GazeboMusicKind): GazeboMusicNote[] {
   const steps: Record<GazeboMusicKind, (keyof typeof GAZEBO_MUSIC_NOTES_HZ)[]> = {
-    piano: ["C4", "E4", "G4", "E4", "A4", "G4", "E4", "C4", "D4", "E4", "G4", "C5"],
-    harp: ["C4", "G4", "E4", "G4", "A4", "C5", "E5", "A4", "G4", "E4", "C5", "G4"],
-    harmonica: ["E4", "G4", "A4", "G4", "E4", "D4", "C4", "E4", "G4", "E4", "D4", "C4"],
-    guitar: ["C4", "G4", "E4", "C4", "A4", "E4", "G4", "C4", "E4", "G4", "A4", "E4"],
-    violins: ["C4", "E4", "G4", "A4", "G4", "E4", "D4", "C4", "E4", "G4", "A4", "C5"],
+    piano: ["C5", "A4", "G4", "E4", "D4", "C4", "E4", "G4", "A4", "G4", "E4", "C4"],
+    harp: ["C4", "E4", "G4", "C5", "E5", "G5", "E5", "C5", "G4", "E4", "G4", "C5"],
+    harmonica: ["D4", "F4", "A4", "C5", "D5", "C5", "A4", "F4", "D4", "A4", "F4", "D4"],
+    guitar: ["E3", "B3", "E4", "GSharp4", "B4", "E5", "B4", "GSharp4", "E4", "B3", "E4", "B4"],
+    violins: ["A3", "C4", "E4", "A4", "C5", "E5", "A5", "E5", "C5", "A4", "E4", "C4"],
+    oboe: ["G4", "B4", "D5", "G5", "D5", "B4", "G4", "A4", "B4", "D5", "E5", "G5"],
   };
   const durationsMs: Record<GazeboMusicKind, number> = {
-    piano: 2200, harp: 2000, harmonica: 3200, guitar: 1400, violins: 3600,
+    piano: 2200, harp: 2000, harmonica: 3400, guitar: 900, violins: 3600, oboe: 2400,
+  };
+  const stepMs: Record<GazeboMusicKind, number> = {
+    piano: 2400, harp: 2200, harmonica: 2600, guitar: 1200, violins: 2400, oboe: 2400,
   };
   return steps[kind].map((note, i) => ({
     frequencyHz: GAZEBO_MUSIC_NOTES_HZ[note],
-    startMs: i * 2400,
+    startMs: i * stepMs[kind],
     durationMs: durationsMs[kind],
   }));
 }
 
 // Each instrument's voice — the oscillator shape and loudness
 // that makes it sound like itself, still soft, still gentle.
+// Louder than the first version (Richard, 2026-11-28: "Not
+// loud enough"): gains about double the old 0.07–0.09, before
+// the gazebo's own volume slider scales them. Oboe is reedy,
+// so it uses a sawtooth at a lower gain — a sawtooth carries
+// further than a sine at the same gain. Violins sing with two
+// tones at once (see playGazeboMusicPhrase, which adds a soft
+// octave above for violins only).
 export function gazeboMusicVoice(kind: GazeboMusicKind): { type: OscillatorType; gain: number } {
   const voices: Record<GazeboMusicKind, { type: OscillatorType; gain: number }> = {
-    piano: { type: "triangle", gain: 0.09 },
-    harp: { type: "sine", gain: 0.09 },
-    harmonica: { type: "sine", gain: 0.07 },
-    guitar: { type: "triangle", gain: 0.08 },
-    violins: { type: "sine", gain: 0.08 },
+    piano: { type: "triangle", gain: 0.18 },
+    harp: { type: "sine", gain: 0.17 },
+    harmonica: { type: "sine", gain: 0.15 },
+    guitar: { type: "triangle", gain: 0.17 },
+    violins: { type: "sine", gain: 0.16 },
+    oboe: { type: "sawtooth", gain: 0.07 },
   };
   return voices[kind];
 }
@@ -221,6 +260,19 @@ class AppSounds {
   private gazeboMusicKind: GazeboMusicKind | null = null;
   private gazeboMusicTimer: ReturnType<typeof setInterval> | null = null;
   private gazeboMusicTimeouts: ReturnType<typeof setTimeout>[] = [];
+  // Gazebo music volume (Richard, 2026-11-28): the visitor's
+  // own slider in the gazebo, 0 to 0.4, default 0.22 — the same
+  // pattern as the breathing exercise's calm-tone volume. The
+  // voices above are the gains at the default volume; the
+  // slider scales them, so 0 is silent and 0.4 is the loudest.
+  private gazeboMusicVolume: number = GAZEBO_MUSIC_VOLUME_DEFAULT;
+
+  // The gazebo's own volume slider calls this. Clamped to
+  // 0–0.4, so the music can never get harsh. Notes already
+  // sounding keep their gain; the next notes use the new one.
+  setGazeboMusicVolume(volume: number): void {
+    this.gazeboMusicVolume = Math.max(0, Math.min(GAZEBO_MUSIC_VOLUME_MAX, volume));
+  }
 
   // The breathing exercise's own volume slider calls this. Clamped
   // to 0–0.4, so the tone can never get harsh. If a tone is playing,
@@ -331,10 +383,21 @@ class AppSounds {
 
   private playGazeboMusicPhrase(kind: GazeboMusicKind): void {
     const voice = gazeboMusicVoice(kind);
+    // The slider scales the voice: at the default 0.22 the
+    // voice plays as written; at 0 it is silent; at 0.4 it is
+    // about twice as loud.
+    const scaledGain = voice.gain * (this.gazeboMusicVolume / GAZEBO_MUSIC_VOLUME_DEFAULT);
     for (const note of gazeboMusicPhrase(kind)) {
       const id = setTimeout(() => {
         if (this.gazeboMusicKind === kind) {
-          this.playTone(note.frequencyHz, note.durationMs, voice.type, voice.gain);
+          this.playTone(note.frequencyHz, note.durationMs, voice.type, scaledGain);
+          if (kind === "violins") {
+            // Violins sing with a soft octave above — the second
+            // tone is what makes them sound like violins, not
+            // just a sine, and it is what the old single
+            // oscillator was missing.
+            this.playTone(note.frequencyHz * 2, note.durationMs, "sine", scaledGain * 0.4);
+          }
         }
       }, note.startMs);
       this.gazeboMusicTimeouts.push(id);

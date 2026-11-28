@@ -117,7 +117,10 @@ test("flowers grow with the settled milestones — one flower per milestone on a
 });
 
 test("the branches are still tappable, and the boxes are unchanged", () => {
-  assert.equal((diagram.match(/role="button"/g) ?? []).length, 10, "there must still be ten tappable branches in the diagram");
+  // Eleven now, not ten: the ten branches plus the cottage
+  // button at the top, which pulls the cottage up big
+  // (Richard, 2026-11-28).
+  assert.equal((diagram.match(/role="button"/g) ?? []).length, 11, "there must still be ten tappable branches in the diagram, plus the cottage button");
   for (const id of BRANCH_IDS) {
     assert.ok(diagram.includes(`onClick={() => openStop("${id}")}`), `the diagram must still have a tappable branch for "${id}"`);
   }

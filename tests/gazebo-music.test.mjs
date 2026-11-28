@@ -2,8 +2,9 @@
 //   "We want our user to be able to select from those 5 while
 //   in the gazebo. And the bell is very spaced apart, like one
 //   minute spacing."
-// The five, Richard's list: soft piano, harp, harmonica,
-// acoustic guitar, violins. All original music, made here with
+// The six, Richard's list plus oboe (2026-11-28: "Oboe are
+// nice too"): soft piano, harp, harmonica, acoustic guitar,
+// violins, oboe. All original music, made here with
 // Web Audio — no audio files, no downloaded music, no
 // copyrighted songs, no copied melody. Off by default: nothing
 // plays until the visitor taps one, and it stops when they
@@ -24,17 +25,17 @@ const sound = readFileSync(path.join(root, "client", "src", "sound.ts"), "utf8")
 const gazeboStart = src.indexOf('{open && stop.id === "gazebo"');
 const gazebo = src.slice(gazeboStart, gazeboStart + 16000);
 
-test("the gazebo offers exactly Richard's five music choices", () => {
+test("the gazebo offers exactly Richard's six music choices", () => {
   assert.ok(sound.includes('export const GAZEBO_MUSIC_KINDS: { id: GazeboMusicKind; label: string }[] = ['),
     "the sound engine must list the gazebo music kinds");
-  for (const label of ["Soft piano", "Harp", "Harmonica", "Acoustic guitar", "Violins"]) {
+  for (const label of ["Soft piano", "Harp", "Harmonica", "Acoustic guitar", "Violins", "Oboe"]) {
     assert.ok(sound.includes(`label: "${label}"`), `the music list must include ${label}`);
   }
-  assert.equal((sound.match(/label: "/g) ?? []).length, 5, "there must be exactly five music choices, no more");
+  assert.equal((sound.match(/label: "/g) ?? []).length, 6, "there must be exactly six music choices, no more");
   // The chooser renders the list from the engine — the labels
   // themselves live in sound.ts, and the gazebo maps over them.
   assert.ok(gazebo.includes("Choose music in the gazebo"), "the gazebo must have a music chooser");
-  assert.ok(gazebo.includes("GAZEBO_MUSIC_KINDS.map((kind)"), "the gazebo chooser must list the five choices from the engine");
+  assert.ok(gazebo.includes("GAZEBO_MUSIC_KINDS.map((kind)"), "the gazebo chooser must list the six choices from the engine");
   assert.ok(gazebo.includes("Original music, made here for the gazebo — soft and slow, no copyrighted songs."),
     "the chooser must say plainly the music is original and made here");
 });
@@ -118,4 +119,46 @@ test("the enlarged gazebo view has the music chooser too", () => {
   const enlarged = gazebo.slice(gazebo.indexOf('aria-label="The gazebo, enlarged"'));
   assert.ok(enlarged.includes("Choose music in the gazebo"), "the enlarged gazebo view must have the music chooser too");
   assert.ok(enlarged.includes("onTouchStart={(e) => e.stopPropagation()}"), "the enlarged music taps must not reach the dialog");
+});
+
+test("the six pieces are genuinely different tunes, not the same notes in different voices", () => {
+  // The first version shared one 8-note C-major pool, so every
+  // instrument played the same tune — Richard: "All instruments
+  // playing same tune/sound. The band needs a wee bit of
+  // practice." Each piece now has its own key/mode and shape:
+  // piano C-major pentatonic stepping down, harp arpeggiating
+  // wide, harmonica D minor pentatonic held long, guitar E major
+  // plucked rhythmic, violins A minor slow and legato, oboe G
+  // major pentatonic reedy. The phrase table must show notes
+  // no other piece uses.
+  assert.ok(sound.includes('"F4"') || sound.includes("F4"), "the harmonica's D minor tune must use F");
+  assert.ok(sound.includes("A3"), "the violins' A minor tune must reach down to A3");
+  assert.ok(sound.includes("GSharp4"), "the guitar's E major tune must use G sharp");
+  assert.ok(sound.includes('"B4"') || sound.includes("B4"), "the oboe's G major tune must use B");
+  // Different rhythms too: guitar plucks short and quick, the
+  // long-note instruments hold.
+  assert.ok(sound.includes("guitar: 900"), "the guitar must pluck short notes");
+  assert.ok(sound.includes("harmonica: 3400"), "the harmonica must hold long notes");
+  assert.ok(sound.includes("violins: 3600"), "the violins must hold long notes");
+  // Different voices too, and louder than the first whisper:
+  // piano and guitar triangle, harp and violins sine, oboe
+  // sawtooth — and gains about double the old 0.07–0.09.
+  assert.ok(sound.includes('piano: { type: "triangle", gain: 0.18 }'), "the piano must be louder — gain 0.18, not 0.09");
+  assert.ok(sound.includes('oboe: { type: "sawtooth", gain: 0.07 }'), "the oboe must be reedy — sawtooth");
+  assert.ok(sound.includes("frequencyHz * 2"), "the violins must sing with a soft octave above, not a bare sine");
+});
+
+test("the gazebo has a music volume control, off by default in loudness terms", () => {
+  // Richard: "Not loud enough or we need volume control."
+  // The engine offers a volume, 0 to 0.4, default 0.22 — the
+  // same level and pattern as the calm tone.
+  assert.ok(sound.includes("GAZEBO_MUSIC_VOLUME_DEFAULT = 0.22"), "the music must play at 0.22 by default, not the old whisper");
+  assert.ok(sound.includes("GAZEBO_MUSIC_VOLUME_MAX = 0.4"), "the music volume must top out at 0.4");
+  assert.ok(sound.includes("setGazeboMusicVolume(volume: number): void"), "the engine must offer setGazeboMusicVolume");
+  // The gazebo has a slider in the panel and in the enlarged
+  // view, following the breathing exercise's calm-tone slider.
+  assert.ok(src.includes('aria-label="Gazebo music volume"'), "the gazebo must have a music volume control");
+  assert.ok(src.includes("sounds.setGazeboMusicVolume((gazeboMusicVolume / 100) * 0.4)"), "the slider must set the music volume like the calm-tone slider does");
+  assert.ok(src.includes("const [gazeboMusicVolume, setGazeboMusicVolume] = useState(55);"), "the volume must start at 55% — 0.22, the same as the calm tone");
+  assert.equal((src.match(/aria-label="Gazebo music volume"/g) ?? []).length, 2, "the volume control must be in the gazebo panel and in the enlarged view");
 });

@@ -52,8 +52,8 @@ test("the garden first picture still enlarges — same bug, checked, not broken"
   // The garden first pic is a real button around the image, and
   // its enlarged dialog closes on tap. That one worked; guard it.
   assert.ok(garden.includes('aria-label="My Life Garden Pathway — tap to see the whole photo bigger"'), "the garden first pic must stay a tappable button");
-  assert.ok(garden.includes("onClick={() => setZoomed(true)}"), "tapping the garden first pic must enlarge it");
-  assert.ok(garden.includes('aria-label="My Life Garden Pathway, enlarged"'), "the garden enlarged view must still exist");
+  assert.ok(garden.includes("setCottageZoom(GAZEBO_ZOOM_RESET); setCottageZoomed(true)"), "tapping the garden first pic must enlarge it, starting at 1x");
+  assert.ok(garden.includes('aria-label="My Life Garden Pathway — the cottage in the field, enlarged"'), "the garden enlarged view must still exist");
 });
 
 test("the enlarged gazebo really pinch-zooms — two fingers, 1x to 4x, drag to pan, double-tap to reset (Richard, 2026-11-28)", () => {
@@ -83,14 +83,19 @@ test("the enlarged gazebo really pinch-zooms — two fingers, 1x to 4x, drag to 
   assert.ok(map.includes("The gazebo — a quiet place, off to the side of the path."), "the gazebo caption must stay word for word");
 });
 
-test("the Map cottage picture promises no enlarge — the gazebo does, the cottage does not (Richard, 2026-11-28)", () => {
+test("the Map cottage now pulls up the cottage, big and pinchable (Richard, 2026-11-28)", () => {
   const map = src.slice(src.indexOf("function GardenMapPage("), src.indexOf("function CozyRoomVisual"));
-  // Updated 2026-11-28: the Map now DOES have one enlarge — the
-  // gazebo pic, at Richard's "Yes Please". So "Tap the photo to
-  // see it bigger" legitimately appears once in the Map, for
-  // the gazebo only. The cottage itself still has no enlarge.
-  assert.ok(!map.includes("Cottage — tap to see it bigger") && !map.includes("cottage — tap to see it bigger"), "the Map cottage must not promise an enlarge it does not have");
-  assert.equal((map.match(/Tap the photo to see it bigger\./g) ?? []).length, 1, "the Map must promise an enlarge exactly once — for the gazebo, not the cottage");
-  assert.ok(map.includes('aria-label="The gazebo — tap to see it bigger"'), "that one enlarge promise must belong to the gazebo picture");
+  // Updated 2026-11-28: "Do we want the cottage button (start
+  // here) to actually pull up the cottage?" Yes — tapping the
+  // cottage at the top of the diagram, or the cottage photo
+  // below it, pulls the cottage up big, pinchable like the
+  // gazebo, so you start where every path begins.
+  assert.ok(map.includes('aria-label="Tap to open the cottage — where every path begins"'), "the cottage button at the top of the Map diagram must open the cottage");
+  assert.ok(map.includes('aria-label="The cottage — tap to see it bigger"'), "the cottage photo below the diagram must open the cottage too");
+  assert.ok(map.includes('aria-label="The cottage, enlarged"'), "the enlarged cottage view must exist on the Map");
+  assert.ok(map.includes("setMapCottageZoom(GAZEBO_ZOOM_RESET)"), "opening the cottage must reset its zoom to 1x");
+  assert.ok(map.includes("setMapCottageZoomed(true)"), "opening the cottage must open the enlarged view");
+  assert.ok(map.includes("Tap the cottage to pull it up big"), "the Map must say plainly the cottage pulls up big");
   assert.ok(map.includes("Your cottage — where every path begins, warm and cozy from the get-go."), "the Map caption must stay word for word");
+  assert.ok(map.includes('aria-label="The gazebo — tap to see it bigger"'), "the gazebo enlarge must still be there too");
 });

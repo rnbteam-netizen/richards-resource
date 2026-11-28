@@ -49,7 +49,12 @@ test("weedy trail pic is reversed everywhere it still appears: cottage to the fi
   // was replaced (Richard, 2026-11-27) by the octagonal gazebo
   // pic, which is NOT flipped.
   const flipped = src.match(/src=\{myLifeGarden\}[^>]*style=\{\{ transform: "scaleX\(-1\)" \}\}/g) ?? [];
-  assert.equal(flipped.length, 2, "both remaining uses of the trail picture must be flipped horizontally");
+  assert.equal(flipped.length, 1, "one static use of the trail picture must be flipped horizontally — the garden first pic");
+  // A third use joined 2026-11-28: the cottage pinch-zoom dialog
+  // in the garden, whose transform also carries the flip —
+  // translate and scale first, then scaleX(-1) — so the enlarged
+  // cottage still leads from the cottage out to the field.
+  assert.ok(garden.includes("scale(${cottageZoom.scale}) scaleX(-1)"), "the enlarged cottage picture must still be flipped, inside its pinch-zoom transform");
   assert.ok(garden.includes('style={{ transform: "scaleX(-1)" }}'), "the garden first pic must be flipped");
   assert.ok(!map.includes('src={myLifeGarden}'), "the Gazebo panel must no longer use the trail pic");
   // Caption / alt text unchanged by the flip.

@@ -41,5 +41,10 @@ test("trail pic is NOT overwritten: garden first pic and zoom still use it, flip
   assert.ok(src.includes('import myLifeGarden from "./assets/my-life-garden.webp"'), "the trail pic must still be imported for the garden first pic");
   assert.ok(existsSync(path.join(root, "client", "src", "assets", "my-life-garden.webp")), "the trail pic file must still exist");
   const flipped = src.match(/src=\{myLifeGarden\}[^>]*style=\{\{ transform: "scaleX\(-1\)" \}\}/g) ?? [];
-  assert.equal(flipped.length, 2, "garden first pic and its zoom must still be the flipped trail pic");
+  assert.equal(flipped.length, 1, "the garden first pic must still be the flipped trail pic");
+  // Its zoom is the same flipped pic, now inside the pinch-zoom
+  // transform (2026-11-28) — translate and scale first, then
+  // scaleX(-1) — so the enlarged cottage still leads from the
+  // cottage out to the field.
+  assert.ok(src.includes("scale(${cottageZoom.scale}) scaleX(-1)"), "the garden zoom must still be the flipped trail pic, inside its pinch-zoom transform");
 });

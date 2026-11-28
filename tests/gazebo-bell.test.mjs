@@ -26,8 +26,8 @@ const gazebo = src.slice(src.indexOf('{open && stop.id === "gazebo"'), src.index
 test("the gazebo bell is a small Web Audio bell, not the big carnival bell and not a file", () => {
   // A bell of its own, softer and higher than the Happy Button's
   // big carnival bell (1046 Hz, gain 0.14, about 1.2 seconds).
-  assert.ok(sound.includes("GAZEBO_BELL_FREQUENCIES_HZ: [number, number, number] = [1568, 2352, 3136]"),
-    "the gazebo bell must be a high, gentle strike — 1568 Hz with quiet harmonics");
+  assert.ok(sound.includes("GAZEBO_BELL_FREQUENCIES_HZ: [number, number, number] = [2093, 3136, 4186]"),
+    "the gazebo bell must be a high, gentle strike — 2093 Hz with quiet harmonics (raised from 1568 Hz, Richard 2026-11-28: the pitch needs to be higher)");
   assert.ok(sound.includes("GAZEBO_BELL_DURATION_MS = 2400"),
     "the tiny bell must ring for about 2.4 seconds, longer and softer than the carnival bell");
   assert.ok(sound.includes("GAZEBO_BELL_GAIN = 0.07"),

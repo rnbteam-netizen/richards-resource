@@ -27,7 +27,7 @@ test("Site Map pops the trail map up at once — the diagram comes before the co
   // never reached it. The diagram must now come first, right
   // under the heading, so the trail map is what you see when you
   // tap Site Map.
-  const diagramAt = map.indexOf('<svg viewBox="0 0 360 660"');
+  const diagramAt = map.indexOf('<svg viewBox="0 0 360 960"');
   const cottageAt = map.indexOf("Your cottage — where every path begins, warm and cozy from the get-go.");
   assert.ok(diagramAt !== -1, "the Map must still have its branching diagram");
   assert.ok(cottageAt !== -1, "the Map must still have the cottage caption Richard liked, word for word");

@@ -66,7 +66,7 @@ test("Site Map opens the real trail map, immediately, at the top — no second m
   // The heading is the Map's own heading, unchanged.
   assert.ok(map.includes("Map — My Life Garden Pathway"), "the trail map must still be headed Map — My Life Garden Pathway");
   // No second diagram: only one map SVG in the whole app.
-  assert.equal((src.match(/viewBox="0 0 360 660"/g) ?? []).length, 1, "there must be exactly one map diagram in the app");
+  assert.equal((src.match(/viewBox="0 0 360 960"/g) ?? []).length, 1, "there must be exactly one map diagram in the app");
 });
 
 test("Site Map works from any tab, and going to a tab closes it", () => {

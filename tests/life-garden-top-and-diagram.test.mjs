@@ -8,8 +8,8 @@
 // diagram. The Map is now our real cottage, with the caption he
 // liked, and a drawn diagram that shows every branch in the
 // diagram itself: the gazebo branch, all eight dead ends each
-// with a trophy on a wooden stool, and Longevity going on to
-// infinity with trophies along it. Local only, nothing sent.
+// with a trophy, and Longevity going on to infinity with
+// trophies along it. Local only, nothing sent.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -21,7 +21,7 @@ const src = readFileSync(path.join(root, "client", "src", "App.tsx"), "utf8");
 const map = src.slice(src.indexOf("const LIFE_GARDEN_TROPHY_KEY"), src.indexOf("function HomePage("));
 const home = src.slice(src.indexOf("function HomePage("), src.indexOf("function ResourcesPage("));
 // The diagram SVG itself — not the stop buttons below it.
-const diagramStart = map.indexOf('<svg viewBox="0 0 360 660"');
+const diagramStart = map.indexOf('<svg viewBox="0 0 360 960"');
 const diagram = diagramStart === -1 ? "" : map.slice(diagramStart, map.indexOf("</svg>", diagramStart));
 
 test("garden and Inside view buttons are at the top of Home, once only", () => {
@@ -50,7 +50,11 @@ test("the diagram itself shows the gazebo branch, all eight dead ends, and infin
   for (const deadEnd of ["Alcohol", "Smoking", "Gambling", "Drugs", "Codependency", "Food", "Screens", "Feeling", "Unwell?"]) {
     assert.ok(diagram.includes(deadEnd), `the diagram itself must show the ${deadEnd} dead end`);
   }
-  assert.equal((diagram.match(/🏆 on a stool/g) ?? []).length, 8, "each of the eight dead ends must show a trophy on a wooden stool in the diagram");
+  // Just the trophy now (Richard, 2026-11-28) — no stool
+  // wording anywhere on the Map: eight dead-end boxes plus the
+  // three Longevity trophies, each a bare 🏆 text.
+  assert.equal((diagram.match(/>🏆<\/text>/g) ?? []).length, 11, "each of the eight dead ends and the three Longevity trophies must show just a trophy in the diagram");
+  assert.ok(!diagram.includes("on a stool") && !diagram.includes("wooden stool"), "no stool wording may remain in the diagram");
   assert.ok(diagram.includes("Longevity → ∞"), "the diagram must show Longevity going on to infinity");
   assert.ok(diagram.includes("the only infinite path") || diagram.includes("Longevity"), "the diagram must mark Longevity as the infinite path");
   // Trophies along the Longevity path, not just at the end — at

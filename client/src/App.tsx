@@ -4779,7 +4779,7 @@ function loadLifeGardenChecked(): string[] {
 // get-go. One pathway from the cottage front steps, branching —
 // branching means dividing from the path. One branch to the gazebo
 // for quiet time, dead-end branches for drinking, smoking, gambling,
-// drugs and the rest (a trophy on a wooden stool at the end of each
+// drugs and the rest (a trophy at the end of each
 // dead end), and the longevity path going on to infinity. The map
 // matches all the buttons/tabs. Tapping a map link shows the option
 // for that issue (for example "No drinking problem"); choosing it
@@ -4814,7 +4814,7 @@ type GardenMapStop = {
 const GARDEN_MAP_KIND_LABEL: Record<GardenMapKind, string> = {
   pathway: "The pathway",
   gazebo: "Branch — quiet time",
-  "dead-end": "Dead end — a trophy on a wooden stool at the end",
+  "dead-end": "Dead end — a trophy at the end",
   infinite: "The path that goes on — to infinity",
   room: "Inside the cottage",
 };
@@ -4822,13 +4822,13 @@ const GARDEN_MAP_KIND_LABEL: Record<GardenMapKind, string> = {
 const GARDEN_MAP_STOPS: GardenMapStop[] = [
   { id: "garden", label: "My Life Garden Pathway", tab: null, kind: "pathway", items: [], note: "One pathway from the front steps of the cottage — you have already been invited in. Weed clearing begins from the front steps." },
   { id: "gazebo", label: "The gazebo — quiet time", tab: "peace", kind: "gazebo", items: ["I take a quiet moment"], note: "A branch for a quiet moment. Then back to the path. Trophies live in the gazebo." },
-  { id: "alcohol", label: "Alcohol", tab: "alcohol", kind: "dead-end", items: ["No drinking problem"], note: "This branch ends when you stop, and stay stopped. A trophy on a wooden stool waits at the end of it." },
-  { id: "smoking", label: "Smoking", tab: "smoking", kind: "dead-end", items: ["No smoking problem"], note: "This branch ends when you stop, and stay stopped. A trophy on a wooden stool waits at the end of it." },
-  { id: "gambling", label: "Gambling", tab: "gambling", kind: "dead-end", items: ["No gambling problem"], note: "This branch ends when you stop, and stay stopped. A trophy on a wooden stool waits at the end of it." },
-  { id: "drugs", label: "Drugs", tab: "drugs", kind: "dead-end", items: ["No drug problem"], note: "This branch ends when you stop, and stay stopped. A trophy on a wooden stool waits at the end of it." },
-  { id: "codependency", label: "Codependency", tab: "codependency", kind: "dead-end", items: ["I don't lose myself trying to fix others"], note: "This branch ends when you stop losing yourself trying to fix others. A trophy on a wooden stool waits at the end of it." },
-  { id: "food", label: "Food", tab: "food", kind: "dead-end", items: ["I eat well", "I like my body just the way it is"], note: "Eating well, and liking your body just the way it is. A trophy on a wooden stool waits at the end." },
-  { id: "screens", label: "Screens", tab: "screens", kind: "dead-end", items: ["I turn my screen off"], note: "This branch ends when you turn your screen off. A trophy on a wooden stool waits at the end of it." },
+  { id: "alcohol", label: "Alcohol", tab: "alcohol", kind: "dead-end", items: ["No drinking problem"], note: "This branch ends when you stop, and stay stopped. A trophy waits at the end of it." },
+  { id: "smoking", label: "Smoking", tab: "smoking", kind: "dead-end", items: ["No smoking problem"], note: "This branch ends when you stop, and stay stopped. A trophy waits at the end of it." },
+  { id: "gambling", label: "Gambling", tab: "gambling", kind: "dead-end", items: ["No gambling problem"], note: "This branch ends when you stop, and stay stopped. A trophy waits at the end of it." },
+  { id: "drugs", label: "Drugs", tab: "drugs", kind: "dead-end", items: ["No drug problem"], note: "This branch ends when you stop, and stay stopped. A trophy waits at the end of it." },
+  { id: "codependency", label: "Codependency", tab: "codependency", kind: "dead-end", items: ["I don't lose myself trying to fix others"], note: "This branch ends when you stop losing yourself trying to fix others. A trophy waits at the end of it." },
+  { id: "food", label: "Food", tab: "food", kind: "dead-end", items: ["I eat well", "I like my body just the way it is"], note: "Eating well, and liking your body just the way it is. A trophy waits at the end." },
+  { id: "screens", label: "Screens", tab: "screens", kind: "dead-end", items: ["I turn my screen off"], note: "This branch ends when you turn your screen off. A trophy waits at the end of it." },
   { id: "wellbeing", label: "Feeling Unwell?", tab: "wellbeing", kind: "dead-end", items: ["I'm not lonely"], note: "If today is hard, start here. You are not alone — a trophy waits at the end." },
   { id: "longevity", label: "Longevity", tab: "longevity", kind: "infinite", items: ["I'm interested in longevity", "I have friends, furry and/or human", "I socialize"], note: "The only infinite path — sleep, walking, real food, friends, purpose. Trophies along the way, no end." },
   { id: "cozy", label: "My Cozy Room", tab: null, kind: "room", items: [], note: "Inside the cottage — your trophy room. First view: no trophies yet, and a few empty picture frames on the walls. Room for 100+ trophies." },
@@ -5623,6 +5623,221 @@ function LifeGardenPage({ onGoHome, onGoTab, profiles, initialView = "list", map
 // walls, books on the shorter shelf, the taller shelf sparse with
 // two or three empty frames, one candle on the mantle, beige rugs.
 // Trophies earned from the Map wait in the Cozy Room. Local only.
+
+// The Map, prettier (Richard, 2026-11-28): the green stick
+// lines are stepping-stone pathways now, winding gently — the
+// main path down from the cottage and each side pathway out to
+// its stop — not sharp zigzags (zigzags were raised only as
+// possibly easier to program; he pictured gentle winding).
+// Lengthened the same day, at his word: "Life is a long path
+// if one gets lucky or takes good care of themselves. It's OK
+// if it doesn't all fit on a single smartphone screen." So the
+// tree is taller than one screen — rows about 140 apart
+// instead of 100, Longevity with room to go onward at the
+// bottom — and the visitor scrolls down to walk it all.
+// Stones stay stones; flowers grow around and between them
+// along the whole length of a path when it is walked, not one
+// tiny flower at the end. Each pathway has its own colour from
+// the app's spring palette. A path's flowers grow with the
+// quit-date milestones already settled — Quit day, One day, One
+// week, One month, Three months, One year — so the Map is a
+// visual snapshot of progress besides the points. A quit day in
+// the past still counts. His example: his already-quit Smoking
+// path would be filled with flowers around the stones. Paths
+// without a quit day bloom from what is already true for them:
+// ticking an item, or earning its trophy, fills that path.
+// The boxes, the branch taps and the trophy are unchanged
+// here — the stool wording is gone (Richard, 2026-11-28):
+// just the trophy 🏆 now, no stool anywhere on the Map,
+// in the boxes, the aria-label or the caption.
+type GardenMapBranchPath = { d: string; stones: { x: number; y: number }[]; flowers: { x: number; y: number }[] };
+
+// The main pathway, winding gently down from the cottage front
+// steps: it passes through (180, 268), (180, 408), (180, 548)
+// and (180, 688) exactly, so every side branch still joins it
+// where its box expects it to, and it sways a little left and
+// right between those joins. Stones sit on the sway. The tree
+// is longer now (Richard, 2026-11-28): rows about 140 apart,
+// so the winding, stones and flowers are not crowded, and
+// Longevity has room to go onward at the bottom.
+const GARDEN_MAP_MAIN_PATH =
+  "M180 40 C170 90 172 180 180 268 C190 300 188 370 180 408 C170 440 172 510 180 548 C190 580 188 650 180 688 C172 720 174 750 180 780";
+const GARDEN_MAP_MAIN_STONES: { x: number; y: number }[] = [
+  { x: 178, y: 70 }, { x: 173, y: 160 }, { x: 186, y: 330 },
+  { x: 173, y: 480 }, { x: 186, y: 620 },
+];
+
+// One spring colour per pathway. Ten branches, five colours in
+// the palette, so the colours repeat down the Map in the same
+// order — a branch is always its own colour, and the Map stays
+// in one spring family.
+const GARDEN_MAP_BRANCH_COLOURS: Record<string, string> = {
+  gazebo: "#9a5a90", // soft plum — quiet time
+  alcohol: "#d99a4e", // sunrise orange
+  smoking: "#3f6fb5", // morning-sky blue
+  gambling: "#e86a8a", // blossom pink
+  drugs: "#6aa84f", // spring-leaf green
+  codependency: "#3f8a8a", // teal
+  food: "#d99a4e", // sunrise orange
+  screens: "#3f6fb5", // morning-sky blue
+  wellbeing: "#e86a8a", // blossom pink
+  longevity: "#6aa84f", // spring-leaf green
+};
+
+// Winding side pathways, two stones each, and six flower spots
+// along each one — flowers are drawn only up to how far that
+// path has been walked (see gardenMapBranchFlowerCount), so a
+// path fills with flowers along its whole length, around and
+// between the stones, and the next spot shows a small bud once
+// the path has started (see gardenMapBranchStarted). Left
+// branches wind out to x=124, right branches to x=236, where
+// their boxes start; the gazebo branch winds down-left to
+// (138, 118). The Longevity flowers sit along the trunk below
+// the last pair and inside its box, flanking the trophies
+// already there.
+// Spacing (Richard, 2026-11-28): the six spots sit in two rows
+// of three, above and below the dirt path — never on it, and
+// never on a stone — so full bloom does not crowd the stones
+// or the joins. The innermost spots are pulled back toward
+// their own box (left no further than x=160, right no nearer
+// than x=200), so the left and right clusters never meet at
+// the trunk. The Longevity trunk flowers stagger to the sides
+// of the trunk, between the stones, and its three in-box
+// flowers sit beside the trophies, 24px from each one. The
+// trunk flowers start below the last pair's flower rows
+// (y 726 and down), so they never meet the Screens or
+// Feeling Unwell flowers at y 708.
+const GARDEN_MAP_BRANCH_PATHS: Record<string, GardenMapBranchPath> = {
+  gazebo: {
+    d: "M180 70 C170 90 152 115 138 143",
+    stones: [{ x: 168, y: 82 }, { x: 152, y: 112 }],
+    flowers: [{ x: 158, y: 63 }, { x: 154, y: 78 }, { x: 150, y: 92 }, { x: 137, y: 101 }, { x: 136, y: 117 }, { x: 123, y: 125 }],
+  },
+  alcohol: {
+    d: "M180 268 C166 256 146 280 124 268",
+    stones: [{ x: 164, y: 264 }, { x: 142, y: 272 }],
+    flowers: [{ x: 132, y: 248 }, { x: 132, y: 288 }, { x: 146, y: 248 }, { x: 146, y: 288 }, { x: 160, y: 248 }, { x: 160, y: 288 }],
+  },
+  smoking: {
+    d: "M180 268 C194 256 214 280 236 268",
+    stones: [{ x: 196, y: 264 }, { x: 218, y: 272 }],
+    flowers: [{ x: 228, y: 248 }, { x: 228, y: 288 }, { x: 214, y: 248 }, { x: 214, y: 288 }, { x: 200, y: 248 }, { x: 200, y: 288 }],
+  },
+  gambling: {
+    d: "M180 408 C166 396 146 420 124 408",
+    stones: [{ x: 164, y: 404 }, { x: 142, y: 412 }],
+    flowers: [{ x: 132, y: 388 }, { x: 132, y: 428 }, { x: 146, y: 388 }, { x: 146, y: 428 }, { x: 160, y: 388 }, { x: 160, y: 428 }],
+  },
+  drugs: {
+    d: "M180 408 C194 396 214 420 236 408",
+    stones: [{ x: 196, y: 404 }, { x: 218, y: 412 }],
+    flowers: [{ x: 228, y: 388 }, { x: 228, y: 428 }, { x: 214, y: 388 }, { x: 214, y: 428 }, { x: 200, y: 388 }, { x: 200, y: 428 }],
+  },
+  codependency: {
+    d: "M180 548 C166 536 146 560 124 548",
+    stones: [{ x: 164, y: 544 }, { x: 142, y: 552 }],
+    flowers: [{ x: 132, y: 528 }, { x: 132, y: 568 }, { x: 146, y: 528 }, { x: 146, y: 568 }, { x: 160, y: 528 }, { x: 160, y: 568 }],
+  },
+  food: {
+    d: "M180 548 C194 536 214 560 236 548",
+    stones: [{ x: 196, y: 544 }, { x: 218, y: 552 }],
+    flowers: [{ x: 228, y: 528 }, { x: 228, y: 568 }, { x: 214, y: 528 }, { x: 214, y: 568 }, { x: 200, y: 528 }, { x: 200, y: 568 }],
+  },
+  screens: {
+    d: "M180 688 C166 676 146 700 124 688",
+    stones: [{ x: 164, y: 684 }, { x: 142, y: 692 }],
+    flowers: [{ x: 132, y: 668 }, { x: 132, y: 708 }, { x: 146, y: 668 }, { x: 146, y: 708 }, { x: 160, y: 668 }, { x: 160, y: 708 }],
+  },
+  wellbeing: {
+    d: "M180 688 C194 676 214 700 236 688",
+    stones: [{ x: 196, y: 684 }, { x: 218, y: 692 }],
+    flowers: [{ x: 228, y: 668 }, { x: 228, y: 708 }, { x: 214, y: 668 }, { x: 214, y: 708 }, { x: 200, y: 668 }, { x: 200, y: 708 }],
+  },
+  longevity: {
+    d: "M180 688 C172 720 174 750 180 780",
+    stones: [{ x: 178, y: 720 }, { x: 186, y: 760 }],
+    flowers: [{ x: 156, y: 726 }, { x: 200, y: 746 }, { x: 156, y: 768 }, { x: 170, y: 806 }, { x: 190, y: 832 }, { x: 170, y: 858 }],
+  },
+}
+
+// How many of the six flower spots along a branch are in
+// flower: 0 to 6. A quit-date path (Alcohol, Smoking,
+// Gambling, Drugs, Codependency) grows one flower per settled
+// milestone reached from its effective quit day — the tab's
+// quit day first, otherwise the garden one — so a quit day in
+// the past already has flowers, and a quit day still ahead has
+// none yet. Any other path blooms from what is already true:
+// each item ticked or trophy-earned fills the same share of
+// its six spots, and a path with no quit day and nothing ticked
+// yet has no flowers. A quit-date path with a quit day set uses
+// its milestones, not its ticked item.
+function gardenMapBranchFlowerCount(
+  stop: GardenMapStop,
+  checked: string[],
+  trophies: string[],
+  effectiveQuitDay: string | null,
+): number {
+  const isQuitStop = stop.tab === "alcohol" || stop.tab === "smoking" || stop.tab === "gambling" || stop.tab === "drugs" || stop.tab === "codependency";
+  if (isQuitStop && effectiveQuitDay) {
+    const until = daysUntilGardenDate(effectiveQuitDay);
+    if (until == null) return 0;
+    return gardenMilestonesReached(-until).length;
+  }
+  if (stop.items.length === 0) return 0;
+  const done = stop.items.filter((item) => checked.includes(item) || trophies.includes(item)).length;
+  return Math.round((6 * done) / stop.items.length);
+}
+
+// Has this path started yet — the bud test (Richard,
+// 2026-11-28): a quit-date path has started once a quit day
+// is set, even if no milestone is reached yet; any other path
+// has started once something on it is already true (an item
+// ticked or a trophy earned). A path that has not started
+// shows no bud — its spots stay empty, not half-promised.
+function gardenMapBranchStarted(
+  stop: GardenMapStop,
+  checked: string[],
+  trophies: string[],
+  effectiveQuitDay: string | null,
+): boolean {
+  const isQuitStop = stop.tab === "alcohol" || stop.tab === "smoking" || stop.tab === "gambling" || stop.tab === "drugs" || stop.tab === "codependency";
+  if (isQuitStop) return effectiveQuitDay != null;
+  return stop.items.some((item) => checked.includes(item) || trophies.includes(item));
+}
+
+// One small flower on the Map: five petals in the pathway's
+// own spring colour, with a sunrise-orange centre. Drawn in
+// the SVG, so it needs no image and stays crisp on a phone.
+// Kept small (petal r 2.5, Richard 2026-11-28) so a path in
+// full bloom does not crowd its stones or its neighbours.
+function GardenMapFlower({ x, y, colour }: { x: number; y: number; colour: string }) {
+  return (
+    <g aria-hidden="true">
+      {[0, 72, 144, 216, 288].map((angle) => {
+        const rad = (angle * Math.PI) / 180;
+        return <circle key={angle} cx={x + 3.8 * Math.cos(rad)} cy={y + 3.8 * Math.sin(rad)} r="2.5" fill={colour} />;
+      })}
+      <circle cx={x} cy={y} r="2.2" fill="#d99a4e" />
+    </g>
+  );
+}
+
+// One small bud on the Map (Richard, 2026-11-28): the next
+// flower not yet bloomed — a small closed bud in the pathway's
+// own spring colour, on a short green stem, smaller than a full
+// flower so a bud never reads as a bloom. One bud only, at the
+// next spot after the flowers already open; the spots after
+// that stay empty until their turn.
+function GardenMapBud({ x, y, colour }: { x: number; y: number; colour: string }) {
+  return (
+    <g aria-hidden="true">
+      <line x1={x} y1={y + 4} x2={x} y2={y + 9} stroke="#6aa84f" strokeWidth="1.5" />
+      <ellipse cx={x} cy={y} rx="3.2" ry="4.5" fill={colour} />
+      <path d={`M${x - 3} ${y + 2} L${x} ${y + 5} L${x + 3} ${y + 2}`} stroke="#6aa84f" strokeWidth="1.2" fill="none" />
+    </g>
+  );
+}
+
 function GardenMapPage({ onGoHome, onGoGarden, onGoTab, onOpenCozy, profiles, gardenName = "", backLabel = "← Back to Home" }: {
   onGoHome: () => void;
   onGoGarden: () => void;
@@ -5648,6 +5863,25 @@ function GardenMapPage({ onGoHome, onGoGarden, onGoTab, onOpenCozy, profiles, ga
   // with the patches already cleared.
   const porchFlowerCount = LIFE_GARDEN_ITEMS.filter((item) => checked.includes(item) || trophies.includes(item)).length;
   const porchCottageBlooms = gardenCottagePatchBlooms(loadLifeGardenVisits(), porchFlowerCount === LIFE_GARDEN_ITEMS.length);
+  // Flowers along each branch on the Map (Richard, 2026-11-28):
+  // the same effective quit day the stop panel uses — the tab's
+  // quit day first, otherwise the garden one — so the flowers on
+  // a branch and the milestones in its panel always agree.
+  const mapBranchEffectiveQuitDay = (stop: GardenMapStop): string | null => {
+    const tabProfile = stop.tab != null ? profiles?.find((p) => p.category === stop.tab) : undefined;
+    return tabProfile?.quitDate ?? quitDays[stop.id] ?? null;
+  };
+  const mapBranchFlowers = (stop: GardenMapStop): number =>
+    gardenMapBranchFlowerCount(stop, checked, trophies, mapBranchEffectiveQuitDay(stop));
+  // Whether the next flower on this branch is a bud (Richard,
+  // 2026-11-28): the path has started, but its next milestone
+  // is not reached yet — so the next spot shows a small closed
+  // bud, ready to bloom. No bud at full bloom, and none on a
+  // path not started.
+  const mapBranchHasBud = (stop: GardenMapStop): boolean => {
+    if (mapBranchFlowers(stop) >= 6) return false;
+    return gardenMapBranchStarted(stop, checked, trophies, mapBranchEffectiveQuitDay(stop));
+  };
   const earn = (item: string) => {
     const before = loadLifeGardenTrophies();
     if (before.includes(item)) {
@@ -5724,87 +5958,198 @@ function GardenMapPage({ onGoHome, onGoGarden, onGoTab, onOpenCozy, profiles, ga
           map photo is gone: he saw it and said it was not a
           diagram — "Just has cottage, gazebo infinity path". The
           diagram shows every branch itself: the gazebo branch, all
-          eight dead ends, each with a trophy on a wooden stool, and
+          eight dead ends, each with a trophy, and
           the longevity path going on to infinity with trophies
           along it. The tap-to-open links below it are unchanged. */}
-      <div className="felt-soft mt-4 rounded-[var(--radius)] border-2 border-[var(--leaf)] bg-[var(--leaf-soft)] px-4 py-3" role="img" aria-label="Map diagram: one pathway from the cottage front steps, branching to the gazebo for quiet time, eight dead ends — Alcohol, Smoking, Gambling, Drugs, Codependency, Food, Screens, Feeling Unwell — each with a trophy on a wooden stool at the end, and the Longevity path going on to infinity with trophies along it">
-        <svg viewBox="0 0 360 660" className="w-full" role="group" aria-label="Map diagram — tap a branch to open it">
+      <div className="felt-soft mt-4 rounded-[var(--radius)] border-2 border-[var(--leaf)] bg-[var(--leaf-soft)] px-4 py-3" role="img" aria-label="Map diagram: one pathway from the cottage front steps, branching to the gazebo for quiet time, eight dead ends — Alcohol, Smoking, Gambling, Drugs, Codependency, Food, Screens, Feeling Unwell — each with a trophy at the end, and the Longevity path going on to infinity with trophies along it">
+        <svg viewBox="0 0 360 960" className="w-full" role="group" aria-label="Map diagram — tap a branch to open it">
           {/* The cottage is the start of the map — it sits at the
               top of the diagram, so the diagram reads as a map
               from the cottage, not as a tree. The pathway runs
               down from its front steps, straight down the middle. */}
           <rect x="105" y="4" width="150" height="36" rx="8" fill="#fdeeda" stroke="#d99a4e" strokeWidth="2" />
           <text x="180" y="28" textAnchor="middle" fontSize="14" fontWeight="bold" fill="#2e2117">🏠 Cottage — start here</text>
-          <path d="M180 40 V640" stroke="#6aa84f" strokeWidth="6" strokeLinecap="round" />
-          {/* Gazebo branch — dividing off to the left, for quiet time. */}
-          <path d="M180 70 L138 118" stroke="#6aa84f" strokeWidth="5" strokeLinecap="round" />
-          <g role="button" tabIndex={0} aria-label="Tap to open the Gazebo — quiet time" onClick={() => openStop("gazebo")} onKeyDown={(e) => diagramKey(e, "gazebo")} style={{ cursor: "pointer" }}>
-          <rect x="28" y="88" width="110" height="66" rx="8" fill="#f3e2f0" stroke="#9a5a90" strokeWidth={selected === "gazebo" ? 4 : 2} />
-          <text x="83" y="112" textAnchor="middle" fontSize="13" fontWeight="bold" fill="#2e2117">Gazebo</text>
-          <text x="83" y="130" textAnchor="middle" fontSize="11" fill="#6f5a44">quiet time</text>
-          <text x="83" y="148" textAnchor="middle" fontSize="13" fill="#2e2117">🏆 🏆 🏆</text>
+          {/* The main pathway, winding gently down from the cottage
+              front steps (Richard, 2026-11-28): a dirt path with
+              stepping stones on it, not a straight green stick.
+              The stones sit on the sway of the path. */}
+          <path d={GARDEN_MAP_MAIN_PATH} stroke="#d9c9a8" strokeWidth="16" fill="none" strokeLinecap="round" />
+          <g aria-label="Stepping stones along the main pathway">
+            {GARDEN_MAP_MAIN_STONES.map((s, i) => (
+              <ellipse key={i} cx={s.x} cy={s.y} rx="9" ry="6" fill="#e9dcc0" stroke="#b89a6a" strokeWidth="1.5" />
+            ))}
           </g>
-          {/* Eight dead ends, in pairs off the pathway — a trophy on a wooden stool at the end of each. */}
-          <path d="M180 200 H124" stroke="#6aa84f" strokeWidth="5" strokeLinecap="round" />
-          <path d="M180 200 H236" stroke="#6aa84f" strokeWidth="5" strokeLinecap="round" />
+          {/* Gazebo branch — dividing off to the left, for quiet time.
+              Winding, with stepping stones on a dirt path in the
+              gazebo's soft plum. Its flowers are drawn with the
+              rest, after the boxes, so they sit on top. */}
+          <path d={GARDEN_MAP_BRANCH_PATHS.gazebo!.d} stroke="#d9c9a8" strokeWidth="12" fill="none" strokeLinecap="round" />
+          <path d={GARDEN_MAP_BRANCH_PATHS.gazebo!.d} stroke={GARDEN_MAP_BRANCH_COLOURS.gazebo} strokeWidth="3" fill="none" strokeLinecap="round" opacity="0.7" />
+          <g aria-label="Stepping stones along the gazebo pathway">
+            {GARDEN_MAP_BRANCH_PATHS.gazebo!.stones.map((s, i) => (
+              <ellipse key={i} cx={s.x} cy={s.y} rx="8" ry="5.5" fill="#e9dcc0" stroke="#b89a6a" strokeWidth="1.5" />
+            ))}
+          </g>
+          <g role="button" tabIndex={0} aria-label="Tap to open the Gazebo — quiet time" onClick={() => openStop("gazebo")} onKeyDown={(e) => diagramKey(e, "gazebo")} style={{ cursor: "pointer" }}>
+          <rect x="28" y="110" width="110" height="66" rx="8" fill="#f3e2f0" stroke="#9a5a90" strokeWidth={selected === "gazebo" ? 4 : 2} />
+          <text x="83" y="134" textAnchor="middle" fontSize="13" fontWeight="bold" fill="#2e2117">Gazebo</text>
+          <text x="83" y="152" textAnchor="middle" fontSize="11" fill="#6f5a44">quiet time</text>
+          <text x="83" y="170" textAnchor="middle" fontSize="13" fill="#2e2117">🏆 🏆 🏆</text>
+          </g>
+          {/* Eight dead ends, in pairs off the pathway — a trophy at the end of each.
+              Each pair is a winding stepping-stone pathway now
+              (Richard, 2026-11-28): dirt under the stones, a thin
+              line in that pathway's own spring colour, stones on
+              top. Flowers for each branch are drawn after the
+              boxes, so they sit on top. */}
+          <path d={GARDEN_MAP_BRANCH_PATHS.alcohol!.d} stroke="#d9c9a8" strokeWidth="12" fill="none" strokeLinecap="round" />
+          <path d={GARDEN_MAP_BRANCH_PATHS.alcohol!.d} stroke={GARDEN_MAP_BRANCH_COLOURS.alcohol} strokeWidth="3" fill="none" strokeLinecap="round" opacity="0.7" />
+          <g aria-label="Stepping stones along the Alcohol pathway">
+            {GARDEN_MAP_BRANCH_PATHS.alcohol!.stones.map((s, i) => (
+              <ellipse key={i} cx={s.x} cy={s.y} rx="8" ry="5.5" fill="#e9dcc0" stroke="#b89a6a" strokeWidth="1.5" />
+            ))}
+          </g>
+          <path d={GARDEN_MAP_BRANCH_PATHS.smoking!.d} stroke="#d9c9a8" strokeWidth="12" fill="none" strokeLinecap="round" />
+          <path d={GARDEN_MAP_BRANCH_PATHS.smoking!.d} stroke={GARDEN_MAP_BRANCH_COLOURS.smoking} strokeWidth="3" fill="none" strokeLinecap="round" opacity="0.7" />
+          <g aria-label="Stepping stones along the Smoking pathway">
+            {GARDEN_MAP_BRANCH_PATHS.smoking!.stones.map((s, i) => (
+              <ellipse key={i} cx={s.x} cy={s.y} rx="8" ry="5.5" fill="#e9dcc0" stroke="#b89a6a" strokeWidth="1.5" />
+            ))}
+          </g>
           <g role="button" tabIndex={0} aria-label="Tap to open Alcohol" onClick={() => openStop("alcohol")} onKeyDown={(e) => diagramKey(e, "alcohol")} style={{ cursor: "pointer" }}>
-          <rect x="6" y="172" width="118" height="56" rx="8" fill="#fdeeda" stroke="#d99a4e" strokeWidth={selected === "alcohol" ? 4 : 2} />
-          <text x="65" y="194" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#2e2117">Alcohol</text>
-          <text x="65" y="214" textAnchor="middle" fontSize="11" fill="#6f5a44">🏆 on a stool</text>
+          <rect x="6" y="240" width="118" height="56" rx="8" fill="#fdeeda" stroke="#d99a4e" strokeWidth={selected === "alcohol" ? 4 : 2} />
+          <text x="65" y="262" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#2e2117">Alcohol</text>
+          <text x="65" y="282" textAnchor="middle" fontSize="11" fill="#6f5a44">🏆</text>
           </g>
           <g role="button" tabIndex={0} aria-label="Tap to open Smoking" onClick={() => openStop("smoking")} onKeyDown={(e) => diagramKey(e, "smoking")} style={{ cursor: "pointer" }}>
-          <rect x="236" y="172" width="118" height="56" rx="8" fill="#fdeeda" stroke="#d99a4e" strokeWidth={selected === "smoking" ? 4 : 2} />
-          <text x="295" y="194" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#2e2117">Smoking</text>
-          <text x="295" y="214" textAnchor="middle" fontSize="11" fill="#6f5a44">🏆 on a stool</text>
+          <rect x="236" y="240" width="118" height="56" rx="8" fill="#fdeeda" stroke="#d99a4e" strokeWidth={selected === "smoking" ? 4 : 2} />
+          <text x="295" y="262" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#2e2117">Smoking</text>
+          <text x="295" y="282" textAnchor="middle" fontSize="11" fill="#6f5a44">🏆</text>
           </g>
-          <path d="M180 300 H124" stroke="#6aa84f" strokeWidth="5" strokeLinecap="round" />
-          <path d="M180 300 H236" stroke="#6aa84f" strokeWidth="5" strokeLinecap="round" />
+          <path d={GARDEN_MAP_BRANCH_PATHS.gambling!.d} stroke="#d9c9a8" strokeWidth="12" fill="none" strokeLinecap="round" />
+          <path d={GARDEN_MAP_BRANCH_PATHS.gambling!.d} stroke={GARDEN_MAP_BRANCH_COLOURS.gambling} strokeWidth="3" fill="none" strokeLinecap="round" opacity="0.7" />
+          <g aria-label="Stepping stones along the Gambling pathway">
+            {GARDEN_MAP_BRANCH_PATHS.gambling!.stones.map((s, i) => (
+              <ellipse key={i} cx={s.x} cy={s.y} rx="8" ry="5.5" fill="#e9dcc0" stroke="#b89a6a" strokeWidth="1.5" />
+            ))}
+          </g>
+          <path d={GARDEN_MAP_BRANCH_PATHS.drugs!.d} stroke="#d9c9a8" strokeWidth="12" fill="none" strokeLinecap="round" />
+          <path d={GARDEN_MAP_BRANCH_PATHS.drugs!.d} stroke={GARDEN_MAP_BRANCH_COLOURS.drugs} strokeWidth="3" fill="none" strokeLinecap="round" opacity="0.7" />
+          <g aria-label="Stepping stones along the Drugs pathway">
+            {GARDEN_MAP_BRANCH_PATHS.drugs!.stones.map((s, i) => (
+              <ellipse key={i} cx={s.x} cy={s.y} rx="8" ry="5.5" fill="#e9dcc0" stroke="#b89a6a" strokeWidth="1.5" />
+            ))}
+          </g>
           <g role="button" tabIndex={0} aria-label="Tap to open Gambling" onClick={() => openStop("gambling")} onKeyDown={(e) => diagramKey(e, "gambling")} style={{ cursor: "pointer" }}>
-          <rect x="6" y="272" width="118" height="56" rx="8" fill="#fdeeda" stroke="#d99a4e" strokeWidth={selected === "gambling" ? 4 : 2} />
-          <text x="65" y="294" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#2e2117">Gambling</text>
-          <text x="65" y="314" textAnchor="middle" fontSize="11" fill="#6f5a44">🏆 on a stool</text>
+          <rect x="6" y="380" width="118" height="56" rx="8" fill="#fdeeda" stroke="#d99a4e" strokeWidth={selected === "gambling" ? 4 : 2} />
+          <text x="65" y="402" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#2e2117">Gambling</text>
+          <text x="65" y="422" textAnchor="middle" fontSize="11" fill="#6f5a44">🏆</text>
           </g>
           <g role="button" tabIndex={0} aria-label="Tap to open Drugs" onClick={() => openStop("drugs")} onKeyDown={(e) => diagramKey(e, "drugs")} style={{ cursor: "pointer" }}>
-          <rect x="236" y="272" width="118" height="56" rx="8" fill="#fdeeda" stroke="#d99a4e" strokeWidth={selected === "drugs" ? 4 : 2} />
-          <text x="295" y="294" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#2e2117">Drugs</text>
-          <text x="295" y="314" textAnchor="middle" fontSize="11" fill="#6f5a44">🏆 on a stool</text>
+          <rect x="236" y="380" width="118" height="56" rx="8" fill="#fdeeda" stroke="#d99a4e" strokeWidth={selected === "drugs" ? 4 : 2} />
+          <text x="295" y="402" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#2e2117">Drugs</text>
+          <text x="295" y="422" textAnchor="middle" fontSize="11" fill="#6f5a44">🏆</text>
           </g>
-          <path d="M180 400 H124" stroke="#6aa84f" strokeWidth="5" strokeLinecap="round" />
-          <path d="M180 400 H236" stroke="#6aa84f" strokeWidth="5" strokeLinecap="round" />
+          <path d={GARDEN_MAP_BRANCH_PATHS.codependency!.d} stroke="#d9c9a8" strokeWidth="12" fill="none" strokeLinecap="round" />
+          <path d={GARDEN_MAP_BRANCH_PATHS.codependency!.d} stroke={GARDEN_MAP_BRANCH_COLOURS.codependency} strokeWidth="3" fill="none" strokeLinecap="round" opacity="0.7" />
+          <g aria-label="Stepping stones along the Codependency pathway">
+            {GARDEN_MAP_BRANCH_PATHS.codependency!.stones.map((s, i) => (
+              <ellipse key={i} cx={s.x} cy={s.y} rx="8" ry="5.5" fill="#e9dcc0" stroke="#b89a6a" strokeWidth="1.5" />
+            ))}
+          </g>
+          <path d={GARDEN_MAP_BRANCH_PATHS.food!.d} stroke="#d9c9a8" strokeWidth="12" fill="none" strokeLinecap="round" />
+          <path d={GARDEN_MAP_BRANCH_PATHS.food!.d} stroke={GARDEN_MAP_BRANCH_COLOURS.food} strokeWidth="3" fill="none" strokeLinecap="round" opacity="0.7" />
+          <g aria-label="Stepping stones along the Food pathway">
+            {GARDEN_MAP_BRANCH_PATHS.food!.stones.map((s, i) => (
+              <ellipse key={i} cx={s.x} cy={s.y} rx="8" ry="5.5" fill="#e9dcc0" stroke="#b89a6a" strokeWidth="1.5" />
+            ))}
+          </g>
           <g role="button" tabIndex={0} aria-label="Tap to open Codependency" onClick={() => openStop("codependency")} onKeyDown={(e) => diagramKey(e, "codependency")} style={{ cursor: "pointer" }}>
-          <rect x="6" y="372" width="118" height="56" rx="8" fill="#fdeeda" stroke="#d99a4e" strokeWidth={selected === "codependency" ? 4 : 2} />
-          <text x="65" y="394" textAnchor="middle" fontSize="10" fontWeight="bold" fill="#2e2117">Codependency</text>
-          <text x="65" y="414" textAnchor="middle" fontSize="11" fill="#6f5a44">🏆 on a stool</text>
+          <rect x="6" y="520" width="118" height="56" rx="8" fill="#fdeeda" stroke="#d99a4e" strokeWidth={selected === "codependency" ? 4 : 2} />
+          <text x="65" y="542" textAnchor="middle" fontSize="10" fontWeight="bold" fill="#2e2117">Codependency</text>
+          <text x="65" y="562" textAnchor="middle" fontSize="11" fill="#6f5a44">🏆</text>
           </g>
           <g role="button" tabIndex={0} aria-label="Tap to open Food" onClick={() => openStop("food")} onKeyDown={(e) => diagramKey(e, "food")} style={{ cursor: "pointer" }}>
-          <rect x="236" y="372" width="118" height="56" rx="8" fill="#fdeeda" stroke="#d99a4e" strokeWidth={selected === "food" ? 4 : 2} />
-          <text x="295" y="394" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#2e2117">Food</text>
-          <text x="295" y="414" textAnchor="middle" fontSize="11" fill="#6f5a44">🏆 on a stool</text>
+          <rect x="236" y="520" width="118" height="56" rx="8" fill="#fdeeda" stroke="#d99a4e" strokeWidth={selected === "food" ? 4 : 2} />
+          <text x="295" y="542" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#2e2117">Food</text>
+          <text x="295" y="562" textAnchor="middle" fontSize="11" fill="#6f5a44">🏆</text>
           </g>
-          <path d="M180 500 H124" stroke="#6aa84f" strokeWidth="5" strokeLinecap="round" />
-          <path d="M180 500 H236" stroke="#6aa84f" strokeWidth="5" strokeLinecap="round" />
+          <path d={GARDEN_MAP_BRANCH_PATHS.screens!.d} stroke="#d9c9a8" strokeWidth="12" fill="none" strokeLinecap="round" />
+          <path d={GARDEN_MAP_BRANCH_PATHS.screens!.d} stroke={GARDEN_MAP_BRANCH_COLOURS.screens} strokeWidth="3" fill="none" strokeLinecap="round" opacity="0.7" />
+          <g aria-label="Stepping stones along the Screens pathway">
+            {GARDEN_MAP_BRANCH_PATHS.screens!.stones.map((s, i) => (
+              <ellipse key={i} cx={s.x} cy={s.y} rx="8" ry="5.5" fill="#e9dcc0" stroke="#b89a6a" strokeWidth="1.5" />
+            ))}
+          </g>
+          <path d={GARDEN_MAP_BRANCH_PATHS.wellbeing!.d} stroke="#d9c9a8" strokeWidth="12" fill="none" strokeLinecap="round" />
+          <path d={GARDEN_MAP_BRANCH_PATHS.wellbeing!.d} stroke={GARDEN_MAP_BRANCH_COLOURS.wellbeing} strokeWidth="3" fill="none" strokeLinecap="round" opacity="0.7" />
+          <g aria-label="Stepping stones along the Feeling Unwell pathway">
+            {GARDEN_MAP_BRANCH_PATHS.wellbeing!.stones.map((s, i) => (
+              <ellipse key={i} cx={s.x} cy={s.y} rx="8" ry="5.5" fill="#e9dcc0" stroke="#b89a6a" strokeWidth="1.5" />
+            ))}
+          </g>
           <g role="button" tabIndex={0} aria-label="Tap to open Screens" onClick={() => openStop("screens")} onKeyDown={(e) => diagramKey(e, "screens")} style={{ cursor: "pointer" }}>
-          <rect x="6" y="472" width="118" height="56" rx="8" fill="#fdeeda" stroke="#d99a4e" strokeWidth={selected === "screens" ? 4 : 2} />
-          <text x="65" y="494" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#2e2117">Screens</text>
-          <text x="65" y="514" textAnchor="middle" fontSize="11" fill="#6f5a44">🏆 on a stool</text>
+          <rect x="6" y="660" width="118" height="56" rx="8" fill="#fdeeda" stroke="#d99a4e" strokeWidth={selected === "screens" ? 4 : 2} />
+          <text x="65" y="682" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#2e2117">Screens</text>
+          <text x="65" y="702" textAnchor="middle" fontSize="11" fill="#6f5a44">🏆</text>
           </g>
           <g role="button" tabIndex={0} aria-label="Tap to open Feeling Unwell" onClick={() => openStop("wellbeing")} onKeyDown={(e) => diagramKey(e, "wellbeing")} style={{ cursor: "pointer" }}>
-          <rect x="236" y="472" width="118" height="56" rx="8" fill="#fdeeda" stroke="#d99a4e" strokeWidth={selected === "wellbeing" ? 4 : 2} />
-          <text x="295" y="492" textAnchor="middle" fontSize="11" fontWeight="bold" fill="#2e2117">Feeling</text>
-          <text x="295" y="506" textAnchor="middle" fontSize="11" fontWeight="bold" fill="#2e2117">Unwell?</text>
-          <text x="295" y="522" textAnchor="middle" fontSize="11" fill="#6f5a44">🏆 on a stool</text>
+          <rect x="236" y="660" width="118" height="56" rx="8" fill="#fdeeda" stroke="#d99a4e" strokeWidth={selected === "wellbeing" ? 4 : 2} />
+          <text x="295" y="680" textAnchor="middle" fontSize="11" fontWeight="bold" fill="#2e2117">Feeling</text>
+          <text x="295" y="694" textAnchor="middle" fontSize="11" fontWeight="bold" fill="#2e2117">Unwell?</text>
+          <text x="295" y="710" textAnchor="middle" fontSize="11" fill="#6f5a44">🏆</text>
           </g>
-          {/* Longevity — the only infinite path, with trophies along it, not just at the end. */}
+          {/* Longevity — the only infinite path, with trophies along it, not just at the end.
+              Its pathway is the trunk below the last pair, in
+              spring-leaf green, with its own stepping stone. */}
+          <path d={GARDEN_MAP_BRANCH_PATHS.longevity!.d} stroke={GARDEN_MAP_BRANCH_COLOURS.longevity} strokeWidth="3" fill="none" strokeLinecap="round" opacity="0.7" />
+          <g aria-label="Stepping stones along the Longevity pathway">
+            {GARDEN_MAP_BRANCH_PATHS.longevity!.stones.map((s, i) => (
+              <ellipse key={i} cx={s.x} cy={s.y} rx="8" ry="5.5" fill="#e9dcc0" stroke="#b89a6a" strokeWidth="1.5" />
+            ))}
+          </g>
           <g role="button" tabIndex={0} aria-label="Tap to open Longevity — the path that goes on to infinity" onClick={() => openStop("longevity")} onKeyDown={(e) => diagramKey(e, "longevity")} style={{ cursor: "pointer" }}>
-          <rect x="40" y="540" width="280" height="112" rx="8" fill="#e2f2da" stroke="#6aa84f" strokeWidth={selected === "longevity" ? 4 : 2} />
-          <text x="146" y="566" textAnchor="middle" fontSize="15" fill="#2e2117">🏆</text>
-          <text x="214" y="592" textAnchor="middle" fontSize="15" fill="#2e2117">🏆</text>
-          <text x="146" y="618" textAnchor="middle" fontSize="15" fill="#2e2117">🏆</text>
-          <text x="180" y="648" textAnchor="middle" fontSize="14" fontWeight="bold" fill="#2e2117">Longevity → ∞</text>
+          <rect x="40" y="780" width="280" height="150" rx="8" fill="#e2f2da" stroke="#6aa84f" strokeWidth={selected === "longevity" ? 4 : 2} />
+          <text x="146" y="806" textAnchor="middle" fontSize="15" fill="#2e2117">🏆</text>
+          <text x="214" y="832" textAnchor="middle" fontSize="15" fill="#2e2117">🏆</text>
+          <text x="146" y="858" textAnchor="middle" fontSize="15" fill="#2e2117">🏆</text>
+          <text x="180" y="918" textAnchor="middle" fontSize="14" fontWeight="bold" fill="#2e2117">Longevity → ∞</text>
+          </g>
+          {/* Flowers along the pathways (Richard, 2026-11-28): a
+              path fills with flowers along its whole length,
+              around the stones, as its milestones are reached —
+              one flower per milestone on a quit-date path, and
+              the same share of its six spots on any other path
+              for what is already true there. Stones stay stones;
+              the flowers grow around them. Each flower is
+              two-step: fully bloomed when its milestone is
+              reached, and a small closed bud at the next spot
+              only, once the path has started, ready to bloom.
+              Drawn last, so they sit on top of the boxes'
+              edges and the Longevity box, where some of them
+              live. */}
+          <g aria-label="Flowers along the pathways you have walked">
+            {GARDEN_MAP_STOPS.map((stop) => {
+              const branch = GARDEN_MAP_BRANCH_PATHS[stop.id];
+              if (!branch) return null;
+              const colour = GARDEN_MAP_BRANCH_COLOURS[stop.id] ?? "#6aa84f";
+              const count = mapBranchFlowers(stop);
+              const next = branch.flowers[count];
+              return (
+                <g key={stop.id}>
+                  {branch.flowers.slice(0, count).map((f, i) => (
+                    <GardenMapFlower key={`${stop.id}-${i}`} x={f.x} y={f.y} colour={colour} />
+                  ))}
+                  {mapBranchHasBud(stop) && next ? (
+                    <GardenMapBud key={`${stop.id}-bud`} x={next.x} y={next.y} colour={colour} />
+                  ) : null}
+                </g>
+              );
+            })}
           </g>
         </svg>
         <p className="text-center text-base font-bold leading-relaxed text-[var(--text)]">Tap a branch on the map — it opens.</p>
-        <p className="text-center text-sm leading-relaxed text-[var(--dim)]">Cottage at the top, gazebo branch for quiet time, eight dead ends each with a trophy on a wooden stool, and Longevity going on to infinity. Tap a branch to open it, then tap Visit to go to that help.</p>
+        <p className="text-center text-sm leading-relaxed text-[var(--dim)]">Cottage at the top, gazebo branch for quiet time, eight dead ends each with a trophy, and Longevity going on to infinity. The green lines are stepping-stone pathways now, winding gently from the cottage — a path fills with flowers along its whole length, around the stones, as its milestones are reached. Life is a long path, so the tree is taller than one screen — scroll down to walk it all. Tap a branch to open it, then tap Visit to go to that help.</p>
       </div>
       <figure className="mt-4 overflow-hidden rounded-[var(--radius)] border-2 border-[var(--leaf)]">
         <img src={welcomeCottage} alt="Our cottage — a wooden cottage with a grey slate roof, green shutters, a big wrap-around porch, a WELCOME mat and an open please come in sign" className="w-full" />

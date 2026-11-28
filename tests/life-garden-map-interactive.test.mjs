@@ -15,7 +15,7 @@ import path from "node:path";
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const src = readFileSync(path.join(root, "client", "src", "App.tsx"), "utf8");
 const map = src.slice(src.indexOf("function GardenMapPage("), src.indexOf("/* ---------- My Life Garden Pathway — books & photos"));
-const diagramStart = map.indexOf('<svg viewBox="0 0 360 660"');
+const diagramStart = map.indexOf('<svg viewBox="0 0 360 960"');
 const diagram = diagramStart === -1 ? "" : map.slice(diagramStart, map.indexOf("</svg>", diagramStart));
 
 test("the diagram is not hidden from assistive tech, and says tap a branch", () => {

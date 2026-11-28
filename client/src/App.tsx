@@ -4623,10 +4623,19 @@ function ShareButton() {
 // there is no account — and defaults to it on return, with a
 // "Welcome back" banner. The My RR card that used to show this
 // on Home was deleted 2026-11-23; the returning itself stays.
-function SearchBox({ onGo, onOpenSiteMap, onOpenCozyRoom }: { onGo: (t: TabId) => void; onOpenSiteMap?: () => void; onOpenCozyRoom?: () => void }) {
+function SearchBox({ onGo, onOpenSiteMap, onOpenCozyRoom, onOpenGazebo }: { onGo: (t: TabId) => void; onOpenSiteMap?: () => void; onOpenCozyRoom?: () => void; onOpenGazebo?: () => void }) {
   const [query, setQuery] = useState("");
   const results = searchApp(query);
-  const open = (r: { tab: TabId; openSiteMap?: boolean; openCozyRoom?: boolean }) => {
+  const open = (r: { tab: TabId; openSiteMap?: boolean; openCozyRoom?: boolean; openGazebo?: boolean }) => {
+    // The Gazebo is not a tab: its result opens the Map with
+    // the gazebo stop already open, pic first — the same
+    // mindful break as "Give myself a break".
+    if (r.openGazebo && onOpenGazebo) {
+      onOpenGazebo();
+      setQuery("");
+      if (typeof window !== "undefined") window.scrollTo(0, 0);
+      return;
+    }
     // The Site Map is not a tab: its result opens the trail map
     // itself, at the top, instead of jumping to a tab.
     if (r.openSiteMap && onOpenSiteMap) {
@@ -4673,7 +4682,7 @@ function SearchBox({ onGo, onOpenSiteMap, onOpenCozyRoom }: { onGo: (t: TabId) =
               <button type="button" onClick={() => open(r)} className="felt-card felt-pressable w-full rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--amber-soft)] p-3 text-left">
                 <span className="block font-bold text-[var(--text)]">{r.title}</span>
                 <span className="mt-0.5 block text-sm leading-relaxed text-[var(--dim)]">{r.snippet}</span>
-                <span className="mt-1 block text-xs font-bold uppercase tracking-widest text-[var(--accent)]">{r.openCozyRoom ? "Cozy Room →" : r.openSiteMap ? "Trail map →" : `${LAST_PLACE_LABELS[r.tab]} tab →`}</span>
+                <span className="mt-1 block text-xs font-bold uppercase tracking-widest text-[var(--accent)]">{r.openGazebo ? "Gazebo →" : r.openCozyRoom ? "Cozy Room →" : r.openSiteMap ? "Trail map →" : `${LAST_PLACE_LABELS[r.tab]} tab →`}</span>
               </button>
             </li>
           ))}
@@ -7020,6 +7029,24 @@ function HomePage({ profiles, logs, pointEvents, dayMarks, onGo, onSurf }: {
           <p className="mt-3 text-sm font-bold uppercase tracking-widest text-[#c95a8a]">Tap to open Inside view →</p>
         </button>
       </div>
+      {/* The Gazebo on Home (Richard, 2026-11-28): searching
+          "gazebo" did not find it, and it is one of our best
+          features — a quiet place to take a mindful break. So
+          it gets its own button on Home, right after the
+          garden and the Cozy Room, same style, small and
+          gentle. It opens the Map with the gazebo stop already
+          open, pic first — the same as "Give myself a break".
+          It is not a new top tab. */}
+      <div className="mb-5">
+        <button type="button" onClick={() => { setCozyOpen(false); setGardenInitialView("map"); setGardenGazeboRequest((n) => n + 1); setGardenOpen(true); if (typeof window !== "undefined") window.scrollTo(0, 0); }} style={{ backgroundColor: "#f3e2f0", borderColor: "#9a5a90" }} className="felt-card felt-pressable w-full rounded-[var(--radius)] border-4 p-6 text-left">
+          <p className="flex items-center gap-3 font-display text-2xl font-black text-[#2e2117] sm:text-3xl">
+            The Gazebo — quiet time
+          </p>
+          <p className="mt-2 text-lg font-bold leading-snug text-[#2e2117]">A quiet place, off to the side of the path — pinch the photo bigger, breathe, chill for a bit.</p>
+          <p className="mt-1 leading-relaxed text-[#6f5a44]">Give myself a break — Chill in Gazebo for a bit. Then come back to the help, calmer, not giving up.</p>
+          <p className="mt-3 text-sm font-bold uppercase tracking-widest text-[#9a5a90]">Tap to open The Gazebo →</p>
+        </button>
+      </div>
       {/* The Happy Button (Richard, 2026-11-18, moved one step down
           2026-11-23): after the Share button, so the order reads
           welcome line → cottage → true message → why we made it
@@ -7715,7 +7742,7 @@ export function App() {
         {/* Search (Richard, 2026-11-21): on every tab, right under
             the tab buttons, so it is there wherever you are. */}
         <div className="mt-4">
-          <SearchBox onGo={goToTab} onOpenSiteMap={openSiteMap} onOpenCozyRoom={openCozyRoom} />
+          <SearchBox onGo={goToTab} onOpenSiteMap={openSiteMap} onOpenCozyRoom={openCozyRoom} onOpenGazebo={openGazebo} />
         </div>
 
         {/* Welcome back (Richard, 2026-11-21): shown only when the

@@ -49,6 +49,11 @@ export type SearchResult = {
   // result with this flag opens the Cozy Room instead of jumping
   // to a tab; `tab` stays "home" only, as for the Site Map.
   openCozyRoom?: boolean;
+  // The Gazebo is not a tab either — it is a branch on the Map,
+  // opened with its stop already open, pic first. A result with
+  // this flag opens the Map on the gazebo instead of jumping to
+  // a tab; `tab` stays "home" only, as for the Site Map.
+  openGazebo?: boolean;
 };
 
 type SearchEntry = SearchResult & { keywords: string };
@@ -65,6 +70,7 @@ export const SEARCH_INDEX: SearchEntry[] = [
   { id: "breathing", tab: "home", title: "Calming breathing", snippet: "Slow and easy — in 3, pause, out 4, pause. On every tab.", keywords: "breathe breathing calm relax breath" },
   { id: "save-phone", tab: "home", title: "Save your data to your phone", snippet: "Save your plans, logs and points to your phone as a file you keep.", keywords: "save backup download data file" },
   { id: "site-map", tab: "home", title: "Site Map", snippet: "The trail map — My Life Garden Pathway: one pathway from the cottage, the gazebo, the dead ends, and Longevity to infinity. Tap a branch, then Visit to go to that help.", keywords: "map site map trail map garden map pathway", openSiteMap: true },
+  { id: "gazebo", tab: "home", title: "The Gazebo — quiet time", snippet: "A quiet place for quiet time, off to the side of the path — the beautiful octagonal gazebo, with pillows, a rocking chair, and candles. Pinch with two fingers to zoom in. Give myself a break — Chill in Gazebo for a bit.", keywords: "gazebo quiet time chill break mindful peaceful", openGazebo: true },
   { id: "cozy-room", tab: "home", title: "My Cozy Room", snippet: "Inside the cottage — your trophy room, with your books and your own photos in the frames. One tap from the top nav.", keywords: "cozy room cottage inside trophy trophies books photos frames", openCozyRoom: true },
   { id: "alcohol", tab: "alcohol", title: "Alcohol", snippet: "Safety first — withdrawal can be dangerous — then pre-commitment before the first drink.", keywords: "alcohol drink drinking quit withdrawal beer wine" },
   { id: "urge", tab: "alcohol", title: "Ride out this urge", snippet: "A guided pause with no time limit — urges peak and pass; this helps you outlast the peak.", keywords: "urge craving pause surf ride out" },
@@ -137,6 +143,7 @@ export function searchApp(query: string): SearchResult[] {
     snippet: entry.snippet,
     ...(entry.openSiteMap ? { openSiteMap: true as const } : {}),
     ...(entry.openCozyRoom ? { openCozyRoom: true as const } : {}),
+    ...(entry.openGazebo ? { openGazebo: true as const } : {}),
   }));
 }
 

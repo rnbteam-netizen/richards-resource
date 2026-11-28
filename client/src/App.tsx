@@ -4623,10 +4623,18 @@ function ShareButton() {
 // there is no account — and defaults to it on return, with a
 // "Welcome back" banner. The My RR card that used to show this
 // on Home was deleted 2026-11-23; the returning itself stays.
-function SearchBox({ onGo, onOpenSiteMap, onOpenCozyRoom, onOpenGazebo }: { onGo: (t: TabId) => void; onOpenSiteMap?: () => void; onOpenCozyRoom?: () => void; onOpenGazebo?: () => void }) {
+function SearchBox({ onGo, onOpenSiteMap, onOpenCozyRoom, onOpenGazebo, onOpenSpiritGuide }: { onGo: (t: TabId) => void; onOpenSiteMap?: () => void; onOpenCozyRoom?: () => void; onOpenGazebo?: () => void; onOpenSpiritGuide?: () => void }) {
   const [query, setQuery] = useState("");
   const results = searchApp(query);
-  const open = (r: { tab: TabId; openSiteMap?: boolean; openCozyRoom?: boolean; openGazebo?: boolean }) => {
+  const open = (r: { tab: TabId; openSiteMap?: boolean; openCozyRoom?: boolean; openGazebo?: boolean; openSpiritGuide?: boolean }) => {
+    // The spirit guide is not a tab: its result opens the
+    // garden list, scrolled to the name & spirit guide section.
+    if (r.openSpiritGuide && onOpenSpiritGuide) {
+      onOpenSpiritGuide();
+      setQuery("");
+      if (typeof window !== "undefined") window.scrollTo(0, 0);
+      return;
+    }
     // The Gazebo is not a tab: its result opens the Map with
     // the gazebo stop already open, pic first — the same
     // mindful break as "Give myself a break".
@@ -4682,7 +4690,7 @@ function SearchBox({ onGo, onOpenSiteMap, onOpenCozyRoom, onOpenGazebo }: { onGo
               <button type="button" onClick={() => open(r)} className="felt-card felt-pressable w-full rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--amber-soft)] p-3 text-left">
                 <span className="block font-bold text-[var(--text)]">{r.title}</span>
                 <span className="mt-0.5 block text-sm leading-relaxed text-[var(--dim)]">{r.snippet}</span>
-                <span className="mt-1 block text-xs font-bold uppercase tracking-widest text-[var(--accent)]">{r.openGazebo ? "Gazebo →" : r.openCozyRoom ? "Cozy Room →" : r.openSiteMap ? "Trail map →" : `${LAST_PLACE_LABELS[r.tab]} tab →`}</span>
+                <span className="mt-1 block text-xs font-bold uppercase tracking-widest text-[var(--accent)]">{r.openGazebo ? "Gazebo →" : r.openCozyRoom ? "Cozy Room →" : r.openSpiritGuide ? "Garden →" : r.openSiteMap ? "Trail map →" : `${LAST_PLACE_LABELS[r.tab]} tab →`}</span>
               </button>
             </li>
           ))}
@@ -5363,7 +5371,7 @@ function GardenPathStrip({ checked, visits }: { checked: string[]; visits: Garde
 // the weeds-to-flowers patches and the cottage patch all stay
 // exactly as they were, and the cottage looks fabulous as it is.
 // Revisit only if Richard asks for an interactive porch later.
-function LifeGardenPage({ onGoHome, onGoTab, profiles, initialView = "list", mapRequest, gazeboRequest, onGazeboOpened, backLabel }: { onGoHome: () => void; onGoTab: (t: TabId) => void; profiles?: Profile[]; initialView?: "list" | "map" | "cozy"; mapRequest?: number; gazeboRequest?: number; onGazeboOpened?: () => void; backLabel?: string }) {
+function LifeGardenPage({ onGoHome, onGoTab, profiles, initialView = "list", mapRequest, gazeboRequest, onGazeboOpened, backLabel, guideRequest }: { onGoHome: () => void; onGoTab: (t: TabId) => void; profiles?: Profile[]; initialView?: "list" | "map" | "cozy"; mapRequest?: number; gazeboRequest?: number; onGazeboOpened?: () => void; backLabel?: string; guideRequest?: number }) {
   const [checked, setChecked] = useState<string[]>(() => loadLifeGardenChecked());
   // Cottage pinch-to-zoom (Richard, 2026-11-28): "Our beautiful
   // cottage pic in the field should be pinch to expand, so folks
@@ -5492,6 +5500,16 @@ function LifeGardenPage({ onGoHome, onGoTab, profiles, initialView = "list", map
   // there; and this is an effect, not a remount, so no extra
   // visit is recorded.
   useEffect(() => { setView(initialView); }, [mapRequest, initialView]);
+  // Spirit guide search (Richard, 2026-11-28): a search result
+  // for "spirit guide" lands here, on the list, scrolled to the
+  // name & spirit guide section — not just the garden top. The
+  // section only exists in the list view, and the garden opens
+  // on the list for this request, so it is there to scroll to.
+  useEffect(() => {
+    if (!guideRequest) return;
+    const el = typeof document !== "undefined" ? document.getElementById("spirit-guide") : null;
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [guideRequest]);
   // Third piece (Richard, 2026-11-26): your name and your spirit
   // guide — optional, local only, nothing sent anywhere.
   const [gardenName, setGardenName] = useState<string>(() => loadLifeGardenName());
@@ -5605,12 +5623,14 @@ function LifeGardenPage({ onGoHome, onGoTab, profiles, initialView = "list", map
         What you tick here stays on this phone, in this browser only — nothing is sent anywhere, and nothing is scored yet.
       </p>
       <GardenPathStrip checked={checked} visits={visits} />
-      <GardenCompanions
-        name={gardenName}
-        onName={saveGardenName}
-        guide={gardenGuide}
-        onGuide={saveGardenGuide}
-      />
+      <div id="spirit-guide">
+        <GardenCompanions
+          name={gardenName}
+          onName={saveGardenName}
+          guide={gardenGuide}
+          onGuide={saveGardenGuide}
+        />
+      </div>
       <div className="mt-6 space-y-3">
         <button type="button" onClick={() => { setMapGazeboRequest(0); setView("map"); if (typeof window !== "undefined") window.scrollTo(0, 0); }} style={{ backgroundColor: "#fdeeda", borderColor: "#d99a4e" }} className="felt-card felt-pressable w-full rounded-[var(--radius)] border-2 p-4 text-left">
           <p className="font-display text-xl font-black text-[#2e2117]">See the Map →</p>
@@ -6236,20 +6256,21 @@ function GardenMapPage({ onGoHome, onGoGarden, onGoTab, onOpenCozy, profiles, ga
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gazeboRequest]);
-  // Gazebo music + bell every minute (Richard, 2026-11-28):
-  // "We want our user to be able to select from those 5 while
-  // in the gazebo. And the bell is very spaced apart, like one
-  // minute spacing." Six original pieces — soft piano, harp,
-  // harmonica, acoustic guitar, violins, and oboe (added
-  // 2026-11-28, Richard: "Oboe are nice too") — made here with
-  // Web Audio, no files, no copyrighted songs. Off by default:
-  // nothing plays until the visitor taps one. The music stops
-  // when they leave the gazebo, and the bell's every-minute
-  // ringing is off to start with, and stops when they leave.
+  // Gazebo background tones + bell every minute (Richard,
+  // 2026-11-28): "We want our user to be able to select from
+  // those 5 while in the gazebo. And the bell is very spaced
+  // apart, like one minute spacing." Six original tones, made
+  // here with Web Audio, no files, no copyrighted songs —
+  // numbered only, never named after instruments (Richard,
+  // 2026-11-28: "We're removing all the instrument labels
+  // correct?"). Off by default: nothing plays until the visitor
+  // taps one. The tones stop when they leave the gazebo, and
+  // the bell's every-minute ringing is off to start with, and
+  // stops when they leave.
   const [gazeboMusic, setGazeboMusic] = useState<GazeboMusicKind | null>(null);
-  // Gazebo music volume (Richard, 2026-11-28): "Not loud enough
-  // or we need volume control" — the pieces were a whisper at
-  // gain 0.07–0.09. The slider sets the music's own volume, 0
+  // Background tones volume (Richard, 2026-11-28): "Not loud
+  // enough or we need volume control" — the tones were a whisper
+  // at gain 0.07–0.09. The slider sets the tones' own volume, 0
   // to 0.4, default 55% (0.22, the same level as the calm tone),
   // following the breathing exercise's calm-tone volume slider.
   // Sound still follows the phone's volume and silent switch.
@@ -6614,29 +6635,34 @@ function GardenMapPage({ onGoHome, onGoGarden, onGoTab, onOpenCozy, profiles, ga
                         <button type="button" onClick={() => setGazeboBellEveryMinute((on) => !on)} aria-pressed={gazeboBellEveryMinute} aria-label="Ring the bell every minute — the tiny bell rings once every minute while you are in the gazebo" className="mt-3 min-h-11 rounded-[var(--radius)] border-2 border-[#9a5a90] bg-[var(--surface)] px-4 font-bold text-[var(--text)]">{gazeboBellEveryMinute ? "🔔 Bell every minute — on, tap to turn off" : "🔔 Ring the bell every minute"}</button>
                         <p className="mt-2 text-sm leading-relaxed text-[var(--dim)]">When on, the tiny bell rings once every minute, spaced apart, while you are in the gazebo. Off to start with — the bell only rings when you tap it.</p>
                       </div>
-                      {/* Music in the gazebo (Richard, 2026-11-28):
-                          "We want our user to be able to select
-                          from those 5 while in the gazebo." Six
-                          original pieces, made here with Web Audio
-                          — soft piano, harp, harmonica, acoustic
-                          guitar, violins, and oboe. No audio files, no
+                      {/* Background tones in the gazebo (Richard,
+                          2026-11-28): "We want our user to be able
+                          to select from those 5 while in the
+                          gazebo" — six original tones, made here
+                          with Web Audio, no audio files, no
                           downloaded music, no copyrighted songs.
-                          Off by default: nothing plays until the
-                          visitor taps one, and it stops when they
-                          leave the gazebo. */}
+                          They are numbered only, never named after
+                          instruments — the tones do not sound like
+                          real instruments, and naming them would
+                          promise what is not there (Richard,
+                          2026-11-28: "We're removing all the
+                          instrument labels correct?"). Off by
+                          default: nothing plays until the visitor
+                          taps one, and it stops when they leave
+                          the gazebo. */}
                       <div className="bg-[var(--surface)] px-4 pb-4 text-center">
-                        <p className="font-bold leading-relaxed text-[var(--text)]">Choose music in the gazebo</p>
-                        <p className="mt-1 text-sm leading-relaxed text-[var(--dim)]">Original music, made here for the gazebo — soft and slow, no copyrighted songs. Tap one to play it, tap it again to stop.</p>
-                        <div role="group" aria-label="Choose music in the gazebo" className="mt-2 flex flex-wrap justify-center gap-2">
-                          {GAZEBO_MUSIC_KINDS.map((kind) => (
-                            <button key={kind.id} type="button" onClick={() => chooseGazeboMusic(kind.id)} aria-pressed={gazeboMusic === kind.id} aria-label={gazeboMusic === kind.id ? `${kind.label} — playing, tap to stop` : `Play ${kind.label} in the gazebo`} className="min-h-11 rounded-[var(--radius)] border-2 border-[#9a5a90] bg-[var(--surface)] px-3 font-bold text-[var(--text)]">{gazeboMusic === kind.id ? `♪ ${kind.label} — playing` : `♪ ${kind.label}`}</button>
+                        <p className="font-bold leading-relaxed text-[var(--text)]">Choose background tones in the gazebo</p>
+                        <p className="mt-1 text-sm leading-relaxed text-[var(--dim)]">Original tones, made here for the gazebo — soft and slow. Tap one to play it, tap it again to stop.</p>
+                        <div role="group" aria-label="Choose background tones in the gazebo" className="mt-2 flex flex-wrap justify-center gap-2">
+                          {GAZEBO_MUSIC_KINDS.map((kind, i) => (
+                            <button key={kind.id} type="button" onClick={() => chooseGazeboMusic(kind.id)} aria-pressed={gazeboMusic === kind.id} aria-label={gazeboMusic === kind.id ? `Background tone ${i + 1} — playing, tap to stop` : `Play background tone ${i + 1} in the gazebo`} className="min-h-11 rounded-[var(--radius)] border-2 border-[#9a5a90] bg-[var(--surface)] px-3 font-bold text-[var(--text)]">{gazeboMusic === kind.id ? `♪ Background tone ${i + 1} — playing` : `♪ Background tone ${i + 1}`}</button>
                           ))}
                         </div>
-                        {gazeboMusic && <p className="mt-2 text-sm font-bold leading-relaxed text-[var(--text)]">Playing {GAZEBO_MUSIC_KINDS.find((k) => k.id === gazeboMusic)?.label} — tap it again, or leave the gazebo, to stop.</p>}
+                        {gazeboMusic && <p className="mt-2 text-sm font-bold leading-relaxed text-[var(--text)]">Playing background tone {GAZEBO_MUSIC_KINDS.findIndex((k) => k.id === gazeboMusic) + 1} — tap it again, or leave the gazebo, to stop.</p>}
                         <div className="mt-3 text-left">
-                          <label htmlFor="gazebo-music-volume" className="text-sm font-semibold text-[var(--text)]">Gazebo music volume</label>
-                          <input id="gazebo-music-volume" type="range" min={0} max={100} value={gazeboMusicVolume} onChange={(e) => setGazeboMusicVolume(Number(e.target.value))} aria-label="Gazebo music volume" className="mt-1 w-full" />
-                          <p className="mt-1 text-sm text-[var(--dim)]">This is the music&apos;s own volume, inside the app — sound still follows your phone&apos;s volume and silent switch.</p>
+                          <label htmlFor="gazebo-music-volume" className="text-sm font-semibold text-[var(--text)]">Background tones volume</label>
+                          <input id="gazebo-music-volume" type="range" min={0} max={100} value={gazeboMusicVolume} onChange={(e) => setGazeboMusicVolume(Number(e.target.value))} aria-label="Background tones volume" className="mt-1 w-full" />
+                          <p className="mt-1 text-sm text-[var(--dim)]">This is the background tones&apos; own volume, inside the app — sound still follows your phone&apos;s volume and silent switch.</p>
                         </div>
                       </div>
                     </figure>
@@ -6668,21 +6694,23 @@ function GardenMapPage({ onGoHome, onGoGarden, onGoTab, onOpenCozy, profiles, ga
                               off screen. */}
                           <img src={myLifeGardenGazebo} alt="The gazebo — enlarged" draggable={false} className="max-h-[75vh] w-auto max-w-full touch-none select-none rounded-[var(--radius)]" style={{ transform: `translate(${gazeboZoom.x}px, ${gazeboZoom.y}px) scale(${gazeboZoom.scale})`, transformOrigin: "center center" }} />
                           <span className="mt-2 block text-center font-semibold text-white">Pinch with two fingers to zoom in, drag to look around, double-tap to reset. Tap anywhere to close.</span>
-                          {/* Music in the enlarged gazebo too
-                              (Richard, 2026-11-28): the same six
-                              choices, while you are there in the
-                              picture. The taps must not reach the
-                              dialog's touch handlers — a tap there
-                              would be read as a tap to close — so
-                              they stop here, like the bell. */}
-                          <div role="group" aria-label="Choose music in the gazebo" className="mt-2 flex flex-wrap justify-center gap-2" onTouchStart={(e) => e.stopPropagation()} onTouchEnd={(e) => e.stopPropagation()}>
-                            {GAZEBO_MUSIC_KINDS.map((kind) => (
-                              <button key={kind.id} type="button" onClick={(e) => { e.stopPropagation(); chooseGazeboMusic(kind.id); }} onTouchStart={(e) => e.stopPropagation()} onTouchEnd={(e) => e.stopPropagation()} aria-pressed={gazeboMusic === kind.id} aria-label={gazeboMusic === kind.id ? `${kind.label} — playing, tap to stop` : `Play ${kind.label} in the gazebo`} className="rounded-full bg-white/90 px-3 py-2 font-bold text-[var(--text)]">{gazeboMusic === kind.id ? `♪ ${kind.label} — playing` : `♪ ${kind.label}`}</button>
+                          {/* Background tones in the enlarged
+                              gazebo too (Richard, 2026-11-28): the
+                              same six numbered tones, while you are
+                              there in the picture — no instrument
+                              names, only numbers. The taps must not
+                              reach the dialog's touch handlers — a
+                              tap there would be read as a tap to
+                              close — so they stop here, like the
+                              bell. */}
+                          <div role="group" aria-label="Choose background tones in the gazebo" className="mt-2 flex flex-wrap justify-center gap-2" onTouchStart={(e) => e.stopPropagation()} onTouchEnd={(e) => e.stopPropagation()}>
+                            {GAZEBO_MUSIC_KINDS.map((kind, i) => (
+                              <button key={kind.id} type="button" onClick={(e) => { e.stopPropagation(); chooseGazeboMusic(kind.id); }} onTouchStart={(e) => e.stopPropagation()} onTouchEnd={(e) => e.stopPropagation()} aria-pressed={gazeboMusic === kind.id} aria-label={gazeboMusic === kind.id ? `Background tone ${i + 1} — playing, tap to stop` : `Play background tone ${i + 1} in the gazebo`} className="rounded-full bg-white/90 px-3 py-2 font-bold text-[var(--text)]">{gazeboMusic === kind.id ? `♪ Background tone ${i + 1} — playing` : `♪ Background tone ${i + 1}`}</button>
                             ))}
                           </div>
                           <div className="mt-2 w-full max-w-md rounded-[var(--radius)] bg-white/90 px-3 py-2" onTouchStart={(e) => e.stopPropagation()} onTouchEnd={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
-                            <label htmlFor="gazebo-music-volume-enlarged" className="text-sm font-semibold text-[var(--text)]">Gazebo music volume</label>
-                            <input id="gazebo-music-volume-enlarged" type="range" min={0} max={100} value={gazeboMusicVolume} onChange={(e) => setGazeboMusicVolume(Number(e.target.value))} aria-label="Gazebo music volume" className="mt-1 w-full" />
+                            <label htmlFor="gazebo-music-volume-enlarged" className="text-sm font-semibold text-[var(--text)]">Background tones volume</label>
+                            <input id="gazebo-music-volume-enlarged" type="range" min={0} max={100} value={gazeboMusicVolume} onChange={(e) => setGazeboMusicVolume(Number(e.target.value))} aria-label="Background tones volume" className="mt-1 w-full" />
                           </div>
                         </div>
                       </div>
@@ -7701,6 +7729,7 @@ export function App() {
   const openSiteMap = () => {
     setSiteMapReturnTab(tab);
     setSiteMapOpen(true);
+    setSpiritGuideOpen(false);
     setCozyRoomOpen(false);
     setGazeboNavActive(false);
     setSiteMapRequest((n) => n + 1);
@@ -7724,6 +7753,7 @@ export function App() {
   const openGazebo = () => {
     setSiteMapReturnTab(tab);
     setSiteMapOpen(true);
+    setSpiritGuideOpen(false);
     setCozyRoomOpen(false);
     setGazeboNavActive(true);
     setSiteMapRequest((n) => n + 1);
@@ -7755,6 +7785,7 @@ export function App() {
   const openCozyRoom = () => {
     setCozyRoomReturnTab(tab);
     setCozyRoomOpen(true);
+    setSpiritGuideOpen(false);
     setSiteMapOpen(false);
     setShowTerms(false);
     setSurfCategory(null);
@@ -7766,12 +7797,39 @@ export function App() {
     setTab(cozyRoomReturnTab);
     if (typeof window !== "undefined") window.scrollTo(0, 0);
   };
+  // Spirit guide search (Richard, 2026-11-28): searching
+  // "Spirit" or "spirit guide" got no hit — it must find the
+  // name & spirit guide section of the garden. Like the Cozy
+  // Room, it is App-level view state, not a tab: it opens the
+  // garden list, scrolled to the guide section, and "Back"
+  // goes to the tab the visitor came from.
+  const [spiritGuideOpen, setSpiritGuideOpen] = useState(false);
+  const [spiritGuideReturnTab, setSpiritGuideReturnTab] = useState<TabId>("home");
+  const [spiritGuideRequest, setSpiritGuideRequest] = useState(0);
+  const openSpiritGuide = () => {
+    setSpiritGuideReturnTab(tab);
+    setSpiritGuideOpen(true);
+    setSiteMapOpen(false);
+    setGazeboNavActive(false);
+    setCozyRoomOpen(false);
+    setShowTerms(false);
+    setSurfCategory(null);
+    setPendingRide(null);
+    setSpiritGuideRequest((n) => n + 1);
+    if (typeof window !== "undefined") window.scrollTo(0, 0);
+  };
+  const closeSpiritGuide = () => {
+    setSpiritGuideOpen(false);
+    setTab(spiritGuideReturnTab);
+    if (typeof window !== "undefined") window.scrollTo(0, 0);
+  };
   // One tap to a tab, from the search results, My RR, or a Home
   // card: switch tab, close anything open on top of it, and start
   // at the top of the new tab.
   const goToTab = (t: TabId) => {
     setSiteMapOpen(false);
     setGazeboNavActive(false);
+    setSpiritGuideOpen(false);
     setCozyRoomOpen(false);
     setTab(t);
     setShowTerms(false);
@@ -8042,7 +8100,7 @@ export function App() {
         {/* Search (Richard, 2026-11-21): on every tab, right under
             the tab buttons, so it is there wherever you are. */}
         <div className="mt-4">
-          <SearchBox onGo={goToTab} onOpenSiteMap={openSiteMap} onOpenCozyRoom={openCozyRoom} onOpenGazebo={openGazebo} />
+          <SearchBox onGo={goToTab} onOpenSiteMap={openSiteMap} onOpenCozyRoom={openCozyRoom} onOpenGazebo={openGazebo} onOpenSpiritGuide={openSpiritGuide} />
         </div>
 
         {/* Welcome back (Richard, 2026-11-21): shown only when the
@@ -8110,6 +8168,21 @@ export function App() {
                 onGoGazebo={() => { setCozyRoomOpen(false); openGazebo(); }}
                 gardenName={loadLifeGardenName()}
                 backLabel={cozyRoomReturnTab === "home" ? "← Back to Home" : `← Back to ${LAST_PLACE_LABELS[cozyRoomReturnTab]}`}
+              />
+            ) : spiritGuideOpen ? (
+              // The spirit guide, from search: the same garden,
+              // landed on its list view, scrolled to the name &
+              // spirit guide section — not a second garden.
+              // "Back" goes to the tab the visitor came from,
+              // named on the button; Home is always one tap away
+              // on the tab buttons above.
+              <LifeGardenPage
+                onGoHome={closeSpiritGuide}
+                onGoTab={goToTab}
+                profiles={profiles}
+                initialView="list"
+                guideRequest={spiritGuideRequest}
+                backLabel={spiritGuideReturnTab === "home" ? "← Back to Home" : `← Back to ${LAST_PLACE_LABELS[spiritGuideReturnTab]}`}
               />
             ) : siteMapOpen ? (
               // The Site Map, open on its own from the top button or

@@ -49,7 +49,7 @@ test("the search box routes a gazebo result to openGazebo", () => {
   assert.ok(searchBox.includes("onOpenGazebo"), "the search box must take a gazebo opener");
   assert.ok(searchBox.includes("if (r.openGazebo && onOpenGazebo)"), "a gazebo search result must open the gazebo, not a tab");
   assert.ok(searchBox.includes('"Gazebo →"'), "a gazebo search result must be labelled as the gazebo");
-  assert.ok(app.includes("<SearchBox onGo={goToTab} onOpenSiteMap={openSiteMap} onOpenCozyRoom={openCozyRoom} onOpenGazebo={openGazebo} />"), "the App must wire the search box to openGazebo");
+  assert.ok(app.includes("<SearchBox onGo={goToTab} onOpenSiteMap={openSiteMap} onOpenCozyRoom={openCozyRoom} onOpenGazebo={openGazebo} onOpenSpiritGuide={openSpiritGuide} />"), "the App must wire the search box to openGazebo");
 });
 
 test("Home has a Gazebo button, after the garden and the Cozy Room", () => {

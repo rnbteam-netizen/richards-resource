@@ -124,26 +124,33 @@ export const GAZEBO_BELL_GAIN = 0.07;
 // the visitor stays in the gazebo. Off by default.
 export const GAZEBO_BELL_EVERY_MINUTE_MS = 60000;
 
-// Gazebo music (Richard, 2026-11-28): six original, gentle
-// pieces to choose from while in the gazebo — soft piano, harp,
-// harmonica, acoustic guitar, violins, and oboe. Each piece is
-// a slow, original phrase in its own key and mode, in the
-// instrument's own voice, made here with Web Audio oscillators
-// — no audio files, no downloaded music, no copyrighted songs,
-// no copied melody. Each one sounds different: piano steps down
-// gently in C major, harp arpeggiates wide, harmonica holds long
-// notes in D minor, guitar plucks short and rhythmic in E major,
-// violins sing long and slow in A minor, oboe sings reedy in
-// G major. A volume slider in the gazebo sets how loud they
-// play, 0 to 0.4, default 0.22.
+// Gazebo background tones (Richard, 2026-11-28): six original,
+// gentle tones to choose from while in the gazebo. Each tone is
+// a short, original phrase in its own key and mode, in its own
+// voice, made here with Web Audio oscillators — no audio files,
+// no downloaded music, no copyrighted songs, no copied melody.
+// The visitor only ever sees them numbered — "Background tone
+// 1" to "Background tone 6" — never an instrument name: the
+// tones do not sound like real instruments, and naming them
+// would promise what is not there (Richard, 2026-11-28:
+// "We're removing all the instrument labels correct?"). The
+// six patterns underneath are still distinct — one steps down
+// gently in C major, one arpeggiates wide, one holds long
+// notes in D minor, one plucks short and rhythmic in E major,
+// one sings long and slow in A minor, one sings reedy in
+// G major — so each tone sounds different from the others.
+// Sped up (Richard, 2026-11-28): about twice as fast as the
+// first version, a note about every 1.2 seconds, a phrase of
+// about 15 seconds. A volume slider in the gazebo sets how
+// loud they play, 0 to 0.4, default 0.22.
 export type GazeboMusicKind = "piano" | "harp" | "harmonica" | "guitar" | "violins" | "oboe";
-export const GAZEBO_MUSIC_KINDS: { id: GazeboMusicKind; label: string }[] = [
-  { id: "piano", label: "Soft piano" },
-  { id: "harp", label: "Harp" },
-  { id: "harmonica", label: "Harmonica" },
-  { id: "guitar", label: "Acoustic guitar" },
-  { id: "violins", label: "Violins" },
-  { id: "oboe", label: "Oboe" },
+export const GAZEBO_MUSIC_KINDS: { id: GazeboMusicKind }[] = [
+  { id: "piano" },
+  { id: "harp" },
+  { id: "harmonica" },
+  { id: "guitar" },
+  { id: "violins" },
+  { id: "oboe" },
 ];
 // Gazebo music volume (Richard, 2026-11-28): "Not loud enough
 // or we need volume control" — the pieces were a whisper at
@@ -155,7 +162,7 @@ export const GAZEBO_MUSIC_KINDS: { id: GazeboMusicKind; label: string }[] = [
 // inside the app. The slider only moves music that is playing.
 export const GAZEBO_MUSIC_VOLUME_DEFAULT = 0.22;
 export const GAZEBO_MUSIC_VOLUME_MAX = 0.4;
-export const GAZEBO_MUSIC_LOOP_MS = 30000;
+export const GAZEBO_MUSIC_LOOP_MS = 15000;
 
 export type GazeboMusicNote = { frequencyHz: number; startMs: number; durationMs: number };
 
@@ -174,11 +181,14 @@ const GAZEBO_MUSIC_NOTES_HZ = {
   A3: 220.0, B3: 246.94, E3: 164.81, G3: 196.0, D3: 146.83, GSharp4: 415.3, CSharp5: 554.37,
 } as const;
 
-// One slow, original phrase per instrument — twelve notes each,
-// each in its own key, shape and rhythm, so the band no longer
-// plays the same tune. Start spacing and note length differ per
-// instrument too: guitar plucks short and quick, harmonica and
+// One original phrase per tone — twelve notes each, each in
+// its own key, shape and rhythm, so the tones no longer all
+// sound the same. Start spacing and note length differ per
+// tone too: guitar plucks short and quick, harmonica and
 // violins hold long notes, piano and oboe sit in between.
+// Sped up (Richard, 2026-11-28): about twice as fast as the
+// first version — a note about every 1.2 seconds, a phrase of
+// about 15 seconds, still calm, not hurried.
 export function gazeboMusicPhrase(kind: GazeboMusicKind): GazeboMusicNote[] {
   const steps: Record<GazeboMusicKind, (keyof typeof GAZEBO_MUSIC_NOTES_HZ)[]> = {
     piano: ["C5", "A4", "G4", "E4", "D4", "C4", "E4", "G4", "A4", "G4", "E4", "C4"],
@@ -189,10 +199,10 @@ export function gazeboMusicPhrase(kind: GazeboMusicKind): GazeboMusicNote[] {
     oboe: ["G4", "B4", "D5", "G5", "D5", "B4", "G4", "A4", "B4", "D5", "E5", "G5"],
   };
   const durationsMs: Record<GazeboMusicKind, number> = {
-    piano: 2200, harp: 2000, harmonica: 3400, guitar: 900, violins: 3600, oboe: 2400,
+    piano: 1100, harp: 1000, harmonica: 1700, guitar: 450, violins: 1800, oboe: 1200,
   };
   const stepMs: Record<GazeboMusicKind, number> = {
-    piano: 2400, harp: 2200, harmonica: 2600, guitar: 1200, violins: 2400, oboe: 2400,
+    piano: 1200, harp: 1100, harmonica: 1300, guitar: 600, violins: 1200, oboe: 1200,
   };
   return steps[kind].map((note, i) => ({
     frequencyHz: GAZEBO_MUSIC_NOTES_HZ[note],

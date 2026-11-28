@@ -37,14 +37,14 @@ test("the music is louder, with a volume slider in the gazebo", () => {
   // Base gains about double the old whisper (0.07–0.09).
   assert.ok(!sound.includes('piano: { type: "triangle", gain: 0.09 }'), "the piano must no longer be at the old whisper gain 0.09");
   assert.ok(sound.includes("GAZEBO_MUSIC_VOLUME_MAX = 0.4"), "the music volume must top out at 0.4");
-  assert.ok(src.includes('aria-label="Gazebo music volume"'), "the gazebo must have a music volume slider");
+  assert.ok(src.includes('aria-label="Background tones volume"'), "the gazebo must have a background-tones volume slider");
 });
 
-test("oboe is a sixth music choice, with its own tune and voice", () => {
-  assert.ok(sound.includes('{ id: "oboe", label: "Oboe" }'), "oboe must be in the music list");
+test("oboe is a sixth tone, with its own tune and voice", () => {
+  assert.ok(sound.includes('{ id: "oboe" }'), "oboe must be in the tone list");
   assert.ok(sound.includes('oboe: { type: "sawtooth", gain: 0.07 }'), "the oboe must sound reedy — sawtooth, not a bare sine");
   assert.ok(sound.includes("G major pentatonic"), "the oboe must have its own tune, in G major");
-  assert.ok(map.includes("GAZEBO_MUSIC_KINDS.map((kind)"), "the gazebo chooser must list all six choices from the engine, oboe included");
+  assert.ok(map.includes("GAZEBO_MUSIC_KINDS.map((kind, i)"), "the gazebo chooser must list all six tones from the engine, oboe included");
 });
 
 test("the garden cottage pic pinch-zooms like the gazebo", () => {

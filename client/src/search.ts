@@ -54,6 +54,13 @@ export type SearchResult = {
   // this flag opens the Map on the gazebo instead of jumping to
   // a tab; `tab` stays "home" only, as for the Site Map.
   openGazebo?: boolean;
+  // The spirit guide is not a tab either — it is the name &
+  // spirit guide section of My Life Garden Pathway. A result
+  // with this flag opens the garden list, scrolled to that
+  // section, instead of jumping to a tab; `tab` stays "home"
+  // only, as for the Site Map. (Richard, 2026-11-28: searching
+  // "Spirit" or "spirit guide" got no hit — it must find it.)
+  openSpiritGuide?: boolean;
 };
 
 type SearchEntry = SearchResult & { keywords: string };
@@ -72,6 +79,7 @@ export const SEARCH_INDEX: SearchEntry[] = [
   { id: "site-map", tab: "home", title: "Site Map", snippet: "The trail map — My Life Garden Pathway: one pathway from the cottage, the gazebo, the dead ends, and Longevity to infinity. Tap a branch, then Visit to go to that help.", keywords: "map site map trail map garden map pathway", openSiteMap: true },
   { id: "gazebo", tab: "home", title: "The Gazebo — quiet time", snippet: "A quiet place for quiet time, off to the side of the path — the beautiful octagonal gazebo, with pillows, a rocking chair, and candles. Pinch with two fingers to zoom in. Give myself a break — Chill in Gazebo for a bit.", keywords: "gazebo quiet time chill break mindful peaceful", openGazebo: true },
   { id: "cozy-room", tab: "home", title: "My Cozy Room", snippet: "Inside the cottage — your trophy room, with your books and your own photos in the frames. One tap from the top nav.", keywords: "cozy room cottage inside trophy trophies books photos frames", openCozyRoom: true },
+  { id: "spirit-guide", tab: "home", title: "Your spirit guide", snippet: "Your name & your spirit guide, in My Life Garden Pathway — pick one of the eight animals to walk beside you, or type your own guide: Jesus, God, Mohammed, Krishna, or anyone else. No list, no doctrine — just your own words.", keywords: "spirit guide spirit animal owl robin turtle butterfly deer bear dog cat jesus god mohammed krishna", openSpiritGuide: true },
   { id: "alcohol", tab: "alcohol", title: "Alcohol", snippet: "Safety first — withdrawal can be dangerous — then pre-commitment before the first drink.", keywords: "alcohol drink drinking quit withdrawal beer wine" },
   { id: "urge", tab: "alcohol", title: "Ride out this urge", snippet: "A guided pause with no time limit — urges peak and pass; this helps you outlast the peak.", keywords: "urge craving pause surf ride out" },
   { id: "smoking", tab: "smoking", title: "Smoking", snippet: "Frequent, short urges. Ride them out, break the cue pairs, use the free quitline.", keywords: "smoking cigarette nicotine smoke quit tobacco vape" },
@@ -144,6 +152,7 @@ export function searchApp(query: string): SearchResult[] {
     ...(entry.openSiteMap ? { openSiteMap: true as const } : {}),
     ...(entry.openCozyRoom ? { openCozyRoom: true as const } : {}),
     ...(entry.openGazebo ? { openGazebo: true as const } : {}),
+    ...(entry.openSpiritGuide ? { openSpiritGuide: true as const } : {}),
   }));
 }
 

@@ -230,3 +230,24 @@ test("the gazebo picture and My Log, My Path are untouched in this piece", () =>
   assert.ok(!helpers.includes("myLifeGardenGazebo"), "the Map-pretty helpers must not touch the gazebo picture");
   assert.ok(!map.includes("My Log, My Path"), "the Map piece must not build My Log, My Path — that is a separate piece");
 });
+
+test("the gazebo picture taps to enlarge — folks can be there (Richard, 2026-11-28)", () => {
+  // The gazebo pic was a plain picture, not a tap target — the
+  // caption below it did not block enlarging, it simply was
+  // not wired up yet. Same pattern as the garden first pic.
+  assert.ok(map.includes("const [gazeboZoomed, setGazeboZoomed] = useState(false)"), "the Map page must hold a gazebo enlarged state");
+  assert.ok(map.includes('aria-label="The gazebo — tap to see it bigger"'), "the gazebo picture must be a tap target that says tap to see it bigger");
+  assert.ok(map.includes("onClick={() => setGazeboZoomed(true)}"), "tapping the gazebo picture must open the enlarged view");
+  assert.ok(map.includes('role="dialog" aria-label="The gazebo, enlarged"'), "the enlarged view must be a dialog labelled The gazebo, enlarged");
+  assert.ok(map.includes('aria-label="Close the enlarged gazebo photo"'), "the enlarged view must have a close button");
+  assert.ok(map.includes("onClick={() => setGazeboZoomed(false)}"), "tapping the enlarged view must close it");
+  assert.ok(map.includes('alt="The gazebo — enlarged"'), "the enlarged view must show the gazebo pic big");
+  assert.ok(map.includes("Tap the photo to see it bigger."), "the gazebo must say tap the photo to see it bigger");
+  // Unchanged: the pic file, the caption wording, and the pic
+  // first, before the stop button / heading.
+  assert.ok(map.includes('src={myLifeGardenGazebo}'), "the enlarged view must use the same gazebo pic file");
+  assert.ok(map.includes("The gazebo — a quiet place, off to the side of the path."), "the gazebo caption must stay exactly as it is");
+  const gazeboFigure = map.indexOf("The gazebo — tap to see it bigger");
+  const gazeboButton = map.indexOf('aria-expanded={open}', gazeboFigure);
+  assert.ok(gazeboFigure !== -1 && gazeboButton !== -1 && gazeboFigure < gazeboButton, "the gazebo picture must still come first, before its stop button / heading");
+});

@@ -56,8 +56,14 @@ test("the garden first picture still enlarges — same bug, checked, not broken"
   assert.ok(garden.includes('aria-label="My Life Garden Pathway, enlarged"'), "the garden enlarged view must still exist");
 });
 
-test("the Map cottage picture promises no enlarge — no false tap target added", () => {
+test("the Map cottage picture promises no enlarge — the gazebo does, the cottage does not (Richard, 2026-11-28)", () => {
   const map = src.slice(src.indexOf("function GardenMapPage("), src.indexOf("function CozyRoomVisual"));
-  assert.ok(!map.includes("Tap the photo to see it bigger"), "the Map cottage must not promise an enlarge it does not have");
+  // Updated 2026-11-28: the Map now DOES have one enlarge — the
+  // gazebo pic, at Richard's "Yes Please". So "Tap the photo to
+  // see it bigger" legitimately appears once in the Map, for
+  // the gazebo only. The cottage itself still has no enlarge.
+  assert.ok(!map.includes("Cottage — tap to see it bigger") && !map.includes("cottage — tap to see it bigger"), "the Map cottage must not promise an enlarge it does not have");
+  assert.equal((map.match(/Tap the photo to see it bigger\./g) ?? []).length, 1, "the Map must promise an enlarge exactly once — for the gazebo, not the cottage");
+  assert.ok(map.includes('aria-label="The gazebo — tap to see it bigger"'), "that one enlarge promise must belong to the gazebo picture");
   assert.ok(map.includes("Your cottage — where every path begins, warm and cozy from the get-go."), "the Map caption must stay word for word");
 });

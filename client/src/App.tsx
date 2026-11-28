@@ -5853,6 +5853,7 @@ function GardenMapPage({ onGoHome, onGoGarden, onGoTab, onOpenCozy, profiles, ga
   backLabel?: string;
 }) {
   const [selected, setSelected] = useState<string | null>(null);
+  const [gazeboZoomed, setGazeboZoomed] = useState(false);
   const [trophies, setTrophies] = useState<string[]>(() => loadLifeGardenTrophies());
   const [checked, setChecked] = useState<string[]>(() => loadLifeGardenChecked());
   const [quitDays, setQuitDays] = useState<GardenQuitDays>(() => loadLifeGardenQuitDays());
@@ -6203,10 +6204,33 @@ function GardenMapPage({ onGoHome, onGoGarden, onGoTab, onOpenCozy, profiles, ga
                     way. The trail pic stays, flipped, for the
                     garden first pic and its zoom. Caption unchanged. */}
                 {open && stop.id === "gazebo" && (
-                  <figure className="mb-3 overflow-hidden rounded-[var(--radius)] border-2 border-[var(--leaf)]">
-                    <img src={myLifeGardenGazebo} alt="The gazebo in My Life Garden Pathway — the beautiful octagonal wooden gazebo, with a bench with pillows and cushions, a rocking chair, and candles" className="w-full" />
-                    <figcaption className="bg-[var(--surface)] px-4 py-3 text-center font-bold leading-relaxed text-[var(--text)]">The gazebo — a quiet place, off to the side of the path.</figcaption>
-                  </figure>
+                  <>
+                    <figure className="mb-3 overflow-hidden rounded-[var(--radius)] border-2 border-[var(--leaf)]">
+                      {/* Tap-to-enlarge (Richard, 2026-11-28): "Oh
+                          my goodness. Yes Please" — folks will want
+                          to enlarge the gazebo and be there. Same
+                          pattern as the garden first pic: the
+                          picture itself is the tap target, the
+                          caption stays below it, unchanged, and
+                          the enlarged view opens on a dark
+                          backdrop, tap anywhere to close. The
+                          caption does not block enlarging — the
+                          picture simply was not wired up yet. */}
+                      <button type="button" onClick={() => setGazeboZoomed(true)} aria-label="The gazebo — tap to see it bigger" className="block w-full">
+                        <img src={myLifeGardenGazebo} alt="The gazebo in My Life Garden Pathway — the beautiful octagonal wooden gazebo, with a bench with pillows and cushions, a rocking chair, and candles" className="w-full" />
+                      </button>
+                      <figcaption className="bg-[var(--surface)] px-4 py-3 text-center font-bold leading-relaxed text-[var(--text)]">The gazebo — a quiet place, off to the side of the path.</figcaption>
+                      <p className="bg-[var(--surface)] pb-3 text-center text-sm text-[var(--dim)]">Tap the photo to see it bigger.</p>
+                    </figure>
+                    {gazeboZoomed && (
+                      <div role="dialog" aria-label="The gazebo, enlarged" className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" onClick={() => setGazeboZoomed(false)}>
+                        <button type="button" onClick={() => setGazeboZoomed(false)} aria-label="Close the enlarged gazebo photo" className="max-h-full max-w-full">
+                          <img src={myLifeGardenGazebo} alt="The gazebo — enlarged" className="max-h-[85vh] w-auto max-w-full rounded-[var(--radius)]" />
+                          <span className="mt-2 block text-center font-semibold text-white">Tap anywhere to close</span>
+                        </button>
+                      </div>
+                    )}
+                  </>
                 )}
                 <button type="button" onClick={() => { if (open) { setSelected(null); } else { openStop(stop.id); } }} aria-expanded={open} className="felt-card w-full rounded-[var(--radius)] border-2 border-[var(--border)] bg-[var(--surface)] p-4 text-left">
                   <p className="font-display text-lg font-black text-[var(--text)]">{stop.label}</p>

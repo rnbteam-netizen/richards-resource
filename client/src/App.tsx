@@ -6403,11 +6403,38 @@ function GardenMapPage({ onGoHome, onGoGarden, onGoTab, onOpenCozy, profiles, ga
                       </button>
                       <figcaption className="bg-[var(--surface)] px-4 py-3 text-center font-bold leading-relaxed text-[var(--text)]">The gazebo — a quiet place, off to the side of the path.</figcaption>
                       <p className="bg-[var(--surface)] pb-3 text-center text-sm text-[var(--dim)]">Tap the photo to see it bigger.</p>
+                      {/* Tiny bell (Richard, 2026-11-28): "Now to
+                          please make the gazebo environment the
+                          best we can. Music is tricky due to
+                          copyright stuff. A small bell is certainly
+                          a nice touch." — a tiny yoga bell, like the
+                          one his instructor rang at the end of a
+                          session, to mark a quiet moment. Web
+                          Audio only (the gazebo bell in sound.ts),
+                          no audio file, no music. It only rings when
+                          tapped — never on its own, never when the
+                          gazebo opens, never on a loop — and it
+                          follows the phone's volume and silent
+                          switch, like every other sound here. */}
+                      <div className="bg-[var(--surface)] px-4 pb-4 text-center">
+                        <button type="button" onClick={() => { sounds.prepareAudio(); sounds.playGazeboBell(); }} aria-label="Ring the tiny bell — a quiet moment, like the bell at the end of a yoga session" className="min-h-11 rounded-[var(--radius)] border-2 border-[#9a5a90] bg-[var(--surface)] px-4 font-bold text-[var(--text)]">🔔 Ring the bell</button>
+                        <p className="mt-2 text-sm leading-relaxed text-[var(--dim)]">A tiny bell, like the one at the end of a yoga session — tap it to mark a quiet moment.</p>
+                      </div>
                     </figure>
                     {gazeboZoomed && (
                       <div role="dialog" aria-label="The gazebo, enlarged" className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-black/80 p-4" style={{ touchAction: "none" }} onClick={(e) => { if (e.target === e.currentTarget) closeGazeboZoom(); }} onTouchStart={gazeboZoomTouchStart} onTouchMove={gazeboZoomTouchMove} onTouchEnd={gazeboZoomTouchEnd} onWheel={gazeboZoomWheel}>
                         <div className="flex max-h-full flex-col items-center">
-                          <button type="button" onClick={closeGazeboZoom} aria-label="Close the enlarged gazebo photo" className="mb-2 self-end rounded-full bg-white/90 px-4 py-2 font-bold text-[var(--text)]">✕ Close</button>
+                          <div className="mb-2 flex w-full items-center justify-between gap-2">
+                            {/* Tiny bell, enlarged view too (Richard,
+                                2026-11-28): the same bell, while
+                                you are there in the picture. The
+                                taps must not reach the dialog's
+                                touch handlers — a tap there would
+                                be read as a tap to close — so they
+                                stop here. */}
+                            <button type="button" onClick={(e) => { e.stopPropagation(); sounds.prepareAudio(); sounds.playGazeboBell(); }} onTouchStart={(e) => e.stopPropagation()} onTouchEnd={(e) => e.stopPropagation()} aria-label="Ring the tiny bell — a quiet moment, like the bell at the end of a yoga session" className="rounded-full bg-white/90 px-4 py-2 font-bold text-[var(--text)]">🔔 Ring the bell</button>
+                            <button type="button" onClick={closeGazeboZoom} aria-label="Close the enlarged gazebo photo" className="rounded-full bg-white/90 px-4 py-2 font-bold text-[var(--text)]">✕ Close</button>
+                          </div>
                           {/* Pinch-to-zoom (Richard, 2026-11-28): the
                               old enlarged view only darkened the
                               background — the picture stayed the

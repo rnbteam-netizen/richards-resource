@@ -27,6 +27,12 @@
 // 3. Happy Button sounds (Home, Richard, 2026-11-18): one fixed tap
 //    tone, the same on every tap, and one big carnival bell when a
 //    thermometer fills. See HAPPY_TAP_* / HAPPY_BELL_* below.
+// 4. Gazebo bell (My Life Garden Pathway, Richard, 2026-11-28): one
+//    small, gentle bell in the gazebo — a tiny yoga bell, like the
+//    one his yoga instructor rang at the end of a session — to mark
+//    a quiet moment. See GAZEBO_BELL_* below. Music was deliberately
+//    not added: copyright makes music tricky, so the bell stands
+//    alone. It only ever rings when tapped, never on its own.
 //
 // Privacy: no recording, no microphone, no data leaves the phone for
 // any of this. Sound on/off is not saved to the server and not tied
@@ -84,6 +90,18 @@ export const SLOT_TONE_SPECS: Record<SlotSoundKind, { frequencyHz: number; durat
 // fundamental (1046 Hz) with harmonics (1568, 2093 Hz) that ring
 // together for about 1.2 seconds, then fade. It plays only when a
 // thermometer fills, never on an ordinary tap.
+// Gazebo bell (Richard, 2026-11-28): a tiny bell, not the big
+// carnival bell. Higher and softer than the Happy Button bell —
+// one strike at 1568 Hz with quiet harmonics (2352, 3136 Hz),
+// gains about half the carnival bell's, ringing together for
+// about 2.4 seconds, then fading — like the small bell at the
+// end of a yoga session. It plays only when the visitor taps
+// "Ring the bell" in the gazebo, never on its own, never on a
+// loop, and never when the gazebo opens.
+export const GAZEBO_BELL_FREQUENCIES_HZ: [number, number, number] = [1568, 2352, 3136];
+export const GAZEBO_BELL_DURATION_MS = 2400;
+export const GAZEBO_BELL_GAIN = 0.07;
+
 export type HappySoundKind = "tap" | "bell";
 export const HAPPY_TAP_FREQUENCY_HZ = 660;
 export const HAPPY_TAP_DURATION_MS = 350;
@@ -188,6 +206,18 @@ class AppSounds {
       return;
     }
     this.playTone(HAPPY_TAP_FREQUENCY_HZ, HAPPY_TAP_DURATION_MS, "sine", HAPPY_TAP_GAIN);
+  }
+
+  // Gazebo bell (Richard, 2026-11-28): one small, gentle ring —
+  // a tiny yoga bell to mark a quiet moment at the end of a
+  // mindful break. Web Audio only, no audio file, no music,
+  // no copyright. Tap-only: the caller plays it from the
+  // "Ring the bell" tap, never on load, never on opening the
+  // gazebo, never on a loop.
+  playGazeboBell(): void {
+    this.playTone(GAZEBO_BELL_FREQUENCIES_HZ[0], GAZEBO_BELL_DURATION_MS, "sine", GAZEBO_BELL_GAIN);
+    this.playTone(GAZEBO_BELL_FREQUENCIES_HZ[1], 1800, "sine", 0.035);
+    this.playTone(GAZEBO_BELL_FREQUENCIES_HZ[2], 1200, "sine", 0.02);
   }
 
   playSlotSound(kind: SlotSoundKind): void {
